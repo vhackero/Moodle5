@@ -34,6 +34,7 @@ $string['completion_progress:showbar'] = 'Show the bar in the Completion Progres
 $string['computeprogress'] = 'Calculating progress percentages';
 $string['config_activitiesincluded'] = 'Activities included';
 $string['config_activitycompletion'] = 'All activities with completion set';
+$string['categorypath'] = 'Course category path + full course name';
 $string['config_default_title'] = 'Completion Progress';
 $string['config_group'] = 'Visible only to group or grouping';
 $string['config_header_monitored'] = 'Monitored';

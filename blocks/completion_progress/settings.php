@@ -56,6 +56,7 @@ if ($ADMIN->fulltree) {
     $options = [
         'shortname' => get_string('shortname', 'block_completion_progress'),
         'fullname' => get_string('fullname', 'block_completion_progress'),
+        'categorypath' => get_string('categorypath', 'block_completion_progress'),
     ];
     $settings->add(
         new admin_setting_configselect(

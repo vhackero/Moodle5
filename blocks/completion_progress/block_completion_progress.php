@@ -224,7 +224,8 @@ class block_completion_progress extends block_base {
             // Output the Progress Bar.
             if (!empty($blockprogresses)) {
                 $courselink = new moodle_url('/course/view.php', ['id' => $course->id]);
-                $linktext = html_writer::tag('h3', s(format_string($course->$coursenametoshow)));
+                $coursedisplayname = $this->get_course_display_name($course, $coursenametoshow);
+                $linktext = html_writer::tag('h3', s(format_string($coursedisplayname)));
                 $this->content->text .= html_writer::link($courselink, $linktext);
             }
             foreach ($blockprogresses as $blockprogress) {
@@ -243,6 +244,25 @@ class block_completion_progress extends block_base {
         }
 
         return true;
+    }
+
+    /**
+     * Returns the Dashboard course display name based on plugin config.
+     *
+     * @param stdClass $course course record
+     * @param string $coursenametoshow selected display type
+     * @return string
+     */
+    protected function get_course_display_name(stdClass $course, string $coursenametoshow): string {
+        if ($coursenametoshow === 'categorypath') {
+            $category = core_course_category::get($course->category, IGNORE_MISSING, true);
+            if (!$category) {
+                return $course->fullname;
+            }
+            return $category->get_nested_name(false) . ' / ' . $course->fullname;
+        }
+
+        return $course->$coursenametoshow ?? $course->shortname;
     }
 
     /**
