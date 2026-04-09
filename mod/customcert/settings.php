@@ -24,7 +24,10 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$url = $CFG->wwwroot . '/mod/customcert/verify_certificate.php';
+$url = trim((string)get_config('customcert', 'verifycertificateurl'));
+if ($url === '') {
+    $url = $CFG->wwwroot . '/mod/customcert/verify_certificate.php';
+}
 
 $ADMIN->add('modsettings', new admin_category('customcert', get_string('pluginname', 'mod_customcert')));
 $settings = new admin_settingpage('modsettingcustomcert', new lang_string('customcertsettings', 'mod_customcert'));
@@ -34,6 +37,14 @@ $settings->add(new admin_setting_configcheckbox(
     get_string('verifyallcertificates', 'customcert'),
     get_string('verifyallcertificates_desc', 'customcert', $url),
     0
+));
+
+$settings->add(new admin_setting_configtext(
+    'customcert/verifycertificateurl',
+    get_string('verifycertificateurl', 'customcert'),
+    get_string('verifycertificateurl_desc', 'customcert'),
+    '',
+    PARAM_URL
 ));
 
 $settings->add(new admin_setting_configcheckbox(
