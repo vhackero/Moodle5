@@ -224,8 +224,9 @@ class block_completion_progress extends block_base {
             // Output the Progress Bar.
             if (!empty($blockprogresses)) {
                 $courselink = new moodle_url('/course/view.php', ['id' => $course->id]);
+                $coursenamecolour = $this->get_course_name_colour();
                 $coursedisplayname = $this->get_course_display_name($course, $coursenametoshow);
-                $linktext = html_writer::tag('h3', s(format_string($coursedisplayname)));
+                $linktext = html_writer::tag('h3', $coursedisplayname, ['style' => "color: {$coursenamecolour};"]);
                 $this->content->text .= html_writer::link($courselink, $linktext);
             }
             foreach ($blockprogresses as $blockprogress) {
@@ -257,12 +258,34 @@ class block_completion_progress extends block_base {
         if ($coursenametoshow === 'categorypath') {
             $category = core_course_category::get($course->category, IGNORE_MISSING, true);
             if (!$category) {
-                return $course->fullname;
+                return s(format_string($course->fullname));
             }
-            return $category->get_nested_name(false) . ' / ' . $course->fullname;
+
+            $separator = ' ' . html_writer::tag('i', '', ['class' => 'fa fa-caret-right', 'aria-hidden' => 'true']) . ' ';
+            $categorysegments = explode(' / ', $category->get_nested_name(false));
+            $categorysegments[] = $course->fullname;
+
+            $segments = [];
+            foreach ($categorysegments as $segment) {
+                $segments[] = s(format_string(trim($segment)));
+            }
+            return implode($separator, $segments);
         }
 
-        return $course->$coursenametoshow ?? $course->shortname;
+        return s(format_string($course->$coursenametoshow ?? $course->shortname));
+    }
+
+    /**
+     * Returns Dashboard course title colour setting.
+     *
+     * @return string
+     */
+    protected function get_course_name_colour(): string {
+        $colour = get_config('block_completion_progress', 'coursenamecolour') ?: defaults::COURSENAMECOLOUR;
+        if (!preg_match('/^#[0-9a-f]{6}$/i', $colour)) {
+            return defaults::COURSENAMECOLOUR;
+        }
+        return $colour;
     }
 
     /**

@@ -50,6 +50,11 @@ abstract class defaults {
     const COURSENAMETOSHOW = 'shortname';
 
     /**
+     * Default dashboard course title colour.
+     */
+    const COURSENAMECOLOUR = '#3d3d3d';
+
+    /**
      * Default display of inactive students on the overview page.
      */
     const SHOWINACTIVE = 0;

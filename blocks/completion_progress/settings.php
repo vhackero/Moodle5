@@ -68,6 +68,16 @@ if ($ADMIN->fulltree) {
         )
     );
 
+    $settings->add(
+        new admin_setting_configcolourpicker(
+            'block_completion_progress/coursenamecolour',
+            get_string('coursenamecolour', 'block_completion_progress'),
+            get_string('coursenamecolour_desc', 'block_completion_progress'),
+            defaults::COURSENAMECOLOUR,
+            null
+        )
+    );
+
     $coloursetting = new admin_setting_configcolourpicker(
         'block_completion_progress/completed_colour',
         get_string('completed_colour_title', 'block_completion_progress'),
