@@ -1,0 +1,340 @@
+.buscarpor_normateca {
+    width: 10rem;
+    height: 35px;
+}
+.card-title {
+    text-transform: none !important;
+}
+
+.buscarpor_normateca {
+    width: 10rem;
+    height: 35px;
+    margin-right: 1em;
+    padding: 0rem;
+    font-size: 1em;
+}
+
+.busqueda-inputs-normateca {
+    background-color: white;
+    outline: none;
+    margin-top: 10px;
+    padding-bottom: 15px;
+    border-color: #611232;
+    border-radius: 10px;
+    text-align: left;
+    padding-top: 10px;
+    width: 224px;
+}
+
+.buscarpalabra-normateca {
+    width: 15rem;
+    height: 50px;
+    margin-right: 1em;
+    padding: 0rem 0.5rem;
+    font-size: 1em;
+    margin-bottom: 20px;
+}
+
+.searchNotValue-normateca {
+    padding: 15px;
+    background: #fded99ed;
+    margin: 15px;
+    border-radius: 5px;
+}
+
+.searchNotValue-info {
+    background: #fded99ed;
+}
+
+.container {
+    padding: 15px;
+}
+
+.form-card {
+    color: white;
+    padding: 10px;
+    margin-top: 5px;
+    justify-content: center;
+}
+
+.extra-card-info {
+    color: black;
+    font-size: 0.75em;
+}
+
+#searchbutton-normateca:hover, #resetElements-normateca:hover, .button-form-card:hover {
+    background: #393c3e !important;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .container-info-normateca {
+        text-align: center;
+    }
+}
+
+.modal-footer-normateca .btn-success {
+    background-color: #611232;
+    border-color: #611232 !important;
+    border-radius: 6%;
+}
+
+.modal-footer-normateca .btn-success:hover .btn-success:active {
+    background-color: #393c3e !important;
+    border-color: #393c3e;
+}
+
+.p-form-card {
+    padding: 8px;
+    padding: 8px;
+    margin-bottom: 15px;
+    margin-top: 15px;
+    min-height: 70px;
+}
+
+.button-form-card {
+    border: 1px solid white;
+    background-color: #611232;
+    border-radius: 10px;
+}
+
+.color-white {
+    color: white !important;
+    border: none !important;
+}
+
+.img-container-form-card {
+    height: auto;
+    background: white;
+    border-radius: 2px;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    max-width: 100px;
+    margin-top: 8px;
+}
+
+#resetElements-normateca {
+    background-color: #A7802D;
+    border-color: #A7802D;
+    border-radius: 6%;
+}
+
+#searchbutton-normateca {
+    background-color: #611232;
+    border-color: #611232;
+    border-radius: 6%;
+}
+
+#searchbutton-normateca:active, #resetElements-normateca:active, #searchbutton-normateca:hover, #resetElements-normateca:hover {
+    background-color: #393c3e;
+    border-color: #393c3e;
+}
+
+.btn:focus, .btn.focus {
+    box-shadow: none;
+}
+
+.searching-normateca {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+    height: 100px;
+    align-items: center;
+    font-size: 1.3em;
+}
+
+.not-view {
+    display: none;
+}
+
+.container-info-normateca {
+    text-align: center;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    padding: 15px;
+}
+
+.container-info-normateca > img {
+    border: solid 2px #611232;
+    border-radius: 10px;
+}
+
+.resultados-normateca {
+    margin-right: auto;
+    margin-left: auto;
+    justify-content: center;
+    align-content: center;
+    display: none !important;
+}
+
+.items-busqueda-normateca {
+    justify-content: center;
+}
+
+.filatrar-por-normateca {
+    margin-left: 15px;
+    font-weight: bold;
+}
+
+.active-item-normateca {
+    display: flex !important;
+}
+
+.caroucel-previous-normateca, .caroucel-nums-normateca {
+    margin-right: 5px;
+    border-radius: 10px;
+}
+
+.caroucel-previous-normateca, .caroucel-next-normateca {
+    background: white;
+    border-radius: 10px;
+    color: #717070;
+}
+
+.caroucel-previous-normateca:hover, .caroucel-next-normateca:hover, .caroucel-nums-normateca:hover, .caroucel-next-normateca:focus, .caroucel-nums-normateca:focus {
+    background-color: #f8f8f8 !important;
+    color: #717070 !important;
+    border: solid 1px;
+}
+
+.active-num-normateca {
+    background-color: #611232 !important;
+    color: white !important;
+}
+
+.paginador-normateca {
+    display: flex;
+    justify-content: center;
+}
+
+.paginador-normateca > .caroucel-previous-normateca:active, .paginador-normateca > .caroucel-previous-normateca:focus, .paginador-normateca > .caroucel-next-normateca:active, .paginador-normateca > .caroucel-next-normateca:focus {
+    background-color: #611232 !important;
+    color: white !important;
+}
+
+.not_visible-num-normateca {
+    display: none !important;
+}
+
+#modal-footer-normateca > {
+    background-color: #611232 !important;
+}
+
+#modal-footer-normateca, .modal-footer-normateca {
+    justify-content: center;
+    display: flow-root;
+    padding-bottom: 15px;
+    text-align: center;
+}
+
+.items-filtros-normateca {
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.tittle-filters-normateca {
+    font-weight: bold;
+}
+
+.required-item-normateca {
+    color: red;
+}
+
+.modal-dialog {
+    max-width: 80% !important;
+}
+
+#scrollToTopBtn-normateca {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+    background-color: #611232;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 10px;
+    cursor: pointer;
+    font-size: 27px;
+    z-index: 1000;
+}
+
+#scrollToTopBtn-normateca:hover {
+    background-color: #393c3e;
+}
+
+#loadElement-normateca {
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    position: absolute;
+    top: 10px;
+    align-content: center;
+    background: #e9ecef;
+    left: 0;
+}
+
+.num_resultados_container-normateca {
+    position: relative;
+    margin-top: 25px;
+}
+
+#pdfModalmessages-normateca {
+    top: 20%;
+}
+
+#modal-footer-message-normateca {
+    justify-content: center;
+}
+
+.resultados-normateca > .card {
+    border: none !important
+}
+
+@media screen and (max-width: 480px) {
+    .items-busqueda-normateca {
+        display: inline-block;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .items-filtros-normateca {
+        width: auto !important;
+    }
+}
+
+@media screen and (min-width: 768px) and (max-width: 1300px) {
+    .items-filtros-normateca {
+        max-width: 50% !important;
+    }
+}
+
+@media screen and (max-width: 720px) {
+    .paginador-normateca {
+        display: none !important;
+    }
+
+    .resultados-normateca {
+        display: flex !important;
+    }
+}
+
+@media screen and (min-width: 1920px) {
+    .items-filtros-normateca {
+        margin-left: unset;
+        margin-right: unset;
+    }
+}
+
+.indicaciones-normateca {
+    color: black;
+    padding: 12px 12px 1px 12px;
+    background: #e8e8e8;
+    font-size: 0.8rem;
+    margin-top: 10px;
+    font-style: italic;
+}

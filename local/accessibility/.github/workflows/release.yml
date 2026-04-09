@@ -1,0 +1,177 @@
+name: Plugin Release
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    with:
+      accessibility-branch: ${{ github.ref }}
+
+  get-version:
+    name: Get version info
+    uses: ./.github/workflows/get-version.yml
+
+  push-branches:
+    name: Push to release branches
+    needs: [ci, get-version]
+    outputs:
+      release: ${{ needs.get-version.outputs.plugin-release }}
+      version: ${{ needs.get-version.outputs.plugin-version }}
+      branch-no-widgets: ${{ needs.get-version.outputs.branch-name }}
+      branch-with-widgets: ${{ needs.get-version.outputs.branch-name }}-with-widgets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Push to release branch (without default widgets)
+        run: |
+          git checkout -b ${{ needs.get-version.outputs.branch-name }}
+          git push -f -u origin ${{ needs.get-version.outputs.branch-name }}
+      - name: Remove .gitignore for default widgets pack
+        run: |
+          git config --global user.name "ponlawat-w"
+          git config --global user.email "ponlawat_w@outlook.co.th"
+          git checkout -b ${{ needs.get-version.outputs.branch-name }}-with-widgets
+          rm ./.gitignore
+          git add -A
+          git commit -m 'Removed .gitignore'
+      - name: 'Checkout Widget: backgroundcolour'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_backgroundcolour
+          path: widgets/backgroundcolour
+          ref: ${{ needs.ci.outputs.widget-backgroundcolour-branch }}
+      - name: 'Checkout Widget: fontface'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_fontface
+          path: widgets/fontface
+          ref: ${{ needs.ci.outputs.widget-fontface-branch }}
+      - name: 'Checkout Widget: fontkerning'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_fontkerning
+          path: widgets/fontkerning
+          ref: ${{ needs.ci.outputs.widget-fontkerning-branch }}
+      - name: 'Checkout Widget: fontsize'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_fontsize
+          path: widgets/fontsize
+          ref: ${{ needs.ci.outputs.widget-fontsize-branch }}
+      - name: 'Checkout Widget: imagevisibility'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_imagevisibility
+          path: widgets/imagevisibility
+          ref: ${{ needs.ci.outputs.widget-imagevisibility-branch }}
+      - name: 'Checkout Widget: letterspacing'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_letterspacing
+          path: widgets/letterspacing
+          ref: ${{ needs.ci.outputs.widget-letterspacing-branch }}
+      - name: 'Checkout Widget: lineheight'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_lineheight
+          path: widgets/lineheight
+          ref: ${{ needs.ci.outputs.widget-lineheight-branch }}
+      - name: 'Checkout Widget: linkhighlight'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_linkhighlight
+          path: widgets/linkhighlight
+          ref: ${{ needs.ci.outputs.widget-linkhighlight-branch }}
+      - name: 'Checkout Widget: textalignment'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_textalignment
+          path: widgets/textalignment
+          ref: ${{ needs.ci.outputs.widget-textalignment-branch }}
+      - name: 'Checkout Widget: textcolour'
+        uses: actions/checkout@v4
+        with:
+          repository: ponlawat-w/moodle-accessibility_textcolour
+          path: widgets/textcolour
+          ref: ${{ needs.ci.outputs.widget-textcolour-branch }}
+      - name: Add widgets
+        run: |
+          rm -rf widgets/backgroundcolour/.git
+          rm -rf widgets/backgroundcolour/.github
+          rm -rf widgets/fontface/.git
+          rm -rf widgets/fontface/.github
+          rm -rf widgets/fontkerning/.git
+          rm -rf widgets/fontkerning/.github
+          rm -rf widgets/fontsize/.git
+          rm -rf widgets/fontsize/.github
+          rm -rf widgets/imagevisibility/.git
+          rm -rf widgets/imagevisibility/.github
+          rm -rf widgets/letterspacing/.git
+          rm -rf widgets/letterspacing/.github
+          rm -rf widgets/lineheight/.git
+          rm -rf widgets/lineheight/.github
+          rm -rf widgets/linkhighlight/.git
+          rm -rf widgets/linkhighlight/.github
+          rm -rf widgets/textalignment/.git
+          rm -rf widgets/textalignment/.github
+          rm -rf widgets/textcolour/.git
+          rm -rf widgets/textcolour/.github
+          git add -A
+          git commit -m 'Added default widgets'
+          git push -f -u origin ${{ needs.get-version.outputs.branch-name }}-with-widgets
+
+  release:
+    needs: push-branches
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - branch: ${{ needs.push-branches.outputs.branch-no-widgets }}
+            name: v${{ needs.push-branches.outputs.release }}-no-widgets
+            body: ${{ needs.push-branches.outputs.release }} - ${{ needs.push-branches.outputs.version }} with no widgets
+            delete-branch: false
+          - branch: ${{ needs.push-branches.outputs.branch-with-widgets }}
+            name: v${{ needs.push-branches.outputs.release }}-with-widgets
+            body: ${{ needs.push-branches.outputs.release }} - ${{ needs.push-branches.outputs.version }} with default widgets
+            delete-branch: true
+    name: Release ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+      - name: Publish Tag
+        run: |
+          git config --global user.name "ponlawat-w"
+          git config --global user.email "ponlawat_w@outlook.co.th"
+          git tag -fa ${{ matrix.name }} -m "${{ matrix.body }}"
+          git push --force origin ${{ matrix.name }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ matrix.name }}
+          name: ${{ matrix.name }}
+          body: ${{ matrix.body }}
+      - name: Delete branch
+        if: ${{ matrix.delete-branch }}
+        run: git push --force -d origin ${{ matrix.branch }}
+
+  make-latest-version:
+    name: Make latest version
+    needs: [push-branches, release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Make latest version
+        run: gh release edit --repo ponlawat-w/moodle-local_accessibility v${{ needs.push-branches.outputs.release }}-with-widgets --latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

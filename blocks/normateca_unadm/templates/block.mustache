@@ -1,0 +1,94 @@
+<div id="buscador-normateca" class="set-buscador">
+    <p>
+        La {{title}} es una herramienta de csimplificada que tiene como propósito el registro, difusión y actualización de las disposiciones legales y
+        administrativas que regulan la operación y funcionamiento al interior de la UnADM.
+    </p>
+
+    <p>
+        Los campos marcados con <span class="required-item-normateca">*</span> son requeridos.
+    </p>
+
+    <p class="filatrar-por-normateca">Filtrar por:</p>
+        <div class="items-busqueda-normateca row">
+            <div class="col-md-2 items-filtros-normateca"><label class="tittle-filters-normateca" for="filtro-division">División:
+                    <span class="required-item-normateca">*</span> </label><br> <select name="filtro-division"
+                                                                                        id="filtro-division"
+                                                                                        class="busqueda-inputs-normateca form-select buscarpordivision">
+                    <option value="0">Seleccionar</option>
+                    <!-- <option value="resource_keywords">Palabras clave</option> <option value="resource_nivel">Nivel de ejecución</option>-->
+                </select></div>
+            <div class="col-md-2 items-filtros-normateca"><label class="tittle-filters-normateca" for="filtro-carrera">Carrera:
+                    <span class="required-item-normateca">*</span> </label><br> <select name="filtro-carrera"
+                                                                                        id="filtro-carrera"
+                                                                                        class="busqueda-inputs-normateca form-select buscarporcarrera">
+                    <option value="0">Seleccionar</option>
+                    <!-- <option value="resource_nivel">Nivel de ejecución</option>--> </select></div>
+            <div class="col-md-2 items-filtros-normateca"><label class="tittle-filters-normateca" for="filtro-dependencia">Dependencia: </label><br>
+                <select name="filtro-dependencia" id="filtro-dependencia"
+                        class="busqueda-inputs-normateca form-select buscarpordependencia">
+                    <option value="0">Seleccionar</option>
+                    <!-- <option value="resource_nivel">Nivel de ejecución</option>--> </select></div>
+            <div class="col-md-2 items-filtros-normateca"><label class="tittle-filters-normateca" for="filtro-recurso">Recurso: </label><br>
+                <select name="filtro-recurso" id="filtro-recurso"
+                        class="busqueda-inputs-normateca form-select buscarporrecurso">
+                    <option value="0">Seleccionar</option>
+                    <!-- <option value="resource_nivel">Nivel de ejecución</option>--> </select></div>
+        </div>
+        <!--<input class="buscarpalabra-normateca busqueda-inputs-normateca" name="filtro-avanzado-text" id="filtro-avanzado-text" placeholder="escribir una palabra o texto">-->
+        <br> <br>
+        <center>
+            <button title="Realizar búsqueda" id="searchbutton-normateca" type="button"
+                     class="btn btn-info btn-buscar button-search"> Buscar <i
+                        class="fa fa-search"></i></button>
+            <button title="Borrar búsqueda" id="resetElements-normateca" type="button"
+                    class="btn btn-danger"> Borrar <img
+                        id="icon-delete-cien-tecnicas-normateca" src="" width="18px" alt="borrar" title="Borrar búsqueda">
+            </button>
+        </center>
+    </div>
+    <div id="num_resultados_container-normateca" class="col-md-12 not-view">
+        <div class="num_resultados_container-normateca"><p>Resultados de búsqueda: <b><span
+                            id="num_resultados_normateca"></span></b></p></div>
+    </div>
+    <div id="vista-normateca" class="container "></div>
+    <div id="cargando-normateca" class="container not-view">
+        <div class="searching-normateca "><i class="fa fa-cog fa-spin fa-3x fa-fw"></i><span>Espere...</span></div>
+    </div>
+    <div id="paginador-normateca" class="paginador-normateca"></div> <!-- Modal -->
+    <div class="modal fade" id="pdfModal" tabindex="-1" role="dialog" aria-labelledby="pdfModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="pdfModalLabel"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <iframe id="pdfViewer" style="width: 100%; height: 500px;" src="" frameborder="0"></iframe>
+                </div>
+                <div id="modal-footer-normateca" class="modal-footer-normateca"></div>
+            </div>
+        </div>
+    </div>
+    <div id="loadElement-normateca" class="not-view"><p id="load-item"></p>
+        <div class="searching-normateca "><i
+                    class="fa fa-cog fa-spin fa-3x fa-fw"></i><span>Cargando contenido, espere...</span></div>
+    </div>
+    <button id="scrollToTopBtn-normateca" title="Volver Arriba"><i class="fa fa-arrow-up" aria-hidden="true"></i></button>
+    <div class="modal fade" id="pdfModalmessages-normateca" tabindex="-1" role="dialog" aria-labelledby="pdfModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Mensaje:</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body"><p id="messageViewer" style="width: 100%; height: auto;"></p></div>
+                <div id="modal-footer-normateca-message" class="modal-footer-normateca">
+                    <button data-dismiss="modal" aria-label="Close" class="btn btn-primary">Aceptar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="result"></div>
+
+</div>

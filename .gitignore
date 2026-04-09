@@ -1,0 +1,13 @@
+# IDE
+.idea/
+.phpstorm.meta.php/
+
+# herramientas locales
+.grunt/
+
+# configs locales
+.shifter.json
+.nvmrc
+
+# notas
+.upgradenotes/

@@ -1,0 +1,112 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+?><!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="utf-8">
+	<title>Send - Mail</title>
+
+	<style type="text/css">
+
+		::selection { background-color: #E13300; color: white; }
+		::-moz-selection { background-color: #E13300; color: white; }
+
+		body {
+			background-color: #fff;
+			margin: 40px;
+			font: 13px/20px normal Helvetica, Arial, sans-serif;
+			color: #4F5155;
+		}
+
+		a {
+			color: #003399;
+			background-color: transparent;
+			font-weight: normal;
+			text-decoration: none;
+		}
+
+		a:hover {
+			color: #97310e;
+		}
+
+		h1 {
+			color: #444;
+			background-color: transparent;
+			border-bottom: 1px solid #D0D0D0;
+			font-size: 19px;
+			font-weight: normal;
+			margin: 0 0 14px 0;
+			padding: 14px 15px 10px 15px;
+		}
+
+		code {
+			font-family: Consolas, Monaco, Courier New, Courier, monospace;
+			font-size: 12px;
+			background-color: #f9f9f9;
+			border: 1px solid #D0D0D0;
+			color: #002166;
+			display: block;
+			margin: 14px 0 14px 0;
+			padding: 12px 10px 12px 10px;
+		}
+
+		#body {
+			margin: 0 15px 0 15px;
+			min-height: 96px;
+		}
+
+		p {
+			margin: 0 0 10px;
+			padding:0;
+		}
+
+		p.footer {
+			text-align: right;
+			font-size: 11px;
+			border-top: 1px solid #D0D0D0;
+			line-height: 32px;
+			padding: 0 10px 0 10px;
+			margin: 20px 0 0 0;
+		}
+
+		#container {
+			margin: 10px;
+			border: 1px solid #D0D0D0;
+			box-shadow: 0 0 8px #D0D0D0;
+		}
+		.button {
+			background-color: #4CAF50; /* Green */
+			border: 1px;
+			color: white;
+			padding: 15px 32px;
+			text-align: center;
+			text-decoration: none;
+			display: inline-block;
+			font-size: 16px;
+		}
+
+	</style>
+</head>
+<body>
+<div id="container">
+	<h1>Correo enviado con éxito <span style="font-size: xx-large; color:green; ">✓</span>
+	</h1>
+	<p style="background-color: darkgreen; color: white; font-size: 18px;" > ¡Registro completado con éxito!.
+		Se ha enviado un mensaje a tu dirección de correo electrónico con los detalles de tu registro y las instrucciones para iniciar sesión."</p>
+	<div >
+		<center>
+			<a href="/course/view.php?id=<?=$idcourse?>" class="button" >Aceptar</a>
+		</center>
+	</div>
+
+</div>
+<script>
+	setTimeout(function (){
+		window.location.href = '/course/view.php?id=<?=$idcourse?>'
+	},5000);
+</script>
+
+</body>
+</html>
+
