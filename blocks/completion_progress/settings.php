@@ -56,6 +56,7 @@ if ($ADMIN->fulltree) {
     $options = [
         'shortname' => get_string('shortname', 'block_completion_progress'),
         'fullname' => get_string('fullname', 'block_completion_progress'),
+        'categorypath' => get_string('categorypath', 'block_completion_progress'),
     ];
     $settings->add(
         new admin_setting_configselect(
@@ -64,6 +65,16 @@ if ($ADMIN->fulltree) {
             '',
             defaults::COURSENAMETOSHOW,
             $options
+        )
+    );
+
+    $settings->add(
+        new admin_setting_configcolourpicker(
+            'block_completion_progress/coursenamecolour',
+            get_string('coursenamecolour', 'block_completion_progress'),
+            get_string('coursenamecolour_desc', 'block_completion_progress'),
+            defaults::COURSENAMECOLOUR,
+            null
         )
     );
 
