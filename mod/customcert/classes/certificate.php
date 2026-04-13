@@ -535,6 +535,7 @@ class certificate {
 
         // Insert the record into the database.
         $issueid = $DB->insert_record('customcert_issues', $issue);
+        self::sync_issue_to_external_database($issue, $certificateid, $userid);
 
         // Get course module context for event.
         $cm = get_coursemodule_from_instance('customcert', $certificateid, 0, false, MUST_EXIST);
@@ -549,6 +550,83 @@ class certificate {
         $event->trigger();
 
         return $issueid;
+    }
+
+    /**
+     * Syncs issued certificate data to external verification database when configured.
+     *
+     * @param \stdClass $issue issue data
+     * @param int $certificateid certificate id
+     * @param int $userid user id
+     * @return void
+     */
+    private static function sync_issue_to_external_database(\stdClass $issue, int $certificateid, int $userid): void {
+        global $CFG, $DB;
+
+        $externalverifyurl = trim((string)get_config('customcert', 'verifycertificateurl'));
+        if ($externalverifyurl === '') {
+            return;
+        }
+
+        $host = trim((string)get_config('customcert', 'externaldbhost'));
+        $dbname = trim((string)get_config('customcert', 'externaldbname'));
+        $table = trim((string)get_config('customcert', 'externaldbtable'));
+        $username = trim((string)get_config('customcert', 'externaldbuser'));
+        $password = (string)get_config('customcert', 'externaldbpass');
+        $port = (int)get_config('customcert', 'externaldbport');
+        $port = $port > 0 ? $port : 3306;
+
+        if ($host === '' || $dbname === '' || $table === '' || $username === '') {
+            return;
+        }
+
+        if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) {
+            debugging('Customcert external DB sync skipped: invalid table name.', DEBUG_DEVELOPER);
+            return;
+        }
+
+        $user = $DB->get_record('user', ['id' => $userid], 'firstname,lastname,email', MUST_EXIST);
+        $customcert = $DB->get_record('customcert', ['id' => $certificateid], 'course,requiredtime', MUST_EXIST);
+        $course = $DB->get_record('course', ['id' => $customcert->course], 'fullname', MUST_EXIST);
+
+        $fullname = trim(fullname($user));
+        $issuedat = date('Y-m-d H:i:s', $issue->timecreated);
+        $courseduration = (int)$customcert->requiredtime;
+
+        mysqli_report(MYSQLI_REPORT_OFF);
+        $connection = @new \mysqli($host, $username, $password, $dbname, $port);
+        if ($connection->connect_errno) {
+            debugging('Customcert external DB sync connection failed: ' . $connection->connect_error, DEBUG_DEVELOPER);
+            return;
+        }
+
+        $connection->set_charset('utf8mb4');
+        $query = "INSERT INTO `{$table}`
+            (`full_name`, `email`, `issued_at`, `code`, `course_name`, `site_url`, `duration_minutes`)
+            VALUES (?, ?, ?, ?, ?, ?, ?)";
+        $statement = $connection->prepare($query);
+        if (!$statement) {
+            debugging('Customcert external DB sync prepare failed: ' . $connection->error, DEBUG_DEVELOPER);
+            $connection->close();
+            return;
+        }
+
+        $statement->bind_param(
+            'ssssssi',
+            $fullname,
+            $user->email,
+            $issuedat,
+            $issue->code,
+            $course->fullname,
+            $CFG->wwwroot,
+            $courseduration
+        );
+        if (!$statement->execute()) {
+            debugging('Customcert external DB sync insert failed: ' . $statement->error, DEBUG_DEVELOPER);
+        }
+
+        $statement->close();
+        $connection->close();
     }
 
     /**

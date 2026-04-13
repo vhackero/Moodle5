@@ -47,6 +47,59 @@ $settings->add(new admin_setting_configtext(
     PARAM_URL
 ));
 
+$settings->add(new admin_setting_heading(
+    'customcert/externaldbsettings',
+    get_string('externaldbsettings', 'customcert'),
+    get_string('externaldbsettings_desc', 'customcert')
+));
+
+$settings->add(new admin_setting_configtext(
+    'customcert/externaldbhost',
+    get_string('externaldbhost', 'customcert'),
+    '',
+    '127.0.0.1',
+    PARAM_HOST
+));
+
+$settings->add(new admin_setting_configtext(
+    'customcert/externaldbport',
+    get_string('externaldbport', 'customcert'),
+    '',
+    '3306',
+    PARAM_INT
+));
+
+$settings->add(new admin_setting_configtext(
+    'customcert/externaldbname',
+    get_string('externaldbname', 'customcert'),
+    '',
+    '',
+    PARAM_ALPHANUMEXT
+));
+
+$settings->add(new admin_setting_configtext(
+    'customcert/externaldbtable',
+    get_string('externaldbtable', 'customcert'),
+    '',
+    'customcert_verifications',
+    PARAM_ALPHANUMEXT
+));
+
+$settings->add(new admin_setting_configtext(
+    'customcert/externaldbuser',
+    get_string('externaldbuser', 'customcert'),
+    '',
+    '',
+    PARAM_RAW_TRIMMED
+));
+
+$settings->add(new admin_setting_configpasswordunmask(
+    'customcert/externaldbpass',
+    get_string('externaldbpass', 'customcert'),
+    '',
+    ''
+));
+
 $settings->add(new admin_setting_configcheckbox(
     'customcert/showposxy',
     get_string('showposxy', 'customcert'),
