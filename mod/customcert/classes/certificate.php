@@ -584,7 +584,8 @@ class certificate {
         }
 
         $sql = "SELECT ci.code, ci.timecreated,
-                       u.firstname, u.lastname, u.email,
+                       u.username, u.firstname, u.lastname, u.email,
+                       co.id AS courseid,
                        co.fullname AS coursefullname,
                        c.requiredtime
                   FROM {customcert_issues} ci
@@ -635,8 +636,8 @@ class certificate {
         $checkstatement->close();
 
         $query = "INSERT INTO `{$table}`
-            (`full_name`, `email`, `issued_at`, `code`, `course_name`, `site_url`, `duration_minutes`)
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
+            (`full_name`, `username`, `email`, `issued_at`, `code`, `course_id`, `course_name`, `site_url`, `duration_minutes`)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $statement = $connection->prepare($query);
         if (!$statement) {
             debugging('Customcert external DB sync prepare failed: ' . $connection->error, DEBUG_DEVELOPER);
@@ -645,11 +646,13 @@ class certificate {
         }
 
         $statement->bind_param(
-            'ssssssi',
+            'sssssissi',
             $fullname,
+            $issuedata->username,
             $issuedata->email,
             $issuedat,
             $issuedata->code,
+            $issuedata->courseid,
             $issuedata->coursefullname,
             $CFG->wwwroot,
             $courseduration
