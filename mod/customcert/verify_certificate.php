@@ -118,7 +118,6 @@ if ($code) {
 
     // It is possible (though unlikely) that there is the same code for issued certificates.
     if ($issues = $DB->get_records_sql($sql, $params)) {
-        \mod_customcert\certificate::sync_issue_by_code_to_external_database($code);
         foreach ($issues as $issue) {
             if (
                 class_exists('\customcertelement_expiry\element') &&
