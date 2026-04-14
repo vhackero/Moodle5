@@ -535,7 +535,7 @@ class certificate {
 
         // Insert the record into the database.
         $issueid = $DB->insert_record('customcert_issues', $issue);
-        self::sync_issue_to_external_database($issue, $certificateid, $userid);
+        self::sync_issue_by_code_to_external_database($issue->code);
 
         // Get course module context for event.
         $cm = get_coursemodule_from_instance('customcert', $certificateid, 0, false, MUST_EXIST);
@@ -555,12 +555,10 @@ class certificate {
     /**
      * Syncs issued certificate data to external verification database when configured.
      *
-     * @param \stdClass $issue issue data
-     * @param int $certificateid certificate id
-     * @param int $userid user id
+     * @param string $code issued certificate code
      * @return void
      */
-    private static function sync_issue_to_external_database(\stdClass $issue, int $certificateid, int $userid): void {
+    public static function sync_issue_by_code_to_external_database(string $code): void {
         global $CFG, $DB;
 
         $externalverifyurl = trim((string)get_config('customcert', 'verifycertificateurl'));
@@ -585,13 +583,26 @@ class certificate {
             return;
         }
 
-        $user = $DB->get_record('user', ['id' => $userid], 'firstname,lastname,email', MUST_EXIST);
-        $customcert = $DB->get_record('customcert', ['id' => $certificateid], 'course,requiredtime', MUST_EXIST);
-        $course = $DB->get_record('course', ['id' => $customcert->course], 'fullname', MUST_EXIST);
+        $sql = "SELECT ci.code, ci.timecreated,
+                       u.firstname, u.lastname, u.email,
+                       co.fullname AS coursefullname,
+                       c.requiredtime
+                  FROM {customcert_issues} ci
+                  JOIN {user} u
+                    ON u.id = ci.userid
+                  JOIN {customcert} c
+                    ON c.id = ci.customcertid
+                  JOIN {course} co
+                    ON co.id = c.course
+                 WHERE ci.code = :code";
+        $issuedata = $DB->get_record_sql($sql, ['code' => $code]);
+        if (!$issuedata) {
+            return;
+        }
 
-        $fullname = trim(fullname($user));
-        $issuedat = date('Y-m-d H:i:s', $issue->timecreated);
-        $courseduration = (int)$customcert->requiredtime;
+        $fullname = trim(fullname($issuedata));
+        $issuedat = date('Y-m-d H:i:s', $issuedata->timecreated);
+        $courseduration = (int)$issuedata->requiredtime;
 
         mysqli_report(MYSQLI_REPORT_OFF);
         $connection = @new \mysqli($host, $username, $password, $dbname, $port);
@@ -601,6 +612,28 @@ class certificate {
         }
 
         $connection->set_charset('utf8mb4');
+        $checkquery = "SELECT id FROM `{$table}` WHERE `code` = ? LIMIT 1";
+        $checkstatement = $connection->prepare($checkquery);
+        if (!$checkstatement) {
+            debugging('Customcert external DB sync check prepare failed: ' . $connection->error, DEBUG_DEVELOPER);
+            $connection->close();
+            return;
+        }
+        $checkstatement->bind_param('s', $issuedata->code);
+        if (!$checkstatement->execute()) {
+            debugging('Customcert external DB sync check execute failed: ' . $checkstatement->error, DEBUG_DEVELOPER);
+            $checkstatement->close();
+            $connection->close();
+            return;
+        }
+        $checkstatement->store_result();
+        if ($checkstatement->num_rows > 0) {
+            $checkstatement->close();
+            $connection->close();
+            return;
+        }
+        $checkstatement->close();
+
         $query = "INSERT INTO `{$table}`
             (`full_name`, `email`, `issued_at`, `code`, `course_name`, `site_url`, `duration_minutes`)
             VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -614,10 +647,10 @@ class certificate {
         $statement->bind_param(
             'ssssssi',
             $fullname,
-            $user->email,
+            $issuedata->email,
             $issuedat,
-            $issue->code,
-            $course->fullname,
+            $issuedata->code,
+            $issuedata->coursefullname,
             $CFG->wwwroot,
             $courseduration
         );
