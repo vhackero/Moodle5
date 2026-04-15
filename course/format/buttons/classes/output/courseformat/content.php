@@ -172,6 +172,10 @@ class content extends content_base
             $data->sections[0]->isarrowstyle = true;
         }
 
+        if ($this->selected_section !== 0) {
+            $data->initialsection = null;
+        }
+
         return $data;
     }
 
@@ -353,9 +357,11 @@ class content extends content_base
             'learningtitle' => get_string('column_learning_title', 'format_buttons'),
             'supporttitle' => get_string('column_support_title', 'format_buttons'),
             'collaborativetitle' => get_string('column_collaborative_title', 'format_buttons'),
+            'uncategorizedtitle' => get_string('column_uncategorized_title', 'format_buttons'),
             'learningitems' => [],
             'supportitems' => [],
             'collaborativeitems' => [],
+            'uncategorizeditems' => [],
         ];
 
         $cms = $sectiondata->cmlist->cms ?? [];
@@ -373,15 +379,17 @@ class content extends content_base
                 $columns->supportitems[] = $item;
                 continue;
             }
-            $columns->collaborativeitems[] = $item;
             if (in_array($module, $collabmods, true)) {
+                $columns->collaborativeitems[] = $item;
                 continue;
             }
+            $columns->uncategorizeditems[] = $item;
         }
 
         $columns->haslearning = !empty($columns->learningitems);
         $columns->hassupport = !empty($columns->supportitems);
         $columns->hascollaborative = !empty($columns->collaborativeitems);
+        $columns->hasuncategorized = !empty($columns->uncategorizeditems);
 
         return $columns;
     }
