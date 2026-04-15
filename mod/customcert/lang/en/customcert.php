@@ -115,6 +115,14 @@ $string['emailstudents_help'] = 'If set this will email the students a copy of t
 $string['emailstudentsubject'] = '{$a->coursefullname}: {$a->certificatename}';
 $string['emailteachers'] = 'Email teachers';
 $string['emailteachers_help'] = 'If set this will email the teachers a copy of the certificate when it becomes available. <strong>Warning:</strong> Setting this to \'Yes\' before you have finished creating the certificate will email the teacher an incomplete certificate.';
+$string['externaldbhost'] = 'External DB host';
+$string['externaldbname'] = 'External DB name';
+$string['externaldbpass'] = 'External DB password';
+$string['externaldbport'] = 'External DB port';
+$string['externaldbsettings'] = 'External verification database';
+$string['externaldbsettings_desc'] = 'If an external verification URL is configured, issued certificates can also be written to an external database for verification.';
+$string['externaldbtable'] = 'External DB table';
+$string['externaldbuser'] = 'External DB user';
 $string['eventelementcreated'] = 'Custom certificate element created';
 $string['eventelementdeleted'] = 'Custom certificate element deleted';
 $string['eventelementupdated'] = 'Custom certificate element updated';
@@ -250,6 +258,8 @@ $string['verifyallcertificates_desc'] = 'When this setting is enabled any person
 
 Note - this only applies to certificates where \'Allow anyone to verify a certificate\' has been set to \'Yes\' in the certificate settings.';
 $string['verifycertificate'] = 'Verify certificate';
+$string['verifycertificateurl'] = 'External certificate verification URL';
+$string['verifycertificateurl_desc'] = 'Optional external URL used for certificate verification links (for example in QR codes). Leave empty to use the default Moodle verification URL.';
 $string['verifycertificateanyone'] = 'Allow anyone to verify a certificate';
 $string['verifycertificateanyone_help'] = 'This setting enables anyone with the certificate verification link (including users not logged in) to verify a certificate.';
 $string['verifycertificatedesc'] = 'This link will take you to a new screen where you will be able to verify certificates on the site';
