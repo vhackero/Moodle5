@@ -255,8 +255,13 @@
     .format-buttons-bottom-nav {gap: .8rem;}
     .format-buttons-bottom-nav .format-buttons-nav-arrow {display:inline-flex; align-items:center; gap:.4rem; font-size: 1rem; text-decoration: none; padding: .5rem .9rem; border-radius: 999px; font-weight:600; box-shadow: 0 2px 8px rgba(0,0,0,.12);}
     .format-buttons-current-section-number {display:inline-flex; min-width:2.5rem; min-height:2.5rem; align-items:center; justify-content:center; border-radius:999px; font-weight:700; box-shadow: 0 2px 8px rgba(0,0,0,.12);}
-    .format-buttons-column-title {background:#d8d8d8; border-radius:.35rem; padding:.8rem 1rem; text-align:center; font-weight:700;}
-    .format-buttons-column .activity-item {background:#fff; border:1px solid #e1e1e1; border-radius:.6rem; margin:.6rem 0; padding:.6rem; overflow-wrap:anywhere; word-break:break-word;}
+    .format-buttons-column-title {background:#d8d8d8; border-radius:.35rem; padding:.8rem 1rem; text-align:center; font-weight:700; height: 5rem; align-content: center;}
+    .format-buttons-column .activity-item {background:#fff; border:1px solid #e1e1e1; border-radius:.6rem; margin:.6rem 0; padding:.8rem; overflow-wrap:anywhere; word-break:break-word; display:flex; flex-wrap:wrap; gap:.6rem;}
+    .format-buttons-column .activity-item .activity-instance {flex:1 1 14rem; min-width:0;}
+    .format-buttons-column .activity-item .activity-actions,
+    .format-buttons-column .activity-item .activity-altcontent {flex:0 0 auto; margin-left:auto;}
+    .format-buttons-column .activity-item button,
+    .format-buttons-column .activity-item .btn {white-space: nowrap;}
     .format-buttons-column .activity-item .activityname,
     .format-buttons-column .activity-item .instancename {overflow-wrap:anywhere; word-break:break-word;}
     body:not(.editing) .format-buttons-activity-columns .activity-actions,
