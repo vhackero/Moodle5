@@ -262,9 +262,22 @@
     .format-buttons-column .activity-item .activity-item-content,
     .format-buttons-column .activity-item .activityname,
     .format-buttons-column .activity-item .instancename {display:block !important; width:100% !important; min-width:0 !important;}
+    .format-buttons-column .activity-item .activity-instance {order: 1;}
     .format-buttons-column .activity-item .activity-actions,
     .format-buttons-column .activity-item .activity-altcontent,
-    .format-buttons-column .activity-item .actions {display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.5rem; margin-left:0 !important; justify-content:flex-start;}
+    .format-buttons-column .activity-item .actions,
+    .format-buttons-column .activity-item .activity-information,
+    .format-buttons-column .activity-item [data-region="completion-info"] {
+        order: 2;
+        display:flex;
+        flex-wrap:wrap;
+        gap:.4rem;
+        margin-top:.5rem;
+        margin-left:0 !important;
+        justify-content:flex-start;
+        width:100%;
+        flex-basis:100%;
+    }
     .format-buttons-column .activity-item button,
     .format-buttons-column .activity-item .btn {white-space: normal; max-width:100%;}
     .format-buttons-column .activity-item .activityname,
