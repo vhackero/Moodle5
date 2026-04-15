@@ -168,6 +168,7 @@ class content extends content_base
         $data->arrownavigation = $this->get_arrow_navigation_data($sectionnavigation);
 
         if ($data->isarrownavigation && !empty($data->sections[0])) {
+            $data->sections[0]->isarrownavigation = true;
             $data->sections[0]->isarrowstyle = $this->should_group_current_section();
             if ($data->sections[0]->isarrowstyle) {
                 $data->sections[0]->arrowcolumns = $this->get_arrow_columns_data($data->sections[0]);
@@ -294,16 +295,13 @@ class content extends content_base
      * @return string
      */
     private function format_section_label(int $sectionnum): string {
-        if ($sectionnum <= 0) {
-            return '0';
+        if ($sectionnum === 0) {
+            return '🖼️';
         }
         if ($sectionnum === 1) {
-            return '★';
+            return '📘';
         }
-        if ($sectionnum === 2) {
-            return '◆';
-        }
-        return (string)($sectionnum - 2);
+        return (string)($sectionnum - 1);
     }
 
     /**
