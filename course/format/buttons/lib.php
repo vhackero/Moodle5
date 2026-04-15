@@ -239,6 +239,14 @@ class format_buttons extends core_courseformat\base
             )
         );
 
+        $courseformatoptionsedit['coursenamecolor'] = array(
+            'label' => get_string('coursenamecolor', 'format_buttons'),
+            'help' => 'coursenamecolor',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => '#6c757d'
+        );
+
         $courseformatoptionsedit['showonlysectionsmenu'] = array(
             'label' => get_string('showonlysectionsmenu', 'format_buttons'),
             'help' => 'showonlysectionsmenu',

@@ -140,7 +140,9 @@ class content extends content_base
             'form_btn' => $this->form_btn,
             'singlesection' => null,
             'isarrownavigation' => ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' && !$isediting,
-            'coursedisplayname' => $this->get_course_display_name(),
+            'coursepathprefix' => $this->get_course_path_prefix(),
+            'coursenamelinktext' => $this->get_course_name_text(),
+            'coursenamecolor' => $this->format->get_course()->coursenamecolor ?? '#6c757d',
             'courseviewurl' => (new moodle_url('/course/view.php', ['id' => $this->format->get_course()->id]))->out(false),
             'hidecourseindexactivities' => (
                 ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' &&
@@ -358,6 +360,32 @@ class content extends content_base
             return $name;
         }
         return $category->get_nested_name(false) . ' › ' . $name;
+    }
+
+    /**
+     * Get course category path prefix (without course name).
+     *
+     * @return string
+     */
+    private function get_course_path_prefix(): string {
+        $course = $this->format->get_course();
+        if ((int)($course->showcategorybranch ?? 0) !== 1) {
+            return '';
+        }
+        $category = \core_course_category::get($course->category, IGNORE_MISSING, true);
+        if (!$category) {
+            return '';
+        }
+        return $category->get_nested_name(false) . ' › ';
+    }
+
+    /**
+     * Get course full name for course-link text.
+     *
+     * @return string
+     */
+    private function get_course_name_text(): string {
+        return format_string($this->format->get_course()->fullname);
     }
 
     /**
