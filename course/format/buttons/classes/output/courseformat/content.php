@@ -138,6 +138,12 @@ class content extends content_base
             'fontcolor_selected' => $this->format->get_course()->fontcolor_selected,
             'form_btn' => $this->form_btn,
             'singlesection' => null,
+            'isarrownavigation' => ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows',
+            'coursedisplayname' => $this->get_course_display_name(),
+            'hidecourseindexactivities' => (
+                ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' &&
+                (int)($this->format->get_course()->showonlysectionsmenu ?? 0) === 1
+            ),
         ];
 
         if ($this->hasaddsection) {
@@ -159,6 +165,12 @@ class content extends content_base
         $data->sectionnavigation = $sectionnavigation->export_for_template($output);
         $sectionselector = new $this->sectionselectorclass($format, $sectionnavigation);
         $data->sectionselector = $sectionselector->export_for_template($output);
+        $data->arrownavigation = $this->get_arrow_navigation_data($sectionnavigation);
+
+        if ($data->isarrownavigation && !empty($data->sections[0])) {
+            $data->sections[0]->arrowcolumns = $this->get_arrow_columns_data($data->sections[0]);
+            $data->sections[0]->isarrowstyle = true;
+        }
 
         return $data;
     }
@@ -238,6 +250,7 @@ class content extends content_base
             $url->set_anchor("section-$section->section");
             $info->url = $url->out();
             $info->namesection = $section->section;
+            $info->displaysection = $this->format_section_label($section->section);
             //Filter capacibility, and fixed the disabled sections for the teacher
             $isteacher = is_siteadmin() || has_capability('moodle/course:update', context_course::instance($course->id));
             if ($section->visible == 0) {
@@ -266,6 +279,122 @@ class content extends content_base
         $array_sections = $this->agruping_sections($array_sections, $course);
 
         $this->array_sections = $array_sections;
+    }
+
+    /**
+     * Build label for section number according to requested arrow style rules.
+     *
+     * @param int $sectionnum
+     * @return string
+     */
+    private function format_section_label(int $sectionnum): string {
+        if ($sectionnum <= 0) {
+            return '0';
+        }
+        if ($sectionnum === 1) {
+            return '★';
+        }
+        if ($sectionnum === 2) {
+            return '◆';
+        }
+        return (string)($sectionnum - 2);
+    }
+
+    /**
+     * Get formatted course display name with optional category branch.
+     *
+     * @return string
+     */
+    private function get_course_display_name(): string {
+        $course = $this->format->get_course();
+        $name = format_string($course->fullname);
+        if ((int)($course->showcategorybranch ?? 0) !== 1) {
+            return $name;
+        }
+        $category = \core_course_category::get($course->category, IGNORE_MISSING, true);
+        if (!$category) {
+            return $name;
+        }
+        return $category->get_nested_name(false) . ' › ' . $name;
+    }
+
+    /**
+     * Create navigation structure for arrows style.
+     *
+     * @param object $sectionnavigation
+     * @return object
+     */
+    private function get_arrow_navigation_data(object $sectionnavigation): object {
+        $selected = $this->selected_section;
+        $data = (object)[
+            'currentlabel' => $this->format_section_label((int)$selected),
+            'currentname' => $this->format->get_section_name($selected),
+            'hasprevious' => !empty($sectionnavigation->hasprevious),
+            'hasnext' => !empty($sectionnavigation->hasnext),
+            'previousurl' => $sectionnavigation->previousurl ?? '',
+            'nexturl' => $sectionnavigation->nexturl ?? '',
+        ];
+        return $data;
+    }
+
+    /**
+     * Build 3-column activities data for arrows style.
+     *
+     * @param object $sectiondata
+     * @return object
+     */
+    private function get_arrow_columns_data(object $sectiondata): object {
+        $course = $this->format->get_course();
+        $learningmods = $this->parse_modules($course->column_learning_modules ?? '');
+        $supportmods = $this->parse_modules($course->column_support_modules ?? '');
+        $collabmods = $this->parse_modules($course->column_collaborative_modules ?? '');
+
+        $columns = (object)[
+            'learningtitle' => get_string('column_learning_title', 'format_buttons'),
+            'supporttitle' => get_string('column_support_title', 'format_buttons'),
+            'collaborativetitle' => get_string('column_collaborative_title', 'format_buttons'),
+            'learningitems' => [],
+            'supportitems' => [],
+            'collaborativeitems' => [],
+        ];
+
+        $cms = $sectiondata->cmlist->cms ?? [];
+        foreach ($cms as $item) {
+            $cmitem = $item->cmitem ?? null;
+            if (!$cmitem) {
+                continue;
+            }
+            $module = $cmitem->module ?? '';
+            if (in_array($module, $learningmods, true)) {
+                $columns->learningitems[] = $item;
+                continue;
+            }
+            if (in_array($module, $supportmods, true)) {
+                $columns->supportitems[] = $item;
+                continue;
+            }
+            $columns->collaborativeitems[] = $item;
+            if (in_array($module, $collabmods, true)) {
+                continue;
+            }
+        }
+
+        $columns->haslearning = !empty($columns->learningitems);
+        $columns->hassupport = !empty($columns->supportitems);
+        $columns->hascollaborative = !empty($columns->collaborativeitems);
+
+        return $columns;
+    }
+
+    /**
+     * Parse modules list from settings.
+     *
+     * @param string $value
+     * @return array
+     */
+    private function parse_modules(string $value): array {
+        $items = preg_split('/\s*,\s*/', trim($value), -1, PREG_SPLIT_NO_EMPTY);
+        return array_values(array_unique(array_map('trim', $items)));
     }
 
     /**

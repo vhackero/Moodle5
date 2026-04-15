@@ -211,6 +211,72 @@ class format_buttons extends core_courseformat\base
             )
         );
 
+        $courseformatoptionsedit['navigationstyle'] = array(
+            'label' => get_string('navigationstyle', 'format_buttons'),
+            'help' => 'navigationstyle',
+            'help_component' => 'format_buttons',
+            'element_type' => 'select',
+            'default' => 'buttons',
+            'element_attributes' => array(
+                array(
+                    'buttons' => get_string('navigationstyle_buttons', 'format_buttons'),
+                    'arrows' => get_string('navigationstyle_arrows', 'format_buttons'),
+                )
+            )
+        );
+
+        $courseformatoptionsedit['showcategorybranch'] = array(
+            'label' => get_string('showcategorybranch', 'format_buttons'),
+            'help' => 'showcategorybranch',
+            'help_component' => 'format_buttons',
+            'element_type' => 'select',
+            'default' => '0',
+            'element_attributes' => array(
+                array(
+                    '0' => get_string('no'),
+                    '1' => get_string('yes'),
+                )
+            )
+        );
+
+        $courseformatoptionsedit['showonlysectionsmenu'] = array(
+            'label' => get_string('showonlysectionsmenu', 'format_buttons'),
+            'help' => 'showonlysectionsmenu',
+            'help_component' => 'format_buttons',
+            'element_type' => 'select',
+            'default' => '1',
+            'element_attributes' => array(
+                array(
+                    '0' => get_string('no'),
+                    '1' => get_string('yes'),
+                )
+            )
+        );
+
+        $courseformatoptionsedit['column_learning_modules'] = array(
+            'label' => get_string('column_learning_modules', 'format_buttons'),
+            'help' => 'column_learning_modules',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => 'assign,quiz'
+        );
+
+        $courseformatoptionsedit['column_support_modules'] = array(
+            'label' => get_string('column_support_modules', 'format_buttons'),
+            'help' => 'column_support_modules',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => 'resource,url,page,book'
+        );
+
+        $courseformatoptionsedit['column_collaborative_modules'] = array(
+            'label' => get_string('column_collaborative_modules', 'format_buttons'),
+            'help' => 'column_collaborative_modules',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => 'forum,chat,workshop,wiki'
+        );
+
         $courseformatoptionsedit['title_section_view'] = array(
             'label' => get_string('title_section_view', 'format_buttons'),
             'help' => 'title_section_view',

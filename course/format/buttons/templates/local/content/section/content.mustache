@@ -130,10 +130,52 @@
             {{> core_courseformat/local/content/section/cmsummary }}
         {{/ core_courseformat/local/content/section/cmsummary }}
     {{/cmsummary}}
-    {{#cmlist}}
-        {{$ core_courseformat/local/content/section/cmlist }}
-            {{> core_courseformat/local/content/section/cmlist }}
-        {{/ core_courseformat/local/content/section/cmlist }}
-    {{/cmlist}}
+    {{#isarrowstyle}}
+        <div class="format-buttons-activity-columns">
+            <div class="format-buttons-column">
+                <h4 class="format-buttons-column-title">{{arrowcolumns.learningtitle}}</h4>
+                {{#arrowcolumns.haslearning}}
+                    <ul class="section img-text">
+                        {{#arrowcolumns.learningitems}}
+                            {{$ core_courseformat/local/content/section/cmitem }}
+                                {{> core_courseformat/local/content/section/cmitem }}
+                            {{/ core_courseformat/local/content/section/cmitem }}
+                        {{/arrowcolumns.learningitems}}
+                    </ul>
+                {{/arrowcolumns.haslearning}}
+            </div>
+            <div class="format-buttons-column">
+                <h4 class="format-buttons-column-title">{{arrowcolumns.supporttitle}}</h4>
+                {{#arrowcolumns.hassupport}}
+                    <ul class="section img-text">
+                        {{#arrowcolumns.supportitems}}
+                            {{$ core_courseformat/local/content/section/cmitem }}
+                                {{> core_courseformat/local/content/section/cmitem }}
+                            {{/ core_courseformat/local/content/section/cmitem }}
+                        {{/arrowcolumns.supportitems}}
+                    </ul>
+                {{/arrowcolumns.hassupport}}
+            </div>
+            <div class="format-buttons-column">
+                <h4 class="format-buttons-column-title">{{arrowcolumns.collaborativetitle}}</h4>
+                {{#arrowcolumns.hascollaborative}}
+                    <ul class="section img-text">
+                        {{#arrowcolumns.collaborativeitems}}
+                            {{$ core_courseformat/local/content/section/cmitem }}
+                                {{> core_courseformat/local/content/section/cmitem }}
+                            {{/ core_courseformat/local/content/section/cmitem }}
+                        {{/arrowcolumns.collaborativeitems}}
+                    </ul>
+                {{/arrowcolumns.hascollaborative}}
+            </div>
+        </div>
+    {{/isarrowstyle}}
+    {{^isarrowstyle}}
+        {{#cmlist}}
+            {{$ core_courseformat/local/content/section/cmlist }}
+                {{> core_courseformat/local/content/section/cmlist }}
+            {{/ core_courseformat/local/content/section/cmlist }}
+        {{/cmlist}}
+    {{/isarrowstyle}}
     {{{cmcontrols}}}
 </div>
