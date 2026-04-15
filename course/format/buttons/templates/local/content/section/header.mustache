@@ -36,6 +36,13 @@
     {{> core_courseformat/local/content/section/bulkselect }}
 {{/ core_courseformat/local/content/section/bulkselect }}
 {{/sectionbulk}}
+{{#showscheduletitle}}
+    <div class="format-buttons-week-title">
+        <h3 class="format-buttons-week-name">{{sectiontitlename}}</h3>
+        <p class="format-buttons-week-range">{{sectionweeklyrange}}</p>
+    </div>
+{{/showscheduletitle}}
+{{^showscheduletitle}}
 {{#headerdisplaymultipage}}
     {{^displayonesection}}
         <h3 id="sectionid-{{id}}-title" class="h4 sectionname">
@@ -88,3 +95,4 @@
         {{/displayonesection}}
     {{/sitehome}}
 {{/headerdisplaymultipage}}
+{{/showscheduletitle}}
