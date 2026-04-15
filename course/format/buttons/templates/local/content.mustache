@@ -191,7 +191,7 @@
                            style="display: inline-flex; align-items: center; justify-content: center; min-width: 50px;
                                    min-height: 50px; border-radius: {{{form_btn}}}; background-color: {{bgcolor_selected}}; margin: 5px;
                                    font-size: 1.5em; text-decoration: none; color: {{fontcolor_selected}};">
-                            {{displaysection}}
+                            {{{displaysection}}}
                         </a>
                     {{/selected}}
                     {{^selected}}
@@ -199,7 +199,7 @@
                            style="display: inline-flex; align-items: center; justify-content: center; min-width: 50px;
                                    min-height: 50px; border-radius: {{{form_btn}}}; background-color: {{bgcolor}}; margin: 5px;
                                    font-size: 1.5em; text-decoration: none; color: {{colorfont}};">
-                            {{displaysection}}
+                            {{{displaysection}}}
                         </a>
                     {{/selected}}
                 {{/body}}
@@ -259,6 +259,12 @@
     .format-buttons-column .activity-item {background:#fff; border:1px solid #e1e1e1; border-radius:.6rem; margin:.6rem 0; padding:.6rem; overflow-wrap:anywhere; word-break:break-word;}
     .format-buttons-column .activity-item .activityname,
     .format-buttons-column .activity-item .instancename {overflow-wrap:anywhere; word-break:break-word;}
+    body:not(.editing) .format-buttons-activity-columns .activity-actions,
+    body:not(.editing) .format-buttons-activity-columns .dropdown-toggle,
+    body:not(.editing) .format-buttons-uncategorized .activity-actions,
+    body:not(.editing) .format-buttons-uncategorized .dropdown-toggle {
+        display: none !important;
+    }
     @media (max-width: 992px) {.format-buttons-activity-columns {grid-template-columns:1fr;}}
     #page-course-view-buttons.format-buttons-hide-courseindex-activities .courseindex [data-for="cm"],
     #page-course-view-buttons.format-buttons-hide-courseindex-activities .courseindex .courseindex-cm {
