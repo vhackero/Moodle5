@@ -216,7 +216,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'navigationstyle',
             'help_component' => 'format_buttons',
             'element_type' => 'select',
-            'default' => 'buttons',
+            'default' => 'arrows',
             'element_attributes' => array(
                 array(
                     'buttons' => get_string('navigationstyle_buttons', 'format_buttons'),
@@ -230,7 +230,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'showcategorybranch',
             'help_component' => 'format_buttons',
             'element_type' => 'select',
-            'default' => '0',
+            'default' => '1',
             'element_attributes' => array(
                 array(
                     '0' => get_string('no'),
@@ -244,7 +244,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'coursenamecolor',
             'help_component' => 'format_buttons',
             'element_type' => 'text',
-            'default' => '#6c757d'
+            'default' => '#611232'
         );
 
         $courseformatoptionsedit['showonlysectionsmenu'] = array(
@@ -266,7 +266,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'column_learning_modules',
             'help_component' => 'format_buttons',
             'element_type' => 'text',
-            'default' => 'assign,quiz'
+            'default' => 'assign,quiz,questionnaire,survey'
         );
 
         $courseformatoptionsedit['column_support_modules'] = array(
@@ -274,7 +274,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'column_support_modules',
             'help_component' => 'format_buttons',
             'element_type' => 'text',
-            'default' => 'resource,url,page,book'
+            'default' => 'url,resource,data,folder'
         );
 
         $courseformatoptionsedit['column_collaborative_modules'] = array(
@@ -282,7 +282,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'column_collaborative_modules',
             'help_component' => 'format_buttons',
             'element_type' => 'text',
-            'default' => 'forum,chat,workshop,wiki'
+            'default' => 'wiki,forum,chat,glossary,lesson,workshop,feedback'
         );
 
         $courseformatoptionsedit['groupingsections'] = array(
@@ -320,7 +320,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'section_zero_ubication',
             'help_component' => 'format_buttons',
             'element_type' => 'select',
-            'default' => '0',
+            'default' => '1',
             'element_attributes' => array(
                 array(
                     '0' => get_string('no'),
