@@ -270,8 +270,12 @@
     .format-buttons-arrow-nav .arrow-current-name {font-weight:700; font-size:1.2rem; color:#4d2433;}
     .format-buttons-section-title {color:#4d2433; font-weight:700;}
     .format-buttons-activity-columns {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem;}
+    .format-buttons-uncategorized {margin-bottom: 1rem;}
     .format-buttons-column-title {background:#d8d8d8; border-radius:.35rem; padding:.8rem 1rem; text-align:center; font-weight:700;}
     .format-buttons-column .activity-item {background:#fff; border:1px solid #e1e1e1; border-radius:.6rem; margin:.6rem 0; padding:.6rem;}
     @media (max-width: 992px) {.format-buttons-activity-columns {grid-template-columns:1fr;}}
-    #page-course-view-buttons.format-buttons-hide-courseindex-activities .courseindex .courseindex-item {display:none !important;}
+    #page-course-view-buttons.format-buttons-hide-courseindex-activities .courseindex [data-for="cm"],
+    #page-course-view-buttons.format-buttons-hide-courseindex-activities .courseindex .courseindex-cm {
+        display:none !important;
+    }
 </style>
