@@ -255,6 +255,9 @@
 {{#js}}
     require(['core_courseformat/local/content'], function(component) {
     component.init('#page', {}, {{sectionreturn}});
+    {{#hidecourseindexactivities}}
+    document.body.classList.add('format-buttons-hide-courseindex-activities');
+    {{/hidecourseindexactivities}}
     });
 {{/js}}
 

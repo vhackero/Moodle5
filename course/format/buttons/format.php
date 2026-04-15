@@ -43,12 +43,6 @@ $renderer = $format->get_renderer($PAGE);
 if (!empty($displaysection)) {
     $format->set_sectionnum($displaysection);
 }
-if (
-    ($course->navigationstyle ?? 'buttons') === 'arrows' &&
-    (int)($course->showonlysectionsmenu ?? 0) === 1
-) {
-    $PAGE->add_body_class('format-buttons-hide-courseindex-activities');
-}
 // Output course content.
 $outputclass = $format->get_output_classname('content');
 $widget = new $outputclass($format);
