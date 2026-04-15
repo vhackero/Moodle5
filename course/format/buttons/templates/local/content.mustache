@@ -174,20 +174,6 @@
     {{#coursedisplayname}}
         <div class="format-buttons-course-path">{{coursedisplayname}}</div>
     {{/coursedisplayname}}
-    {{#isarrownavigation}}
-        <div class="format-buttons-arrow-nav">
-            {{#arrownavigation.hasprevious}}
-                <a class="arrow-link arrow-prev" href="{{{arrownavigation.previousurl}}}">&#8592;</a>
-            {{/arrownavigation.hasprevious}}
-            <div class="arrow-current">
-                <span class="arrow-current-label">{{arrownavigation.currentlabel}}</span>
-                <span class="arrow-current-name">{{arrownavigation.currentname}}</span>
-            </div>
-            {{#arrownavigation.hasnext}}
-                <a class="arrow-link arrow-next" href="{{{arrownavigation.nexturl}}}">&#8594;</a>
-            {{/arrownavigation.hasnext}}
-        </div>
-    {{/isarrownavigation}}
     {{{completionhelp}}}
     <ul class="{{format}} section-list" data-for="course_sectionlist">
         {{#initialsection}}
@@ -263,14 +249,11 @@
 
 <style>
     .format-buttons-course-path {margin: .5rem 0 1rem; color: #6c757d; font-size: 1.05rem;}
-    .format-buttons-arrow-nav {display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem;}
-    .format-buttons-arrow-nav .arrow-link {font-size: 1.6rem; text-decoration: none; padding: .35rem .75rem; background: #e7e7e7; border-radius: 999px;}
-    .format-buttons-arrow-nav .arrow-current {display:flex; align-items:center; gap:.7rem; flex-wrap:wrap;}
-    .format-buttons-arrow-nav .arrow-current-label {display:inline-flex; min-width:2.3rem; min-height:2.3rem; align-items:center; justify-content:center; background:#4d2433; color:#fff; border-radius:999px; font-weight:700;}
-    .format-buttons-arrow-nav .arrow-current-name {font-weight:700; font-size:1.2rem; color:#4d2433;}
     .format-buttons-section-title {color:#4d2433; font-weight:700;}
     .format-buttons-activity-columns {display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:1rem;}
     .format-buttons-uncategorized {margin-bottom: 1rem;}
+    .format-buttons-bottom-nav .format-buttons-nav-arrow {font-size: 1.3rem; text-decoration: none; padding: .35rem .75rem; background: #e7e7e7; border-radius: 999px;}
+    .format-buttons-current-section-number {display:inline-flex; min-width:2.5rem; min-height:2.5rem; align-items:center; justify-content:center; background:#4d2433; color:#fff; border-radius:999px; font-weight:700;}
     .format-buttons-column-title {background:#d8d8d8; border-radius:.35rem; padding:.8rem 1rem; text-align:center; font-weight:700;}
     .format-buttons-column .activity-item {background:#fff; border:1px solid #e1e1e1; border-radius:.6rem; margin:.6rem 0; padding:.6rem;}
     @media (max-width: 992px) {.format-buttons-activity-columns {grid-template-columns:1fr;}}
