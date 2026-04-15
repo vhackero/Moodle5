@@ -141,6 +141,7 @@ class content extends content_base
             'singlesection' => null,
             'isarrownavigation' => ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' && !$isediting,
             'coursedisplayname' => $this->get_course_display_name(),
+            'courseviewurl' => (new moodle_url('/course/view.php', ['id' => $this->format->get_course()->id]))->out(false),
             'hidecourseindexactivities' => (
                 ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' &&
                 (int)($this->format->get_course()->showonlysectionsmenu ?? 0) === 1 &&
