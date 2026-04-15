@@ -121,6 +121,7 @@ class content extends content_base
     public function export_for_template(\renderer_base $output)
     {
         $format = $this->format;
+        $isediting = $format->show_editor();
         $format->set_sectionnum(null);
 
         $this->save_last_section_access($this->selected_section);
@@ -138,13 +139,20 @@ class content extends content_base
             'fontcolor_selected' => $this->format->get_course()->fontcolor_selected,
             'form_btn' => $this->form_btn,
             'singlesection' => null,
-            'isarrownavigation' => ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows',
+            'isarrownavigation' => ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' && !$isediting,
             'coursedisplayname' => $this->get_course_display_name(),
             'hidecourseindexactivities' => (
                 ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' &&
-                (int)($this->format->get_course()->showonlysectionsmenu ?? 0) === 1
+                (int)($this->format->get_course()->showonlysectionsmenu ?? 0) === 1 &&
+                !$isediting
             ),
         ];
+
+        if ($isediting) {
+            $data->all_sections = [];
+            $data->initialsection = null;
+            $data->sections = $this->get_all_export_sections($output);
+        }
 
         if ($this->hasaddsection) {
             $addsection = new $this->addsectionclass($format);
@@ -168,7 +176,6 @@ class content extends content_base
         $data->arrownavigation = $this->get_arrow_navigation_data($sectionnavigation);
 
         if ($data->isarrownavigation && !empty($data->sections[0])) {
-            $isediting = $format->show_editor();
             $data->sections[0]->isarrownavigation = true;
             $data->sections[0]->isediting = $isediting;
             $data->sections[0]->isarrowstyle = !$isediting && $this->should_group_current_section();
@@ -200,6 +207,34 @@ class content extends content_base
         $sectionclass = $this->format->get_output_classname('content\\section');
         $sectionoutput = new $sectionclass($this->format, $sectioninfo);
         return $sectionoutput->export_for_template($output);
+    }
+
+    /**
+     * Export all sections for editing mode, preserving native behavior.
+     *
+     * @param \renderer_base $output
+     * @return array
+     * @throws \core\exception\coding_exception
+     * @throws \moodle_exception
+     */
+    private function get_all_export_sections(\renderer_base $output): array {
+        $sections = [];
+        $course = $this->format->get_course();
+        $modinfo = get_fast_modinfo($course);
+        $sectionclass = $this->format->get_output_classname('content\\section');
+
+        foreach ($modinfo->get_section_info_all() as $sectioninfo) {
+            if ($sectioninfo->component !== null) {
+                continue;
+            }
+            if ($sectioninfo->section === 0 && !$course->section_zero_ubication) {
+                continue;
+            }
+            $sectionoutput = new $sectionclass($this->format, $sectioninfo);
+            $sections[] = $sectionoutput->export_for_template($output);
+        }
+
+        return $sections;
     }
 
     /**
