@@ -462,6 +462,12 @@ function format_buttons_extend_navigation_course($navigation, $course, $context)
         return;
     }
 
+    // Never apply this behaviour in editing mode because it can interfere
+    // with section/activity editing controls (e.g. adding sections).
+    if ($PAGE->user_is_editing()) {
+        return;
+    }
+
     $PAGE->requires->js_init_code("
         (function() {
             var hideCourseIndexItems = function() {
