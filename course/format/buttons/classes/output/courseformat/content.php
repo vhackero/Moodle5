@@ -168,8 +168,10 @@ class content extends content_base
         $data->arrownavigation = $this->get_arrow_navigation_data($sectionnavigation);
 
         if ($data->isarrownavigation && !empty($data->sections[0])) {
-            $data->sections[0]->arrowcolumns = $this->get_arrow_columns_data($data->sections[0]);
-            $data->sections[0]->isarrowstyle = true;
+            $data->sections[0]->isarrowstyle = $this->should_group_current_section();
+            if ($data->sections[0]->isarrowstyle) {
+                $data->sections[0]->arrowcolumns = $this->get_arrow_columns_data($data->sections[0]);
+            }
         }
 
         if ($this->selected_section !== 0) {
@@ -403,6 +405,35 @@ class content extends content_base
     private function parse_modules(string $value): array {
         $items = preg_split('/\s*,\s*/', trim($value), -1, PREG_SPLIT_NO_EMPTY);
         return array_values(array_unique(array_map('trim', $items)));
+    }
+
+    /**
+     * Determines if current selected section should display grouped columns.
+     *
+     * @return bool
+     */
+    private function should_group_current_section(): bool {
+        $sectionnum = (int)$this->selected_section;
+        $rules = trim((string)($this->format->get_course()->groupingsections ?? ''));
+        if ($rules === '') {
+            return $sectionnum > 1;
+        }
+
+        $tokens = preg_split('/\s*,\s*/', $rules, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($tokens as $token) {
+            if (strpos($token, '-') !== false) {
+                [$start, $end] = array_map('intval', explode('-', $token, 2));
+                if ($sectionnum >= $start && $sectionnum <= $end) {
+                    return true;
+                }
+                continue;
+            }
+            if ((int)$token === $sectionnum) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

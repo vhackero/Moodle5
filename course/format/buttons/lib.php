@@ -277,6 +277,14 @@ class format_buttons extends core_courseformat\base
             'default' => 'forum,chat,workshop,wiki'
         );
 
+        $courseformatoptionsedit['groupingsections'] = array(
+            'label' => get_string('groupingsections', 'format_buttons'),
+            'help' => 'groupingsections',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => '2-999'
+        );
+
         $courseformatoptionsedit['title_section_view'] = array(
             'label' => get_string('title_section_view', 'format_buttons'),
             'help' => 'title_section_view',
@@ -428,4 +436,51 @@ function format_buttons_inplace_editable($itemtype, $itemid, $newvalue)
         $format = core_courseformat\base::instance($section->course);
         return $format->inplace_editable_update_section_name($section, $itemtype, $newvalue);
     }
+}
+
+/**
+ * Extend navigation in course pages.
+ *
+ * @param navigation_node $navigation
+ * @param stdClass $course
+ * @param context_course $context
+ * @return void
+ */
+function format_buttons_extend_navigation_course($navigation, $course, $context) {
+    global $PAGE;
+
+    $format = course_get_format($course);
+    if ($format->get_format() !== 'buttons') {
+        return;
+    }
+
+    $courseoptions = $format->get_course();
+    if (
+        ($courseoptions->navigationstyle ?? 'buttons') !== 'arrows' ||
+        (int)($courseoptions->showonlysectionsmenu ?? 0) !== 1
+    ) {
+        return;
+    }
+
+    $PAGE->requires->js_init_code("
+        (function() {
+            var hideCourseIndexItems = function() {
+                var selectors = [
+                    '.courseindex [data-for=\"cm\"]',
+                    '.courseindex .courseindex-cm',
+                    '.courseindex [data-for=\"sectiontoggle\"]',
+                    '.courseindex .courseindex-chevron',
+                    '.courseindex .courseindex-item-action'
+                ];
+                selectors.forEach(function(selector) {
+                    document.querySelectorAll(selector).forEach(function(node) {
+                        node.style.display = 'none';
+                    });
+                });
+            };
+            hideCourseIndexItems();
+            var observer = new MutationObserver(hideCourseIndexItems);
+            observer.observe(document.body, {childList: true, subtree: true});
+        })();
+    ");
 }

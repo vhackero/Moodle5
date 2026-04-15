@@ -131,6 +131,8 @@ class sectionselector extends core_sectionselector
         $data->selector = $output->render($select);
         $data->isarrownavigation = ($course->navigationstyle ?? 'buttons') === 'arrows';
         $data->currentlabel = $this->format_section_label((int)$data->currentsection);
+        $data->arrowbgcolor = $course->bgcolor_selected ?? '#959494';
+        $data->arrowfontcolor = $course->fontcolor_selected ?? '#e7e7e7';
 
         return $data;
     }
