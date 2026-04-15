@@ -320,7 +320,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'section_zero_ubication',
             'help_component' => 'format_buttons',
             'element_type' => 'select',
-            'default' => '0',
+            'default' => '1',
             'element_attributes' => array(
                 array(
                     '0' => get_string('no'),
