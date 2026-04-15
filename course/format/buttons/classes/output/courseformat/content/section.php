@@ -81,6 +81,8 @@ class section extends section_base
         if ($data->showscheduletitle) {
             $data->sectiontitlename = format_string($this->format->get_section_name($this->section));
             $data->sectionweeklyrange = $this->get_weekly_range_label($sectionnum);
+            $data->sectiontitlecolor = $this->format->get_course()->fontcolor_selected ?? '#e7e7e7';
+            $data->sectionstripeurl = trim((string)($this->format->get_course()->sectionstripeurl ?? '../plecabase.png'));
         }
 
         return $data;
