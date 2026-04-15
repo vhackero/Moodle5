@@ -145,10 +145,10 @@ class sectionselector extends core_sectionselector
      */
     private function format_section_label(int $sectionnum): string {
         if ($sectionnum === 0) {
-            return '🖼️';
+            return '<i class="fa fa-television" aria-hidden="true"></i>';
         }
         if ($sectionnum === 1) {
-            return '📘';
+            return '<i class="fa fa-book" aria-hidden="true"></i>';
         }
         return (string)($sectionnum - 1);
     }
