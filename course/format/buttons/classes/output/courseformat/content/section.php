@@ -75,7 +75,38 @@ class section extends section_base
         $controlmenu = new controlmenu($this->format, $this->section);
         $data->controlmenu = $controlmenu->export_for_template($output);
 
+        $showtitles = (int)($this->format->get_course()->title_section_view ?? 1) === 1;
+        $sectionnum = (int)$this->section->section;
+        $data->showscheduletitle = $showtitles && $sectionnum > 1;
+        if ($data->showscheduletitle) {
+            $data->sectiontitlename = format_string($this->format->get_section_name($this->section));
+            $data->sectionweeklyrange = $this->get_weekly_range_label($sectionnum);
+        }
+
         return $data;
+    }
+
+    /**
+     * Build weekly date range label for a section.
+     * Section 2 is week 1, section 3 is week 2, etc.
+     *
+     * @param int $sectionnum
+     * @return string
+     */
+    private function get_weekly_range_label(int $sectionnum): string {
+        $course = $this->format->get_course();
+        if (empty($course->startdate)) {
+            return '';
+        }
+
+        $weekindex = max(0, $sectionnum - 2);
+        $start = strtotime("+{$weekindex} week", (int)$course->startdate);
+        $end = strtotime('+6 day', $start);
+
+        $startlabel = trim(preg_replace('/\s+/', ' ', userdate($start, '%A %e de %B de %Y')));
+        $endlabel = trim(preg_replace('/\s+/', ' ', userdate($end, '%A %e de %B de %Y')));
+
+        return "del {$startlabel} al {$endlabel}";
     }
 
 
