@@ -51,13 +51,13 @@
     {{/sitehome}}
     {{^sitehome}}
         {{^displayonesection}}
-            {{#isarrowstyle}}
+            {{#isarrownavigation}}
                 <h{{headinglevel}} class="h4 sectionname format-buttons-section-title course-content-item d-flex align-self-stretch align-items-center mb-0 w-100"
                     id="sectionid-{{id}}-title" data-for="section_title" data-id="{{id}}" data-number="{{num}}">
                     {{{title}}}
                 </h{{headinglevel}}>
-            {{/isarrowstyle}}
-            {{^isarrowstyle}}
+            {{/isarrownavigation}}
+            {{^isarrownavigation}}
                 <div class="d-flex align-items-center position-relative">
                     <a role="button"
                         data-bs-toggle="collapse"
@@ -84,7 +84,7 @@
                         {{{title}}}
                     </h{{headinglevel}}>
                 </div>
-            {{/isarrowstyle}}
+            {{/isarrownavigation}}
         {{/displayonesection}}
     {{/sitehome}}
 {{/headerdisplaymultipage}}

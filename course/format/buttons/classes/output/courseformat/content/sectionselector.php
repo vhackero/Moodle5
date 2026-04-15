@@ -144,16 +144,13 @@ class sectionselector extends core_sectionselector
      * @return string
      */
     private function format_section_label(int $sectionnum): string {
-        if ($sectionnum <= 0) {
-            return '0';
+        if ($sectionnum === 0) {
+            return '🖼️';
         }
         if ($sectionnum === 1) {
-            return '★';
+            return '📘';
         }
-        if ($sectionnum === 2) {
-            return '◆';
-        }
-        return (string)($sectionnum - 2);
+        return (string)($sectionnum - 1);
     }
 
     /**

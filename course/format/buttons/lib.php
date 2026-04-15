@@ -467,7 +467,10 @@ function format_buttons_extend_navigation_course($navigation, $course, $context)
             var hideCourseIndexItems = function() {
                 var selectors = [
                     '.courseindex [data-for=\"cm\"]',
+                    '.courseindex [data-for=\"cmitem\"]',
                     '.courseindex .courseindex-cm',
+                    '.courseindex .courseindex-sectioncontent',
+                    '.courseindex li.activity',
                     '.courseindex [data-for=\"sectiontoggle\"]',
                     '.courseindex .courseindex-chevron',
                     '.courseindex .courseindex-item-action'
