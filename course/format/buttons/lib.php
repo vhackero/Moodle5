@@ -285,6 +285,14 @@ class format_buttons extends core_courseformat\base
             'default' => '2-999'
         );
 
+        $courseformatoptionsedit['sectionstripeurl'] = array(
+            'label' => get_string('sectionstripeurl', 'format_buttons'),
+            'help' => 'sectionstripeurl',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => '../plecabase.png'
+        );
+
         $courseformatoptionsedit['title_section_view'] = array(
             'label' => get_string('title_section_view', 'format_buttons'),
             'help' => 'title_section_view',
