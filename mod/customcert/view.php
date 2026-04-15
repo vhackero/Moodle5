@@ -215,16 +215,6 @@ if (!$downloadown && !$downloadissue) {
             \mod_customcert\certificate::issue_certificate($customcert->id, $USER->id);
         }
 
-        $issue = $DB->get_record(
-            'customcert_issues',
-            ['userid' => $USER->id, 'customcertid' => $customcert->id],
-            'code',
-            IGNORE_MULTIPLE
-        );
-        if (!empty($issue->code)) {
-            \mod_customcert\certificate::sync_issue_by_code_to_external_database($issue->code);
-        }
-
         // Set the custom certificate as viewed.
         $completion = new completion_info($course);
         $completion->set_module_viewed($cm);

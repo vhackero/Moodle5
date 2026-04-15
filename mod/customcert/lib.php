@@ -530,20 +530,3 @@ function mod_customcert_apply_runtime_language(string $language): bool {
 
     return false;
 }
-
-/**
- * Returns the certificate verification URL, allowing an external base URL override.
- *
- * @param array $params query string parameters for the verification URL
- * @return moodle_url
- */
-function mod_customcert_get_verify_certificate_url(array $params = []): moodle_url {
-    global $CFG;
-
-    $externalurl = trim((string)get_config('customcert', 'verifycertificateurl'));
-    if ($externalurl !== '') {
-        return new moodle_url($externalurl, $params);
-    }
-
-    return new moodle_url($CFG->wwwroot . '/mod/customcert/verify_certificate.php', $params);
-}

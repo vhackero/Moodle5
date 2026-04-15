@@ -24,10 +24,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$url = trim((string)get_config('customcert', 'verifycertificateurl'));
-if ($url === '') {
-    $url = $CFG->wwwroot . '/mod/customcert/verify_certificate.php';
-}
+$url = $CFG->wwwroot . '/mod/customcert/verify_certificate.php';
 
 $ADMIN->add('modsettings', new admin_category('customcert', get_string('pluginname', 'mod_customcert')));
 $settings = new admin_settingpage('modsettingcustomcert', new lang_string('customcertsettings', 'mod_customcert'));
@@ -37,67 +34,6 @@ $settings->add(new admin_setting_configcheckbox(
     get_string('verifyallcertificates', 'customcert'),
     get_string('verifyallcertificates_desc', 'customcert', $url),
     0
-));
-
-$settings->add(new admin_setting_configtext(
-    'customcert/verifycertificateurl',
-    get_string('verifycertificateurl', 'customcert'),
-    get_string('verifycertificateurl_desc', 'customcert'),
-    '',
-    PARAM_URL
-));
-
-$settings->add(new admin_setting_heading(
-    'customcert/externaldbsettings',
-    get_string('externaldbsettings', 'customcert'),
-    get_string('externaldbsettings_desc', 'customcert')
-));
-
-$settings->add(new admin_setting_configtext(
-    'customcert/externaldbhost',
-    get_string('externaldbhost', 'customcert'),
-    '',
-    '127.0.0.1',
-    PARAM_HOST
-));
-
-$settings->add(new admin_setting_configtext(
-    'customcert/externaldbport',
-    get_string('externaldbport', 'customcert'),
-    '',
-    '3306',
-    PARAM_INT
-));
-
-$settings->add(new admin_setting_configtext(
-    'customcert/externaldbname',
-    get_string('externaldbname', 'customcert'),
-    '',
-    '',
-    PARAM_ALPHANUMEXT
-));
-
-$settings->add(new admin_setting_configtext(
-    'customcert/externaldbtable',
-    get_string('externaldbtable', 'customcert'),
-    '',
-    'customcert_verifications',
-    PARAM_ALPHANUMEXT
-));
-
-$settings->add(new admin_setting_configtext(
-    'customcert/externaldbuser',
-    get_string('externaldbuser', 'customcert'),
-    '',
-    '',
-    PARAM_RAW_TRIMMED
-));
-
-$settings->add(new admin_setting_configpasswordunmask(
-    'customcert/externaldbpass',
-    get_string('externaldbpass', 'customcert'),
-    '',
-    ''
 ));
 
 $settings->add(new admin_setting_configcheckbox(

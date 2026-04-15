@@ -178,7 +178,7 @@ class element extends \mod_customcert\element {
                 $urlparams['contextid'] = $issue->contextid;
             }
 
-            $qrcodeurl = \mod_customcert_get_verify_certificate_url($urlparams);
+            $qrcodeurl = new \moodle_url('/mod/customcert/verify_certificate.php', $urlparams);
             $qrcodeurl = $qrcodeurl->out(false);
         }
 
