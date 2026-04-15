@@ -168,8 +168,10 @@ class content extends content_base
         $data->arrownavigation = $this->get_arrow_navigation_data($sectionnavigation);
 
         if ($data->isarrownavigation && !empty($data->sections[0])) {
+            $isediting = $format->show_editor();
             $data->sections[0]->isarrownavigation = true;
-            $data->sections[0]->isarrowstyle = $this->should_group_current_section();
+            $data->sections[0]->isediting = $isediting;
+            $data->sections[0]->isarrowstyle = !$isediting && $this->should_group_current_section();
             if ($data->sections[0]->isarrowstyle) {
                 $data->sections[0]->arrowcolumns = $this->get_arrow_columns_data($data->sections[0]);
             }
