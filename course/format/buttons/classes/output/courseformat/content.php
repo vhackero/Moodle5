@@ -456,6 +456,7 @@ class content extends content_base
         $columns->hassupport = !empty($columns->supportitems);
         $columns->hascollaborative = !empty($columns->collaborativeitems);
         $columns->hasuncategorized = !empty($columns->uncategorizeditems);
+        $columns->hascolumnactivities = $columns->haslearning || $columns->hassupport || $columns->hascollaborative;
 
         return $columns;
     }
