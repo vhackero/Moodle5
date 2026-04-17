@@ -130,10 +130,76 @@
             {{> core_courseformat/local/content/section/cmsummary }}
         {{/ core_courseformat/local/content/section/cmsummary }}
     {{/cmsummary}}
-    {{#cmlist}}
-        {{$ core_courseformat/local/content/section/cmlist }}
-            {{> core_courseformat/local/content/section/cmlist }}
-        {{/ core_courseformat/local/content/section/cmlist }}
-    {{/cmlist}}
+    {{#isarrowstyle}}
+        {{#arrowcolumns.hasuncategorized}}
+            <div class="format-buttons-uncategorized">
+                <ul class="section img-text">
+                    {{#arrowcolumns.uncategorizeditems}}
+                        {{#cmitem}}
+                            {{$ core_courseformat/local/content/section/cmitem }}
+                                {{> core_courseformat/local/content/section/cmitem }}
+                            {{/ core_courseformat/local/content/section/cmitem }}
+                        {{/cmitem}}
+                    {{/arrowcolumns.uncategorizeditems}}
+                </ul>
+            </div>
+        {{/arrowcolumns.hasuncategorized}}
+        {{#arrowcolumns.hascolumnactivities}}
+            <div class="format-buttons-activity-columns{{#arrowcolumns.hasonecolumn}} has-one-column{{/arrowcolumns.hasonecolumn}}{{#arrowcolumns.hastwocolumns}} has-two-columns{{/arrowcolumns.hastwocolumns}}{{#arrowcolumns.hasthreecolumns}} has-three-columns{{/arrowcolumns.hasthreecolumns}}">
+                {{#arrowcolumns.haslearning}}
+                    <div class="format-buttons-column">
+                        <h4 class="format-buttons-column-title">{{arrowcolumns.learningtitle}}</h4>
+                        <ul class="section img-text">
+                            {{#arrowcolumns.learningitems}}
+                                {{#cmitem}}
+                                    {{$ core_courseformat/local/content/section/cmitem }}
+                                        {{> core_courseformat/local/content/section/cmitem }}
+                                    {{/ core_courseformat/local/content/section/cmitem }}
+                                {{/cmitem}}
+                            {{/arrowcolumns.learningitems}}
+                        </ul>
+                    </div>
+                {{/arrowcolumns.haslearning}}
+                {{#arrowcolumns.hassupport}}
+                    <div class="format-buttons-column">
+                        <h4 class="format-buttons-column-title">{{arrowcolumns.supporttitle}}</h4>
+                        <ul class="section img-text">
+                            {{#arrowcolumns.supportitems}}
+                                {{#cmitem}}
+                                    {{$ core_courseformat/local/content/section/cmitem }}
+                                        {{> core_courseformat/local/content/section/cmitem }}
+                                    {{/ core_courseformat/local/content/section/cmitem }}
+                                {{/cmitem}}
+                            {{/arrowcolumns.supportitems}}
+                        </ul>
+                    </div>
+                {{/arrowcolumns.hassupport}}
+                {{#arrowcolumns.hascollaborative}}
+                    <div class="format-buttons-column">
+                        <h4 class="format-buttons-column-title">{{arrowcolumns.collaborativetitle}}</h4>
+                        <ul class="section img-text">
+                            {{#arrowcolumns.collaborativeitems}}
+                                {{#cmitem}}
+                                    {{$ core_courseformat/local/content/section/cmitem }}
+                                        {{> core_courseformat/local/content/section/cmitem }}
+                                    {{/ core_courseformat/local/content/section/cmitem }}
+                                {{/cmitem}}
+                            {{/arrowcolumns.collaborativeitems}}
+                        </ul>
+                    </div>
+                {{/arrowcolumns.hascollaborative}}
+            </div>
+        {{/arrowcolumns.hascolumnactivities}}
+        {{^arrowcolumns.hascolumnactivities}}
+            <p class="format-buttons-no-activities-message">{{#str}}noactivitiesmessage, format_buttons{{/str}}</p>
+        {{/arrowcolumns.hascolumnactivities}}
+    {{/isarrowstyle}}
+    {{^isarrowstyle}}
+        {{#cmlist}}
+            {{$ core_courseformat/local/content/section/cmlist }}
+                {{> core_courseformat/local/content/section/cmlist }}
+            {{/ core_courseformat/local/content/section/cmlist }}
+        {{/cmlist}}
+    {{/isarrowstyle}}
     {{{cmcontrols}}}
 </div>

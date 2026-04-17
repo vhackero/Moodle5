@@ -211,6 +211,96 @@ class format_buttons extends core_courseformat\base
             )
         );
 
+        $courseformatoptionsedit['navigationstyle'] = array(
+            'label' => get_string('navigationstyle', 'format_buttons'),
+            'help' => 'navigationstyle',
+            'help_component' => 'format_buttons',
+            'element_type' => 'select',
+            'default' => 'arrows',
+            'element_attributes' => array(
+                array(
+                    'buttons' => get_string('navigationstyle_buttons', 'format_buttons'),
+                    'arrows' => get_string('navigationstyle_arrows', 'format_buttons'),
+                )
+            )
+        );
+
+        $courseformatoptionsedit['showcategorybranch'] = array(
+            'label' => get_string('showcategorybranch', 'format_buttons'),
+            'help' => 'showcategorybranch',
+            'help_component' => 'format_buttons',
+            'element_type' => 'select',
+            'default' => '1',
+            'element_attributes' => array(
+                array(
+                    '0' => get_string('no'),
+                    '1' => get_string('yes'),
+                )
+            )
+        );
+
+        $courseformatoptionsedit['coursenamecolor'] = array(
+            'label' => get_string('coursenamecolor', 'format_buttons'),
+            'help' => 'coursenamecolor',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => '#611232'
+        );
+
+        $courseformatoptionsedit['showonlysectionsmenu'] = array(
+            'label' => get_string('showonlysectionsmenu', 'format_buttons'),
+            'help' => 'showonlysectionsmenu',
+            'help_component' => 'format_buttons',
+            'element_type' => 'select',
+            'default' => '1',
+            'element_attributes' => array(
+                array(
+                    '0' => get_string('no'),
+                    '1' => get_string('yes'),
+                )
+            )
+        );
+
+        $courseformatoptionsedit['column_learning_modules'] = array(
+            'label' => get_string('column_learning_modules', 'format_buttons'),
+            'help' => 'column_learning_modules',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => 'assign,quiz,questionnaire,survey'
+        );
+
+        $courseformatoptionsedit['column_support_modules'] = array(
+            'label' => get_string('column_support_modules', 'format_buttons'),
+            'help' => 'column_support_modules',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => 'url,resource,data,folder'
+        );
+
+        $courseformatoptionsedit['column_collaborative_modules'] = array(
+            'label' => get_string('column_collaborative_modules', 'format_buttons'),
+            'help' => 'column_collaborative_modules',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => 'wiki,forum,chat,glossary,lesson,workshop,feedback'
+        );
+
+        $courseformatoptionsedit['groupingsections'] = array(
+            'label' => get_string('groupingsections', 'format_buttons'),
+            'help' => 'groupingsections',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => '2-999'
+        );
+
+        $courseformatoptionsedit['sectionstripeurl'] = array(
+            'label' => get_string('sectionstripeurl', 'format_buttons'),
+            'help' => 'sectionstripeurl',
+            'help_component' => 'format_buttons',
+            'element_type' => 'text',
+            'default' => '../plecabase.png'
+        );
+
         $courseformatoptionsedit['title_section_view'] = array(
             'label' => get_string('title_section_view', 'format_buttons'),
             'help' => 'title_section_view',
@@ -230,7 +320,7 @@ class format_buttons extends core_courseformat\base
             'help' => 'section_zero_ubication',
             'help_component' => 'format_buttons',
             'element_type' => 'select',
-            'default' => '0',
+            'default' => '1',
             'element_attributes' => array(
                 array(
                     '0' => get_string('no'),
@@ -362,4 +452,60 @@ function format_buttons_inplace_editable($itemtype, $itemid, $newvalue)
         $format = core_courseformat\base::instance($section->course);
         return $format->inplace_editable_update_section_name($section, $itemtype, $newvalue);
     }
+}
+
+/**
+ * Extend navigation in course pages.
+ *
+ * @param navigation_node $navigation
+ * @param stdClass $course
+ * @param context_course $context
+ * @return void
+ */
+function format_buttons_extend_navigation_course($navigation, $course, $context) {
+    global $PAGE;
+
+    $format = course_get_format($course);
+    if ($format->get_format() !== 'buttons') {
+        return;
+    }
+
+    $courseoptions = $format->get_course();
+    if (
+        ($courseoptions->navigationstyle ?? 'buttons') !== 'arrows' ||
+        (int)($courseoptions->showonlysectionsmenu ?? 0) !== 1
+    ) {
+        return;
+    }
+
+    // Never apply this behaviour in editing mode because it can interfere
+    // with section/activity editing controls (e.g. adding sections).
+    if ($PAGE->user_is_editing()) {
+        return;
+    }
+
+    $PAGE->requires->js_init_code("
+        (function() {
+            var hideCourseIndexItems = function() {
+                var selectors = [
+                    '.courseindex [data-for=\"cm\"]',
+                    '.courseindex [data-for=\"cmitem\"]',
+                    '.courseindex .courseindex-cm',
+                    '.courseindex .courseindex-sectioncontent',
+                    '.courseindex li.activity',
+                    '.courseindex [data-for=\"sectiontoggle\"]',
+                    '.courseindex .courseindex-chevron',
+                    '.courseindex .courseindex-item-action'
+                ];
+                selectors.forEach(function(selector) {
+                    document.querySelectorAll(selector).forEach(function(node) {
+                        node.style.display = 'none';
+                    });
+                });
+            };
+            hideCourseIndexItems();
+            var observer = new MutationObserver(hideCourseIndexItems);
+            observer.observe(document.body, {childList: true, subtree: true});
+        })();
+    ");
 }
