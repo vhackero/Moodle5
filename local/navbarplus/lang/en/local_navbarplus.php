@@ -29,10 +29,11 @@ $string['privacy:metadata'] = 'The Navbar Plus plugin provides extended function
 $string['resetusertours_hint'] = '(Could take a short time)';
 $string['setting_inserticonswithlinks'] = 'Icons with links';
 $string['setting_inserticonswithlinks_desc'] = 'With this setting you can add link icons to the header navbar left to the icons "messages" and "notifications".<br/>
-Each line consists of an icon image, a link URL, a text, supported language(s) (optional) and new window setting (optional) - separated by pipe characters. Each icon needs to be written in a new line.<br/>
+Each line consists of an icon image, a link URL, a text, supported language(s) (optional), new window setting (optional), additional classes (optional), element ID (optional) and visibility scope (optional) - separated by pipe characters. Each icon needs to be written in a new line.<br/>
 For example:<br/>
-fa-question|http://moodle.org|Moodle|en,de|true|d-none d-sm-flex<br/>
-fa-sign-out|/login/logout.php|Logout||false<br/><br/>
+fa-question|http://moodle.org|Moodle|en,de|true|d-none d-sm-flex||all<br/>
+fa-sign-out|/login/logout.php|Logout||false|||loggedin<br/>
+fa-home|/|Home|||||public<br/><br/>
 Further information to the parameters:
 <ul>
 <li><b>Image:</b> You can add Font Awesome icon identifiers (<a href="https://fontawesome.com/v6/icons">See the icon list on fontawesome.com/v6/icons</a>). Font Awesome 6 is included in Moodle core.</li>
@@ -43,6 +44,7 @@ Further information to the parameters:
 <li><b>Additional classes (optional)</b>: You can add individual classes with this optional parameter. A common use case might be to add Bootstrap\'s responsive classes to hide an icon for specific display sizes. <br/> You can look up the definitions for the responsive Bootstrap display classes for <a href="https://getbootstrap.com/docs/5.2/utilities/display/">Bootstrap version 5</a> for all Boost based themes.<br/>
 The most important classes for Boost based themes might be "d-none d-sm-flex" for hiding an icon on small devices or "d-sm-none" for only displaying the icon on small screens.
 <li><b>ID (optional)</b>: You can add an individual ID to your icon element. This makes it possible to address this specific icon easily with CSS (for example for the Moodle user tours). The string you enter here will always be prefixed with "localnavbarplus-".</li>
+<li><b>Visibility scope (optional)</b>: You can decide when the icon is shown: "all" (default), "loggedin" (only authenticated users) or "public" (only users without an authenticated session).</li>
 </ul>
 Please note:
 <ul>

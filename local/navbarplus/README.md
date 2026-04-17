@@ -41,11 +41,12 @@ There, you find two settings:
 ### 1. Icons with links
 
 With this setting you can add link icons to the header navbar left to the icons "messages" and "notifications".
-Each line consists of an icon image, a link URL, a text, supported language(s) (optional) and new window setting (optional) - separated by pipe characters. Each icon needs to be written in a new line. For example:
+Each line consists of an icon image, a link URL, a text, supported language(s) (optional), new window setting (optional), additional classes (optional), element ID (optional) and visibility scope (optional) - separated by pipe characters. Each icon needs to be written in a new line. For example:
 
 ```
-fa-question|http://moodle.org|Moodle|en,de|true|hidden-small-down
-fa-sign-out|/login/logout.php|Logout||false
+fa-question|http://moodle.org|Moodle|en,de|true|hidden-small-down||all
+fa-sign-out|/login/logout.php|Logout||false|||loggedin
+fa-home|/|Home|||||public
 ```
 
 Further information to the parameters:
@@ -57,6 +58,7 @@ Further information to the parameters:
 * Additional classes (optional): You can add individual classes with this optional parameter. A common use case might be to add Bootstrap's responsive classes to hide an icon for specific display sizes. <br/> You can look up the definitions for the responsive Bootstrap display classes for <a href="https://getbootstrap.com/docs/5.2/utilities/display/">Bootstrap version 5</a> for all Boost based themes.
   The most important classes for Boost based themes might be "d-none d-sm-block" for hiding an icon on small devices or "d-sm-none" for only displaying the icon on small screens.
 * ID (optional): You can add an individual ID to your icon element. This makes it possible to address this specific icon easily with CSS (for example for the Moodle user tours). The string you enter here will always be prefixed with "localnavbarplus-".
+* Visibility scope (optional): You can decide when the icon is shown: `all` (default), `loggedin` (only authenticated users) or `public` (only users without an authenticated session).
 
 Please note:
 * Pipe dividing for optional parameters is always needed if they are located between other options. This means that you have to separate params with the pipe character although they are empty. Also see the example for the Font Awesome icon above.

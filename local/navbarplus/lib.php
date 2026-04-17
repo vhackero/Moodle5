@@ -59,6 +59,7 @@ function local_navbarplus_render_navbar_output() {
             $itemopeninnewwindow = false;
             $itemadditionalclasses = null;
             $itemid = null;
+            $itemvisibilityscope = 'all';
 
             // Make a new array on delimiter "|".
             $settings = explode('|', $line);
@@ -66,7 +67,7 @@ function local_navbarplus_render_navbar_output() {
             // If array contains too less or too many settings, do not proceed and therefore do not display the item.
             // Furthermore check it at least the first three mandatory params are not an empty string.
             if (
-                count($settings) >= 3 && count($settings) <= 7 &&
+                count($settings) >= 3 && count($settings) <= 8 &&
                 $settings[0] !== '' && $settings[1] !== '' && $settings[2] !== ''
             ) {
                 foreach ($settings as $i => $setting) {
@@ -123,8 +124,34 @@ function local_navbarplus_render_navbar_output() {
                             case 6:
                                 $itemid = $setting;
                                 break;
+                            // Check for optional eighth parameter: icon visibility scope.
+                            case 7:
+                                $itemvisibilityscope = $setting;
+                                break;
                         }
                     }
+                }
+            }
+            // Check for optional eighth parameter: icon visibility scope.
+            // all -> display for everyone (default).
+            // loggedin -> display only for authenticated users (not guest).
+            // public -> display only for users without an authenticated session.
+            if ($itemvisible) {
+                $itemvisibilityscope = strtolower(trim($itemvisibilityscope));
+                switch ($itemvisibilityscope) {
+                    case 'loggedin':
+                        $itemvisible &= isloggedin() && !isguestuser();
+                        break;
+                    case 'public':
+                        $itemvisible &= !isloggedin() || isguestuser();
+                        break;
+                    case 'all':
+                    case '':
+                        break;
+                    default:
+                        // Invalid scope values hide the icon to prevent accidental disclosure.
+                        $itemvisible = false;
+                        break;
                 }
             }
             // Add link with icon as a child to the surrounding div only if it should be displayed.
