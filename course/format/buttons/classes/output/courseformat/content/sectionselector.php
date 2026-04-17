@@ -129,8 +129,28 @@ class sectionselector extends core_sectionselector
         $select->formid = 'sectionmenu';
 
         $data->selector = $output->render($select);
+        $data->isarrownavigation = ($course->navigationstyle ?? 'buttons') === 'arrows';
+        $data->currentlabel = $this->format_section_label((int)$data->currentsection);
+        $data->arrowbgcolor = $course->bgcolor_selected ?? '#959494';
+        $data->arrowfontcolor = $course->fontcolor_selected ?? '#e7e7e7';
 
         return $data;
+    }
+
+    /**
+     * Build label for section number according to arrow style rules.
+     *
+     * @param int $sectionnum
+     * @return string
+     */
+    private function format_section_label(int $sectionnum): string {
+        if ($sectionnum === 0) {
+            return '<i class="fa fa-television" aria-hidden="true"></i>';
+        }
+        if ($sectionnum === 1) {
+            return '<i class="fa fa-book" aria-hidden="true"></i>';
+        }
+        return (string)($sectionnum - 1);
     }
 
     /**

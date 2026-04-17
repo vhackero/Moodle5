@@ -33,22 +33,45 @@
     }
 }}
 <hr/>
-<div class="section-navigation mdl-bottom d-flex justify-content-between mt-5">
-    <div class="prevsection">
-        {{#hasprevious}}
-        <a href="{{{previousurl}}}" class="{{#previoushidden}} dimmed_text {{/previoushidden}}">
-            <span class="larrow">{{{larrow}}}</span>{{{previousname}}}
-        </a>
-        {{/hasprevious}}
+{{#isarrownavigation}}
+    <div class="section-navigation mdl-bottom d-flex justify-content-between align-items-center mt-5 format-buttons-bottom-nav">
+        <div class="prevsection">
+            {{#hasprevious}}
+                <a href="{{{previousurl}}}" class="format-buttons-nav-arrow {{#previoushidden}} dimmed_text {{/previoushidden}}"
+                   style="background: {{arrowbgcolor}}; color: {{arrowfontcolor}};">
+                    <span class="larrow">{{{larrow}}}</span> {{{previousname}}}
+                </a>
+            {{/hasprevious}}
+        </div>
+        <div class="format-buttons-current-section-number" style="background: {{arrowbgcolor}}; color: {{arrowfontcolor}};">{{{currentlabel}}}</div>
+        <div class="nextsection">
+            {{#hasnext}}
+                <a href="{{{nexturl}}}" class="format-buttons-nav-arrow {{#nexthidden}} dimmed_text {{/nexthidden}}"
+                   style="background: {{arrowbgcolor}}; color: {{arrowfontcolor}};">
+                    {{{nextname}}} <span class="rarrow">{{{rarrow}}}</span>
+                </a>
+            {{/hasnext}}
+        </div>
     </div>
-    <div>
-        {{{selector}}}
+{{/isarrownavigation}}
+{{^isarrownavigation}}
+    <div class="section-navigation mdl-bottom d-flex justify-content-between mt-5">
+        <div class="prevsection">
+            {{#hasprevious}}
+            <a href="{{{previousurl}}}" class="{{#previoushidden}} dimmed_text {{/previoushidden}}">
+                <span class="larrow">{{{larrow}}}</span>{{{previousname}}}
+            </a>
+            {{/hasprevious}}
+        </div>
+        <div>
+            {{{selector}}}
+        </div>
+        <div class="nextsection">
+            {{#hasnext}}
+            <a href="{{{nexturl}}}" class="{{#nexthidden}} dimmed_text {{/nexthidden}}">
+                <span class="rarrow">{{{rarrow}}}</span>{{{nextname}}}
+            </a>
+            {{/hasnext}}
+        </div>
     </div>
-    <div class="nextsection">
-        {{#hasnext}}
-        <a href="{{{nexturl}}}" class="{{#nexthidden}} dimmed_text {{/nexthidden}}">
-            <span class="rarrow">{{{rarrow}}}</span>{{{nextname}}}
-        </a>
-        {{/hasnext}}
-    </div>
-</div>
+{{/isarrownavigation}}

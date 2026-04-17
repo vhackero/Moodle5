@@ -59,6 +59,7 @@ function local_navbarplus_render_navbar_output() {
             $itemopeninnewwindow = false;
             $itemadditionalclasses = null;
             $itemid = null;
+            $itemvisibility = 'all';
 
             // Make a new array on delimiter "|".
             $settings = explode('|', $line);
@@ -66,7 +67,7 @@ function local_navbarplus_render_navbar_output() {
             // If array contains too less or too many settings, do not proceed and therefore do not display the item.
             // Furthermore check it at least the first three mandatory params are not an empty string.
             if (
-                count($settings) >= 3 && count($settings) <= 7 &&
+                count($settings) >= 3 && count($settings) <= 8 &&
                 $settings[0] !== '' && $settings[1] !== '' && $settings[2] !== ''
             ) {
                 foreach ($settings as $i => $setting) {
@@ -123,8 +124,31 @@ function local_navbarplus_render_navbar_output() {
                             case 6:
                                 $itemid = $setting;
                                 break;
+                            // Check for optional eighth parameter: visibility by session state.
+                            case 7:
+                                $visibility = strtolower($setting);
+                                if (in_array($visibility, ['all', 'loggedin', 'loggedout'], true)) {
+                                    $itemvisibility = $visibility;
+                                }
+                                break;
                         }
                     }
+                }
+            }
+            // Apply optional visibility condition based on session state.
+            if ($itemvisible) {
+                $isloggedinuser = isloggedin() && !isguestuser();
+                switch ($itemvisibility) {
+                    case 'loggedin':
+                        $itemvisible = $isloggedinuser;
+                        break;
+                    case 'loggedout':
+                        $itemvisible = !$isloggedinuser;
+                        break;
+                    case 'all':
+                    default:
+                        // Keep current visibility.
+                        break;
                 }
             }
             // Add link with icon as a child to the surrounding div only if it should be displayed.

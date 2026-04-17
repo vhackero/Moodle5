@@ -121,6 +121,7 @@ class content extends content_base
     public function export_for_template(\renderer_base $output)
     {
         $format = $this->format;
+        $isediting = $format->show_editor();
         $format->set_sectionnum(null);
 
         $this->save_last_section_access($this->selected_section);
@@ -138,7 +139,23 @@ class content extends content_base
             'fontcolor_selected' => $this->format->get_course()->fontcolor_selected,
             'form_btn' => $this->form_btn,
             'singlesection' => null,
+            'isarrownavigation' => ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' && !$isediting,
+            'coursepathprefix' => $this->get_course_path_prefix(),
+            'coursenamelinktext' => $this->get_course_name_text(),
+            'coursenamecolor' => $this->format->get_course()->coursenamecolor ?? '#6c757d',
+            'courseviewurl' => (new moodle_url('/course/view.php', ['id' => $this->format->get_course()->id]))->out(false),
+            'hidecourseindexactivities' => (
+                ($this->format->get_course()->navigationstyle ?? 'buttons') === 'arrows' &&
+                (int)($this->format->get_course()->showonlysectionsmenu ?? 0) === 1 &&
+                !$isediting
+            ),
         ];
+
+        if ($isediting) {
+            $data->all_sections = [];
+            $data->initialsection = null;
+            $data->sections = $this->get_all_export_sections($output);
+        }
 
         if ($this->hasaddsection) {
             $addsection = new $this->addsectionclass($format);
@@ -159,6 +176,20 @@ class content extends content_base
         $data->sectionnavigation = $sectionnavigation->export_for_template($output);
         $sectionselector = new $this->sectionselectorclass($format, $sectionnavigation);
         $data->sectionselector = $sectionselector->export_for_template($output);
+        $data->arrownavigation = $this->get_arrow_navigation_data($sectionnavigation);
+
+        if ($data->isarrownavigation && !empty($data->sections[0])) {
+            $data->sections[0]->isarrownavigation = true;
+            $data->sections[0]->isediting = $isediting;
+            $data->sections[0]->isarrowstyle = !$isediting && $this->should_group_current_section();
+            if ($data->sections[0]->isarrowstyle) {
+                $data->sections[0]->arrowcolumns = $this->get_arrow_columns_data($data->sections[0]);
+            }
+        }
+
+        if ($this->selected_section !== 0) {
+            $data->initialsection = null;
+        }
 
         return $data;
     }
@@ -179,6 +210,34 @@ class content extends content_base
         $sectionclass = $this->format->get_output_classname('content\\section');
         $sectionoutput = new $sectionclass($this->format, $sectioninfo);
         return $sectionoutput->export_for_template($output);
+    }
+
+    /**
+     * Export all sections for editing mode, preserving native behavior.
+     *
+     * @param \renderer_base $output
+     * @return array
+     * @throws \core\exception\coding_exception
+     * @throws \moodle_exception
+     */
+    private function get_all_export_sections(\renderer_base $output): array {
+        $sections = [];
+        $course = $this->format->get_course();
+        $modinfo = get_fast_modinfo($course);
+        $sectionclass = $this->format->get_output_classname('content\\section');
+
+        foreach ($modinfo->get_section_info_all() as $sectioninfo) {
+            if ($sectioninfo->component !== null) {
+                continue;
+            }
+            if ($sectioninfo->section === 0 && !$course->section_zero_ubication) {
+                continue;
+            }
+            $sectionoutput = new $sectionclass($this->format, $sectioninfo);
+            $sections[] = $sectionoutput->export_for_template($output);
+        }
+
+        return $sections;
     }
 
     /**
@@ -238,6 +297,7 @@ class content extends content_base
             $url->set_anchor("section-$section->section");
             $info->url = $url->out();
             $info->namesection = $section->section;
+            $info->displaysection = $this->format_section_label($section->section);
             //Filter capacibility, and fixed the disabled sections for the teacher
             $isteacher = is_siteadmin() || has_capability('moodle/course:update', context_course::instance($course->id));
             if ($section->visible == 0) {
@@ -266,6 +326,183 @@ class content extends content_base
         $array_sections = $this->agruping_sections($array_sections, $course);
 
         $this->array_sections = $array_sections;
+    }
+
+    /**
+     * Build label for section number according to requested arrow style rules.
+     *
+     * @param int $sectionnum
+     * @return string
+     */
+    private function format_section_label(int $sectionnum): string {
+        if ($sectionnum === 0) {
+            return '<i class="fa fa-television" aria-hidden="true"></i>';
+        }
+        if ($sectionnum === 1) {
+            return '<i class="fa fa-book" aria-hidden="true"></i>';
+        }
+        return (string)($sectionnum - 1);
+    }
+
+    /**
+     * Get formatted course display name with optional category branch.
+     *
+     * @return string
+     */
+    private function get_course_display_name(): string {
+        $course = $this->format->get_course();
+        $name = format_string($course->fullname);
+        if ((int)($course->showcategorybranch ?? 0) !== 1) {
+            return $name;
+        }
+        $category = \core_course_category::get($course->category, IGNORE_MISSING, true);
+        if (!$category) {
+            return $name;
+        }
+        return $category->get_nested_name(false) . ' › ' . $name;
+    }
+
+    /**
+     * Get course category path prefix (without course name).
+     *
+     * @return string
+     */
+    private function get_course_path_prefix(): string {
+        $course = $this->format->get_course();
+        if ((int)($course->showcategorybranch ?? 0) !== 1) {
+            return '';
+        }
+        $category = \core_course_category::get($course->category, IGNORE_MISSING, true);
+        if (!$category) {
+            return '';
+        }
+        return $category->get_nested_name(false) . ' › ';
+    }
+
+    /**
+     * Get course full name for course-link text.
+     *
+     * @return string
+     */
+    private function get_course_name_text(): string {
+        return format_string($this->format->get_course()->fullname);
+    }
+
+    /**
+     * Create navigation structure for arrows style.
+     *
+     * @param object $sectionnavigation
+     * @return object
+     */
+    private function get_arrow_navigation_data(object $sectionnavigation): object {
+        $selected = $this->selected_section;
+        $data = (object)[
+            'currentlabel' => $this->format_section_label((int)$selected),
+            'currentname' => $this->format->get_section_name($selected),
+            'hasprevious' => !empty($sectionnavigation->hasprevious),
+            'hasnext' => !empty($sectionnavigation->hasnext),
+            'previousurl' => $sectionnavigation->previousurl ?? '',
+            'nexturl' => $sectionnavigation->nexturl ?? '',
+        ];
+        return $data;
+    }
+
+    /**
+     * Build 3-column activities data for arrows style.
+     *
+     * @param object $sectiondata
+     * @return object
+     */
+    private function get_arrow_columns_data(object $sectiondata): object {
+        $course = $this->format->get_course();
+        $learningmods = $this->parse_modules($course->column_learning_modules ?? '');
+        $supportmods = $this->parse_modules($course->column_support_modules ?? '');
+        $collabmods = $this->parse_modules($course->column_collaborative_modules ?? '');
+
+        $columns = (object)[
+            'learningtitle' => get_string('column_learning_title', 'format_buttons'),
+            'supporttitle' => get_string('column_support_title', 'format_buttons'),
+            'collaborativetitle' => get_string('column_collaborative_title', 'format_buttons'),
+            'uncategorizedtitle' => get_string('column_uncategorized_title', 'format_buttons'),
+            'learningitems' => [],
+            'supportitems' => [],
+            'collaborativeitems' => [],
+            'uncategorizeditems' => [],
+        ];
+
+        $cms = $sectiondata->cmlist->cms ?? [];
+        foreach ($cms as $item) {
+            $cmitem = $item->cmitem ?? null;
+            if (!$cmitem) {
+                continue;
+            }
+            $module = $cmitem->module ?? '';
+            if (in_array($module, $learningmods, true)) {
+                $columns->learningitems[] = $item;
+                continue;
+            }
+            if (in_array($module, $supportmods, true)) {
+                $columns->supportitems[] = $item;
+                continue;
+            }
+            if (in_array($module, $collabmods, true)) {
+                $columns->collaborativeitems[] = $item;
+                continue;
+            }
+            $columns->uncategorizeditems[] = $item;
+        }
+
+        $columns->haslearning = !empty($columns->learningitems);
+        $columns->hassupport = !empty($columns->supportitems);
+        $columns->hascollaborative = !empty($columns->collaborativeitems);
+        $columns->hasuncategorized = !empty($columns->uncategorizeditems);
+        $columns->hascolumnactivities = $columns->haslearning || $columns->hassupport || $columns->hascollaborative;
+        $columns->activecolumncount = (int)$columns->haslearning + (int)$columns->hassupport + (int)$columns->hascollaborative;
+        $columns->hasonecolumn = $columns->activecolumncount === 1;
+        $columns->hastwocolumns = $columns->activecolumncount === 2;
+        $columns->hasthreecolumns = $columns->activecolumncount === 3;
+
+        return $columns;
+    }
+
+    /**
+     * Parse modules list from settings.
+     *
+     * @param string $value
+     * @return array
+     */
+    private function parse_modules(string $value): array {
+        $items = preg_split('/\s*,\s*/', trim($value), -1, PREG_SPLIT_NO_EMPTY);
+        return array_values(array_unique(array_map('trim', $items)));
+    }
+
+    /**
+     * Determines if current selected section should display grouped columns.
+     *
+     * @return bool
+     */
+    private function should_group_current_section(): bool {
+        $sectionnum = (int)$this->selected_section;
+        $rules = trim((string)($this->format->get_course()->groupingsections ?? ''));
+        if ($rules === '') {
+            return $sectionnum > 1;
+        }
+
+        $tokens = preg_split('/\s*,\s*/', $rules, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($tokens as $token) {
+            if (strpos($token, '-') !== false) {
+                [$start, $end] = array_map('intval', explode('-', $token, 2));
+                if ($sectionnum >= $start && $sectionnum <= $end) {
+                    return true;
+                }
+                continue;
+            }
+            if ((int)$token === $sectionnum) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
