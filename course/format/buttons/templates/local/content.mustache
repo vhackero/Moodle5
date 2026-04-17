@@ -310,7 +310,14 @@
     body:not(.editing) .section_action_menu {
         display: none !important;
     }
-    @media (max-width: 992px) {.format-buttons-activity-columns {grid-template-columns:1fr;}}
+    @media (max-width: 992px) {
+        .format-buttons-activity-columns,
+        .format-buttons-activity-columns.has-two-columns,
+        .format-buttons-activity-columns.has-three-columns,
+        .format-buttons-activity-columns.has-one-column {
+            grid-template-columns: 1fr !important;
+        }
+    }
     #page-course-view-buttons.format-buttons-hide-courseindex-activities .courseindex [data-for="cm"],
     #page-course-view-buttons.format-buttons-hide-courseindex-activities .courseindex .courseindex-cm {
         display:none !important;
