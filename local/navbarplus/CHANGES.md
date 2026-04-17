@@ -4,6 +4,10 @@ moodle-local_navbarplus
 Changes
 -------
 
+### v5.0-r5
+
+* 2026-04-17 - Feature: Add optional icon visibility scope (`all`, `loggedin`, `public`) to differentiate links by authentication status.
+
 ### v5.0-r4
 
 * 2025-10-31 - Improvement: Change link to FontAwesome icons documentation in plugin settings from Fontawesome 4 to 6.

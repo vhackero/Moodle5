@@ -69,6 +69,24 @@ Feature: Configuring the navbarplus plugin
     And I press "Save"
     Then I should see the icon with the title "Idtest" and the id "optional-id" in the navbar
 
+  Scenario: Configuring item for logged in users only
+    When I log in as "admin"
+    And I navigate to "Appearance > Navbar Plus" in site administration
+    And I set the field "id_s_local_navbarplus_inserticonswithlinks" to "fa-user|/?redirect=0|Loggedinonly|||||loggedin"
+    And I press "Save"
+    Then I should see the icon with the title "Loggedinonly" and the iconclass "fa-user" and the link "/?redirect=0" in the navbar
+    And I log out
+    And I should not see the icon with the title "Loggedinonly" in the navbar
+
+  Scenario: Configuring item for public users only
+    When I log in as "admin"
+    And I navigate to "Appearance > Navbar Plus" in site administration
+    And I set the field "id_s_local_navbarplus_inserticonswithlinks" to "fa-house|/?redirect=0|Publiconly|||||public"
+    And I press "Save"
+    Then I should not see the icon with the title "Publiconly" in the navbar
+    And I log out
+    And I should see the icon with the title "Publiconly" and the iconclass "fa-house" and the link "/?redirect=0" in the navbar
+
   Scenario: Verifying the icon position
     When I log in as "admin"
     When I navigate to "Appearance > Navbar Plus" in site administration
