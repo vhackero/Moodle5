@@ -87,6 +87,7 @@ $string['column_learning_title'] = 'Actividades de aprendizaje';
 $string['column_support_title'] = 'Recursos de apoyo';
 $string['column_collaborative_title'] = 'Trabajo colaborativo';
 $string['column_uncategorized_title'] = 'Otras actividades';
+$string['noactivitiesmessage'] = 'No hay actividades de aprendizaje, recursos de apoyo o trabajo colaborativo que mostrar';
 $string['plugin_description'] = 'Buttons es un formato de curso que crea un menú con botones para acceder a las secciones, una por una.';
 $string['pluginname'] = 'Formato buttons';
 $string['rounded'] = 'Redondos';
