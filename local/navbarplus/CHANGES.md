@@ -4,6 +4,10 @@ moodle-local_navbarplus
 Changes
 -------
 
+### v5.0-r6
+
+* 2026-04-17 - Maintenance: Bump plugin version to 2026041700.
+
 ### v5.0-r5
 
 * 2026-04-17 - Feature: Add optional icon visibility scope (`all`, `loggedin`, `public`) to differentiate links by authentication status.
