@@ -4,6 +4,10 @@ moodle-local_navbarplus
 Changes
 -------
 
+### v5.0-r7
+
+* 2026-04-17 - Maintenance: Use a new language string key for the "Icons with links" setting description to avoid stale language overrides.
+
 ### v5.0-r6
 
 * 2026-04-17 - Maintenance: Bump plugin version to 2026041700.
