@@ -457,6 +457,10 @@ class content extends content_base
         $columns->hascollaborative = !empty($columns->collaborativeitems);
         $columns->hasuncategorized = !empty($columns->uncategorizeditems);
         $columns->hascolumnactivities = $columns->haslearning || $columns->hassupport || $columns->hascollaborative;
+        $columns->activecolumncount = (int)$columns->haslearning + (int)$columns->hassupport + (int)$columns->hascollaborative;
+        $columns->hasonecolumn = $columns->activecolumncount === 1;
+        $columns->hastwocolumns = $columns->activecolumncount === 2;
+        $columns->hasthreecolumns = $columns->activecolumncount === 3;
 
         return $columns;
     }

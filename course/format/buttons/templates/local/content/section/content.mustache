@@ -145,7 +145,7 @@
             </div>
         {{/arrowcolumns.hasuncategorized}}
         {{#arrowcolumns.hascolumnactivities}}
-            <div class="format-buttons-activity-columns">
+            <div class="format-buttons-activity-columns{{#arrowcolumns.hasonecolumn}} has-one-column{{/arrowcolumns.hasonecolumn}}{{#arrowcolumns.hastwocolumns}} has-two-columns{{/arrowcolumns.hastwocolumns}}{{#arrowcolumns.hasthreecolumns}} has-three-columns{{/arrowcolumns.hasthreecolumns}}">
                 {{#arrowcolumns.haslearning}}
                     <div class="format-buttons-column">
                         <h4 class="format-buttons-column-title">{{arrowcolumns.learningtitle}}</h4>
