@@ -38,7 +38,7 @@ if ($hassiteconfig) {
         $setting = new admin_setting_configtextarea(
             'local_navbarplus/inserticonswithlinks',
             get_string('setting_inserticonswithlinks', 'local_navbarplus', null, true),
-            get_string('setting_inserticonswithlinks_desc', 'local_navbarplus', null, true),
+            get_string('setting_inserticonswithlinks_desc_v2', 'local_navbarplus', null, true),
             '',
             PARAM_RAW
         );
