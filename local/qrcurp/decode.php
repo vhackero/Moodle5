@@ -22,6 +22,10 @@ use local_qrcurp\local\config;
  * @return mysqli_result|false
  */
 function local_qrcurp_execute_template_query(mysqli $connection, string $template, array $values) {
+    if (trim($template) === '') {
+        return false;
+    }
+
     $params = [];
     $sql = preg_replace_callback('/\{\{([a-z_]+)\}\}/', static function($matches) use ($values, &$params) {
         $key = $matches[1];
@@ -157,7 +161,7 @@ if($categoryid == ''){$nameCategoria = get_config('local_qrcurp','defaultnamecat
 //DATOS QUE CONTIENE EL ESCANEO DE LA CURP
 $campos = explode("|", $text);
 
-if($DBEXTERNAL->errordbportname = ''){
+if ($DBEXTERNAL->errordbportname == '') {
     $DBEXTERNAL->errordbportname =0;
 }
 //DATOS DE LA BD EXTERNA
