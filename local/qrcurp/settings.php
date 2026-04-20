@@ -34,6 +34,31 @@ if ( $hassiteconfig ) {
             $roleoptions[$role->id] = $role->localname;
         }
         $defaultstudentroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'student']);
+        $defaultprofilefieldlist = implode(',', array_keys(\local_qrcurp\local\profile_fields_manager::default_fields()));
+
+        $settings->add(new admin_setting_configcheckbox('local_qrcurp/validateprofilefields', get_string('validateprofilefields', 'local_qrcurp'),
+            get_string('validateprofilefieldsinfo', 'local_qrcurp'), 1));
+        $settings->add(new admin_setting_configcheckbox('local_qrcurp/autoinstallprofilefields', get_string('autoinstallprofilefields', 'local_qrcurp'),
+            get_string('autoinstallprofilefieldsinfo', 'local_qrcurp'), 0));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/profilefieldslist', get_string('profilefieldslist', 'local_qrcurp'),
+            get_string('profilefieldslistinfo', 'local_qrcurp'), $defaultprofilefieldlist, PARAM_RAW, 500));
+
+        $missingprofilefields = [];
+        if ((int) get_config('local_qrcurp', 'validateprofilefields') === 1) {
+            $configuredfields = \local_qrcurp\local\profile_fields_manager::get_configured_shortnames();
+            if ((int) get_config('local_qrcurp', 'autoinstallprofilefields') === 1) {
+                \local_qrcurp\local\profile_fields_manager::ensure_fields($configuredfields);
+            }
+            $missingprofilefields = \local_qrcurp\local\profile_fields_manager::get_missing_fields($configuredfields);
+        }
+        $installerurl = new moodle_url('/local/qrcurp/installUserFields.php');
+        if (empty($missingprofilefields)) {
+            $profilefieldsstatus = get_string('profilefieldsok', 'local_qrcurp');
+        } else {
+            $profilefieldsstatus = get_string('profilefieldsmissing', 'local_qrcurp', implode(', ', $missingprofilefields));
+            $profilefieldsstatus .= '<br><a href="'.$installerurl.'">'.get_string('profilefieldsinstalllink', 'local_qrcurp').'</a>';
+        }
+        $settings->add(new admin_setting_heading('local_qrcurp/profilefieldsstatus', get_string('profilefieldsstatus', 'local_qrcurp'), $profilefieldsstatus));
 
         $settings->add(new admin_setting_configtext('local_qrcurp/dbhost', get_string('dbhost', 'local_qrcurp'),
             get_string('dbhostinfo', 'local_qrcurp'), '', PARAM_HOST, 100));

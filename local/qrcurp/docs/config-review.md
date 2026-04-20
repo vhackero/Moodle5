@@ -78,6 +78,12 @@ Se revisó el flujo de configuración del plugin y se detectaron oportunidades d
     - Muestra roles disponibles en Moodle.
     - Usa por defecto el rol con shortname `student`.
 
+11. Se agregó gestión configurable de campos de perfil:
+    - Validación de existencia desde settings.
+    - Lista configurable de shortnames para agregar/quitar campos administrados.
+    - Instalación automática opcional de campos faltantes.
+    - Enlace directo al instalador manual `installUserFields.php`.
+
 ## Siguientes pasos recomendados
 1. Repetir la migración de SQL parametrizado en `decode.php`, `insertardb.php` y otros archivos con interpolación.
 2. Sustituir uso de `mysqli` directo por API `$DB` cuando aplique o encapsular repositorios para consultas externas.
