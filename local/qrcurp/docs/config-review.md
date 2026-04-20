@@ -67,6 +67,13 @@ Se revisó el flujo de configuración del plugin y se detectaron oportunidades d
    - `dateregistro` pasa a texto normal (ya no password field).
    - `dbuser` pasa de password field a text field.
 
+9. Se ajustó la regla de `studentxcategory`:
+   - Si está vacío o con valor `<= 0`, se considera **sin límite** (no redirecciona).
+   - Se habilitó configuración por múltiples categorías:
+     - `100` límite global.
+     - `5:100,8:200` límites específicos.
+     - `*:100,8:200` límite global con excepciones.
+
 ## Siguientes pasos recomendados
 1. Repetir la migración de SQL parametrizado en `decode.php`, `insertardb.php` y otros archivos con interpolación.
 2. Sustituir uso de `mysqli` directo por API `$DB` cuando aplique o encapsular repositorios para consultas externas.

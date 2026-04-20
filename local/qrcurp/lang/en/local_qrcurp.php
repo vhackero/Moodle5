@@ -64,7 +64,7 @@ $string['confirmemailinfoexternos'] = "Cuando un nuevo usuario se registra se en
 $string['emailexterno'] = "Usar servidor de correo externo";
 $string['emailexternoinfo'] = "Hace uso de un servidor de correo smtp externo al de moodle.";
 $string['studentxcategory'] = "Límite de estudiantes totales por categoría";
-$string['studentxcategoryinfo'] = "Número de estudiantes que se aceptaran por categoría ejemplo: 100";
+$string['studentxcategoryinfo'] = "Límites por categoría. Formatos válidos: 100 (límite global), 5:100,8:200 (por categoría), *:100,8:200 (global + excepción). Vacío = sin límite.";
 $string['studentxcategorytext'] = "Texto a mostrar si se supera el límite de estudiantes en la categoría";
 $string['studentxcategorytextinfo'] = "Texto a mostrar pasado el límite de los estudiantes";
 $string['sampleregister'] = "Acepta registro sin matriculación";
@@ -137,5 +137,4 @@ $string['regismoodlenotexdb1'] = 'No existe una cuenta en la base de datos exter
 $string['errorconsulta'] = 'No existe una cuenta en la base de datos externa pero sí en este sitio, regístrate en la base de datos externa.';
 $string['correoregimoodle'] = 'Existe una cuenta registrada con ese correo en este sitio, inténtalo con otro.';
 //$string['regisexdbnotmoodle'] = "Tus datos han sido registrados previamente en la base de datos de la SIGE(UnADM), da clic en continuar para proceder con el registro en el sitio de reforma laboral, (Verifica que los datos sean correctos)";
-
 

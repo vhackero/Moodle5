@@ -235,9 +235,11 @@ if($categoryid != '') {
         'roleid' => $rolStudent,
     ];
     $numStundentToCategory = (int) $DB->count_records_sql($consultaNumAlumnosXCategoria, $params);
-    $totalAlumnoPorCategoria = config::get_int('studentxcategory');
+    $studentlimits = config::get_category_limits('studentxcategory');
+    $limitforcategory = $studentlimits['categories'][$categoryid] ?? $studentlimits['default'];
 
-    if($numStundentToCategory == $totalAlumnoPorCategoria){
+    // Si no existe configuración o el límite es <= 0, se considera sin límite.
+    if (!empty($limitforcategory) && $limitforcategory > 0 && $numStundentToCategory >= $limitforcategory) {
         $url = $CFG->wwwroot.'/index.php';
         $menssage = config::get_string('studentxcategorytext');
         redirect($url, $menssage , 15, \core\output\notification::NOTIFY_WARNING);

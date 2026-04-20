@@ -58,8 +58,8 @@ if ( $hassiteconfig ) {
             get_string('rolteacherinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 3));
         $settings->add(new admin_setting_configtext('local_qrcurp/limitegroup', get_string('limitegroup', 'local_qrcurp'),
             get_string('limitegroupinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 5));
-        $settings->add(new admin_setting_configtext('local_qrcurp/studentxcategory', get_string('studentxcategory', 'local_qrcurp'),
-            get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_ALPHANUM));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategory', get_string('studentxcategory', 'local_qrcurp'),
+            get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_RAW, 120));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategorytext', get_string('studentxcategorytext', 'local_qrcurp'),
             get_string('studentxcategorytextinfo', 'local_qrcurp'), '', PARAM_RAW));
         $settings->add(new admin_setting_configtext('local_qrcurp/rolstudent', get_string('rolstudent', 'local_qrcurp'),
