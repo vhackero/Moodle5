@@ -9,6 +9,8 @@
 require_once(__DIR__.'/../../config.php');
 require_once('globalVariables.php');
 
+use local_qrcurp\local\config;
+
 global $DB,$PAGE,$CFG,$NAMEPLATAFORMQRCURP,$NAMEEXTERNALDBQRCURP;
 
 $PAGE->set_url(new moodle_url('/local/qrcurp/index.php'));
@@ -106,10 +108,10 @@ if(isloggedin()){
 }
 
 //FECHA LÍMITE DEL REGISTRO
-$fechaLimiteRegistro = strtotime(get_config('local_qrcurp','dateregistro'));
-$fechaporperidos = get_config('local_qrcurp','dateperiodos');
+$fechaLimiteRegistro = strtotime(config::get_string('dateregistro'));
+$fechaporperidos = config::get_string('dateperiodos');
 $fechaActual = strtotime(date('d-m-Y'));
-$menssage = get_config('local_qrcurp','textregistro');
+$menssage = config::get_string('textregistro');
 
 if($fechaporperidos != ''){
     if(!strstr($fechaporperidos,'|')){
@@ -203,9 +205,9 @@ if($fechaporperidos != ''){
 }
 
 //DATOS POR DEFECTO EN LA URL SIN PARAMETROS
-$defaultcategory = get_config('local_qrcurp','defaultcategoryid');
-$defaultcourse = get_config('local_qrcurp','defaultcourse');
-$defaultgroup = get_config('local_qrcurp','defaultgroup');
+$defaultcategory = config::get_int('defaultcategoryid');
+$defaultcourse = config::get_int('defaultcourseid');
+$defaultgroup = config::get_int('defaultgroupid');
 
 $categoryid = optional_param('categoryid', $defaultcategory, PARAM_INT);
 $idcourse = optional_param('courseid', $defaultcourse, PARAM_INT);
@@ -218,19 +220,26 @@ if ($is_from_saberes_mx && !empty($idcourse_from_utm)) {
 
 //COMPROBACIÓN DEL ID PARA CONTINUAR CON EL REGISTRO.
 if($categoryid != '') {
-    $rolStudent = get_config('local_qrcurp','rolstudent');
-    $consultaNumAlumnosXCategoria = "SELECT count(*) AS total
-    FROM mdl_course c JOIN mdl_course_categories ct  on ct.id = c.category
-    JOIN mdl_context ctx on ctx.instanceid = c.id JOIN mdl_role_assignments ra on ra.contextid = ctx.id
-    JOIN mdl_role rl on rl.id = ra.roleid JOIN mdl_user u on u.id = ra.userid
-    where ct.id = $categoryid AND rl.id = $rolStudent";
-    $totalAlumnos = $DB->get_records_sql($consultaNumAlumnosXCategoria);
-    $numStundentToCategory = reset($totalAlumnos)->total;
-    $totalAlumnoPorCategoria = get_config('local_qrcurp','studentxcategory');
+    $rolStudent = config::get_int('rolstudent');
+    $consultaNumAlumnosXCategoria = "SELECT COUNT(*) AS total
+      FROM {course} c
+      JOIN {course_categories} ct ON ct.id = c.category
+      JOIN {context} ctx ON ctx.instanceid = c.id AND ctx.contextlevel = :contextlevel
+      JOIN {role_assignments} ra ON ra.contextid = ctx.id
+      JOIN {role} rl ON rl.id = ra.roleid
+      JOIN {user} u ON u.id = ra.userid
+     WHERE ct.id = :categoryid AND rl.id = :roleid";
+    $params = [
+        'contextlevel' => CONTEXT_COURSE,
+        'categoryid' => $categoryid,
+        'roleid' => $rolStudent,
+    ];
+    $numStundentToCategory = (int) $DB->count_records_sql($consultaNumAlumnosXCategoria, $params);
+    $totalAlumnoPorCategoria = config::get_int('studentxcategory');
 
     if($numStundentToCategory == $totalAlumnoPorCategoria){
         $url = $CFG->wwwroot.'/index.php';
-        $menssage = get_config('local_qrcurp','studentxcategorytext');
+        $menssage = config::get_string('studentxcategorytext');
         redirect($url, $menssage , 15, \core\output\notification::NOTIFY_WARNING);
     }
 
@@ -245,7 +254,7 @@ if($categoryid != '') {
     }
 }
 else{
-    $nameCategoria = get_config('local_qrcurp','defaultnamecategory');
+    $nameCategoria = config::get_string('defaultnamecategory');
     $name = "iconos/".$nameCategoria.".jpg";
 
     if($nameCategoria != ""){
@@ -260,7 +269,7 @@ else{
         redirect($url, $menssage, 15, \core\output\notification::NOTIFY_WARNING);
     }
 
-    if(get_config('local_qrcurp','sampleregister') == 0) {
+    if (!config::get_bool('sampleregister')) {
         $menssage = "La URL debe incluir un id de categoría para continuar con el registro. Revisar la configuración del pluggin e ingresa el id de la categoría por defecto o activar los registros sin matriculación";
         redirect($url, $menssage, 15, \core\output\notification::NOTIFY_WARNING);
     }

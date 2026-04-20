@@ -27,21 +27,21 @@ if ( $hassiteconfig ) {
 
     if ($ADMIN->fulltree) {
         $settings->add(new admin_setting_configtext('local_qrcurp/dbhost', get_string('dbhost', 'local_qrcurp'),
-            get_string('dbhostinfo', 'local_qrcurp'), '', PARAM_URL, 30));
+            get_string('dbhostinfo', 'local_qrcurp'), '', PARAM_HOST, 100));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbport', get_string('dbport', 'local_qrcurp'),
             get_string('dbportinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbname', get_string('dbname', 'local_qrcurp'),
             get_string('dbnameinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbtable', get_string('dbtable', 'local_qrcurp'),
             get_string('dbtableinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
-        $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dbuser', get_string('dbuser', 'local_qrcurp'),
+        $settings->add(new admin_setting_configtext('local_qrcurp/dbuser', get_string('dbuser', 'local_qrcurp'),
             get_string('dbuserinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dbpass', get_string('dbpass', 'local_qrcurp'),
             get_string('dbpassinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/dbinsert', get_string('dbinsert', 'local_qrcurp'),
             get_string('dbinsertinfo', 'local_qrcurp'), 0));
-        $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dateregistro', get_string('dateregistro', 'local_qrcurp'),
-            get_string('dateregistroinfo', 'local_qrcurp'), '', PARAM_URL, 30));
+        $settings->add(new admin_setting_configtext('local_qrcurp/dateregistro', get_string('dateregistro', 'local_qrcurp'),
+            get_string('dateregistroinfo', 'local_qrcurp'), '', PARAM_TEXT, 30));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/textregistro', get_string('textregistro', 'local_qrcurp'),
             get_string('textregistroinfo', 'local_qrcurp'), '', PARAM_RAW, 500));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/dateperiodos', get_string('dateperiodos', 'local_qrcurp'),
@@ -91,7 +91,7 @@ if ( $hassiteconfig ) {
         $settings->add(new admin_setting_configtext('local_qrcurp/mailsupport', get_string('mailsupport', 'local_qrcurp'),
             get_string('mailsupportinfo', 'local_qrcurp'),'', PARAM_RAW, 80));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbcatalogoshost', get_string('dbcatalogoshost', 'local_qrcurp'),
-            get_string('dbcatalogoshostinfo', 'local_qrcurp'), '', PARAM_URL, 30));
+            get_string('dbcatalogoshostinfo', 'local_qrcurp'), '', PARAM_HOST, 100));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbcatalogos', get_string('dbcatalogos', 'local_qrcurp'),
             get_string('dbcatalogosinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dbcatalogosuser', get_string('dbcatalogosuser', 'local_qrcurp'),

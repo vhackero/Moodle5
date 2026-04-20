@@ -14,11 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-$NAMEPLATAFORMQRCURP = get_config('local_qrcurp','nameplataform');
-$NAMEEXTERNALDBQRCURP = get_config('local_qrcurp','nameexternal');
-//$NAMEPLATAFORMQRCURP = "NAME";
-//$NAMEEXTERNALDBQRCURP = "NAME2";
-//NOmbre DE Los dos portales
 $string['pluginname'] = 'QRCURP';
 $string['dbhost'] = "DB Host";
 $string['dbhostinfo'] = "Remote Database host name (on which, we will be executing our SQL queries)";
@@ -132,15 +127,15 @@ $string['dbconn'] = "Exito";
 $string['dbconnerr'] = "Asegurarse de haber configurado el puerto y el nombre de la base de datos";
 
 //Mensajes emergentes
-$string['noregismoodle'] = "Tus datos no han sido registrados previamente, por favor da clic en aceptar para registrar en el sitio de $NAMEPLATAFORMQRCURP.";
-$string['noregisexdb'] = "Tus datos no han sido registrados previamente, por favor da clic en aceptar para registrar en el sitio de $NAMEPLATAFORMQRCURP";
-$string['regismoodleyexdb'] = "Ya existe una cuenta registrada en $NAMEEXTERNALDBQRCURP y en el sitio de $NAMEPLATAFORMQRCURP, inicia sesión.";
-$string['regismoodlenotexdb'] = "No existe una cuenta registrada en el sitio de $NAMEPLATAFORMQRCURP ni en $NAMEEXTERNALDBQRCURP, registrarse para continuar.";
-$string['regismoodle'] = "Ya existe una cuenta registrada en el sitio de $NAMEPLATAFORMQRCURP, inicia sesión";
-$string['regismoodlenotexdb0'] = "No existe una cuenta registrada en $NAMEEXTERNALDBQRCURP pero si en el sitio de $NAMEPLATAFORMQRCURP, inicia sesión.";
-$string['regismoodlenotexdb1'] = "No existe una cuenta registrada en $NAMEEXTERNALDBQRCURP pero si en el sitio de $NAMEPLATAFORMQRCURP, registrarse en $NAMEEXTERNALDBQRCURP.";
-$string['errorconsulta'] = "No existe una cuenta registrada en $NAMEEXTERNALDBQRCURP pero si en el sitio de $NAMEPLATAFORMQRCURP, registrarse en $NAMEEXTERNALDBQRCURP.";
-$string['correoregimoodle'] = "Existe una cuenta registrada con ese correo en el sitio de $NAMEPLATAFORMQRCURP, intentalo con otro.";
+$string['noregismoodle'] = 'Tus datos no han sido registrados previamente, por favor da clic en aceptar para registrarte en el sitio.';
+$string['noregisexdb'] = 'Tus datos no han sido registrados previamente, por favor da clic en aceptar para registrarte en el sitio.';
+$string['regismoodleyexdb'] = 'Ya existe una cuenta registrada en la base de datos externa y en este sitio, inicia sesión.';
+$string['regismoodlenotexdb'] = 'No existe una cuenta registrada ni en este sitio ni en la base de datos externa, regístrate para continuar.';
+$string['regismoodle'] = 'Ya existe una cuenta registrada en este sitio, inicia sesión.';
+$string['regismoodlenotexdb0'] = 'No existe una cuenta en la base de datos externa pero sí en este sitio, inicia sesión.';
+$string['regismoodlenotexdb1'] = 'No existe una cuenta en la base de datos externa pero sí en este sitio, regístrate en la base de datos externa.';
+$string['errorconsulta'] = 'No existe una cuenta en la base de datos externa pero sí en este sitio, regístrate en la base de datos externa.';
+$string['correoregimoodle'] = 'Existe una cuenta registrada con ese correo en este sitio, inténtalo con otro.';
 //$string['regisexdbnotmoodle'] = "Tus datos han sido registrados previamente en la base de datos de la SIGE(UnADM), da clic en continuar para proceder con el registro en el sitio de reforma laboral, (Verifica que los datos sean correctos)";
 
 
