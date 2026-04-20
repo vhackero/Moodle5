@@ -1448,9 +1448,13 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         if (!element) {
                             return;
                         }
-                        const group = element.closest('.form-group');
-                        if (group && Number(config.visible) === 0) {
-                            group.style.display = 'none';
+                        const group = element.closest('.form-group') || element.closest('div') || element.parentElement;
+                        if (Number(config.visible) === 0) {
+                            if (group) {
+                                group.style.display = 'none';
+                            } else {
+                                element.style.display = 'none';
+                            }
                             element.removeAttribute('required');
                             element.disabled = true;
                             return;
