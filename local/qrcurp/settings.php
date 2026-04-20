@@ -43,7 +43,7 @@ if ( $hassiteconfig ) {
         $settings->add(new admin_setting_configtextarea('local_qrcurp/profilefieldslist', get_string('profilefieldslist', 'local_qrcurp'),
             get_string('profilefieldslistinfo', 'local_qrcurp'), $defaultprofilefieldlist, PARAM_RAW, 500));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/formfieldsconfig', get_string('formfieldsconfig', 'local_qrcurp'),
-            get_string('formfieldsconfiginfo', 'local_qrcurp'), "curp|CURP|1\nusername|Nombre de usuario|1\nnombre|Nombre(s)|1\np_apellido|Primer apellido|1\ns_apellido|Segundo apellido|1\nemail|Correo electrónico|1\nid_country|País|1\ncodigo-postal|Código postal|1\ne_residencias|Estado de residencia|1\nmunicipios|Municipio|1\ne_nacimiento|Estado de nacimiento|1\ndate_nacimientos|Fecha de nacimiento|1\nedad|Edad|1\ngenero|Género|1\nocupacion|Ocupación|1\nmatricula|Matrícula|1\nrol|Rol|1", PARAM_RAW, 1200));
+            get_string('formfieldsconfiginfo', 'local_qrcurp'), "curp|CURP|1|1\nusername|Nombre de usuario|1|1\nnombre|Nombre(s)|1|1\np_apellido|Primer apellido|1|1\ns_apellido|Segundo apellido|1|1\nemail|Correo electrónico|1|1\nid_country|País|1|1\ncodigo-postal|Código postal|1|1\ne_residencias|Estado de residencia|1|1\nmunicipios|Municipio|1|1\ne_nacimiento|Estado de nacimiento|1|1\ndate_nacimientos|Fecha de nacimiento|1|1\nedad|Edad|1|1\ngenero|Género|1|1\nocupacion|Ocupación|1|1\nmatricula|Matrícula|1|1\nrol|Rol|1|1", PARAM_RAW, 1200));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/formextrafields', get_string('formextrafields', 'local_qrcurp'),
             get_string('formextrafieldsinfo', 'local_qrcurp'), '', PARAM_RAW, 1200));
 

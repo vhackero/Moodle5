@@ -211,6 +211,7 @@ $esinactivo = '';
 $datosencontrados = null;
 $skipexternalqueries = ($existeerror > 0);
 $curp = '';
+$inativotogeneral = 0;
 
 if (!$skipexternalqueries) {
     $message = 'Consulta fallida: revisar la consulta configurada en externalcurpquery.';
@@ -579,6 +580,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formfieldsconfigraw) as $line) {
     $formfieldconfig[$fieldname] = [
         'label' => $parts[1] ?? $fieldname,
         'visible' => (isset($parts[2]) && (int) $parts[2] === 0) ? 0 : 1,
+        'required' => (isset($parts[3]) && (int) $parts[3] === 0) ? 0 : 1,
     ];
 }
 
@@ -1085,7 +1087,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         $('#rolname').val(text);
                         document.getElementById("user-not-view-info").style.display = 'none'
                         setTimeout(function () {
-                            var inactivoToGeneral = <?=$inativotogeneral ?>;
+                            var inactivoToGeneral = <?= (int)$inativotogeneral ?>;
                             dato = document.getElementById("envia-info").querySelectorAll(".form-control");
                             tam = dato.length;
                             if (inactivoToGeneral == 1) {
@@ -1452,6 +1454,11 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             element.removeAttribute('required');
                             element.disabled = true;
                             return;
+                        }
+                        if (Number(config.required) === 0) {
+                            element.removeAttribute('required');
+                        } else {
+                            element.setAttribute('required', 'required');
                         }
                         if (group && config.label) {
                             const labelContainer = group.querySelector('p');
