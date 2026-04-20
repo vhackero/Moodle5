@@ -74,6 +74,10 @@ Se revisó el flujo de configuración del plugin y se detectaron oportunidades d
      - `5:100,8:200` límites específicos.
      - `*:100,8:200` límite global con excepciones.
 
+10. `rolstudent` cambió de captura manual de ID a selección por combo:
+    - Muestra roles disponibles en Moodle.
+    - Usa por defecto el rol con shortname `student`.
+
 ## Siguientes pasos recomendados
 1. Repetir la migración de SQL parametrizado en `decode.php`, `insertardb.php` y otros archivos con interpolación.
 2. Sustituir uso de `mysqli` directo por API `$DB` cuando aplique o encapsular repositorios para consultas externas.

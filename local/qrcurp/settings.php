@@ -16,6 +16,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 if ( $hassiteconfig ) {
+    global $DB;
 
     // Create the new settings page
     // - in a local plugin this is not defined as standard, so normal $settings->methods will throw an error as
@@ -26,6 +27,14 @@ if ( $hassiteconfig ) {
     $ADMIN->add('localplugins', $settings);
 
     if ($ADMIN->fulltree) {
+        $systemcontext = context_system::instance();
+        $roles = role_fix_names(get_all_roles($systemcontext), $systemcontext, ROLENAME_ORIGINAL);
+        $roleoptions = [];
+        foreach ($roles as $role) {
+            $roleoptions[$role->id] = $role->localname;
+        }
+        $defaultstudentroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'student']);
+
         $settings->add(new admin_setting_configtext('local_qrcurp/dbhost', get_string('dbhost', 'local_qrcurp'),
             get_string('dbhostinfo', 'local_qrcurp'), '', PARAM_HOST, 100));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbport', get_string('dbport', 'local_qrcurp'),
@@ -62,8 +71,8 @@ if ( $hassiteconfig ) {
             get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_RAW, 120));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategorytext', get_string('studentxcategorytext', 'local_qrcurp'),
             get_string('studentxcategorytextinfo', 'local_qrcurp'), '', PARAM_RAW));
-        $settings->add(new admin_setting_configtext('local_qrcurp/rolstudent', get_string('rolstudent', 'local_qrcurp'),
-            get_string('rolstudentinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 3));
+        $settings->add(new admin_setting_configselect('local_qrcurp/rolstudent', get_string('rolstudent', 'local_qrcurp'),
+            get_string('rolstudentinfo', 'local_qrcurp'), $defaultstudentroleid, $roleoptions));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/haygroupespera', get_string('haygroupespera', 'local_qrcurp'),
             get_string('haygroupesperainfo', 'local_qrcurp'),0));
         $settings->add(new admin_setting_configtext('local_qrcurp/namegroupespera', get_string('namegroupespera', 'local_qrcurp'),
