@@ -207,12 +207,12 @@ if(isset($consultamoodle[0])) {
     $estaregis = $consultamoodle[0]; //SE EXTRAE EL USUARIO CON ESA CURP
 }
 $encuentracurp = 0;
+$esinactivo = '';
+$datosencontrados = null;
+$skipexternalqueries = ($existeerror > 0);
+$curp = '';
 
-if($existeerror >0){
-    //NO SE EJECUTA LA CONSULTA
-    redirect('index.php', get_string('dbconnerr','local_qrcurp') , null, \core\output\notification::NOTIFY_INFO);
-}else{
-    $esinactivo = '';
+if (!$skipexternalqueries) {
     $message = 'Consulta fallida: revisar la consulta configurada en externalcurpquery.';
     $datos = local_qrcurp_execute_template_query($DBEXTERNAL, $consulta, ['curp' => $campos[0]]);
     if ($datos === false) {
@@ -390,7 +390,7 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
     //Validación de numero de roles para selccionar entre cada uno de ellos
     $masdeunrol = 0;
     $listahtmlroles = '';
-    if($esinactivo == ''){
+    if($esinactivo == '' && !$skipexternalqueries){
         $listaroles = "SELECT
                 DISTINCT(ps.rol_id),
                 pa.contrasenia,
@@ -512,7 +512,7 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
 
     //Valida si solo aceptará publico en general omitiendo los de la base de datos externa
     $omiteuserdbexterna = 0;
-    if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND $datosencontrados->num_rows > 0 ){
+    if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND isset($datosencontrados) AND $datosencontrados->num_rows > 0 ){
         $omiteuserdbexterna = 1;
     }
 
