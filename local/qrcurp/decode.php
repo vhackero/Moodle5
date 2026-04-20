@@ -11,6 +11,46 @@ require_once('notificaciones.php');
 require_once('globalVariables.php');
 require_once('AvisosdePrivacidad.php');
 
+use local_qrcurp\local\config;
+
+/**
+ * Ejecuta una consulta SQL con placeholders tipo {{param}} de forma preparada.
+ *
+ * @param mysqli $connection
+ * @param string $template
+ * @param array $values
+ * @return mysqli_result|false
+ */
+function local_qrcurp_execute_template_query(mysqli $connection, string $template, array $values) {
+    $params = [];
+    $sql = preg_replace_callback('/\{\{([a-z_]+)\}\}/', static function($matches) use ($values, &$params) {
+        $key = $matches[1];
+        if (!array_key_exists($key, $values)) {
+            return $matches[0];
+        }
+        $params[] = (string) $values[$key];
+        return '?';
+    }, $template);
+
+    $statement = $connection->prepare($sql);
+    if (!$statement) {
+        return false;
+    }
+
+    if (!empty($params)) {
+        $types = str_repeat('s', count($params));
+        $bindargs = [$types];
+        foreach ($params as $index => $param) {
+            $bindargs[] = &$params[$index];
+        }
+        call_user_func_array([$statement, 'bind_param'], $bindargs);
+    }
+
+    $statement->execute();
+
+    return $statement->get_result();
+}
+
 $PAGE->set_url(new moodle_url('/local/qrcurp/decode.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title('Registro');
@@ -127,7 +167,7 @@ $remoteinsertdb = $DBEXTERNAL->dbinsert;        //INFORMACIÓN PARA SABER SI SE 
 
 //CONSULTA PRINCIPAL CON LA QUE TRABAJA EL FORMULARIO  EN LA BD EXTERNA
 //$consulta ="SELECT curp FROM $remotedbtable where curp = '$campos[0]'"; //REVISAR SI LA COLUMNA ES LA CORRECTA
-$consulta = "SELECT curp FROM tsige_persona WHERE curp = '$campos[0]'";
+$consulta = config::get_string('externalcurpquery', "SELECT curp FROM tsige_persona WHERE curp = '{{curp}}'");
 
 //VALIDACIÓN PARA VERIFICAR QUE EL USUARIO NO SE ENCUENTRA REGISTRADO
 
@@ -169,10 +209,11 @@ if($existeerror >0){
     redirect('index.php', get_string('dbconnerr','local_qrcurp') , null, \core\output\notification::NOTIFY_INFO);
 }else{
     $esinactivo = '';
-    $message = 'Consulta fallida: ' . mysqli_error($DBEXTERNAL);
-    $datos = mysqli_query($DBEXTERNAL,$consulta)or die(
-    redirect('index.php', $message .\core\notification::error("Informar al administrador del sitio.") , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-    );
+    $message = 'Consulta fallida: revisar la consulta configurada en externalcurpquery.';
+    $datos = local_qrcurp_execute_template_query($DBEXTERNAL, $consulta, ['curp' => $campos[0]]);
+    if ($datos === false) {
+        redirect('index.php', $message .\core\notification::error("Informar al administrador del sitio.") , null, \core\output\notification::NOTIFY_ERROR);
+    }
     //EXTRAE LA CURP ENCONTRADA EN LA BASE DE DATOS EXTERNA
     $curp = ''; //INICIA VACIO
     while($row = mysqli_fetch_array($datos)) {
@@ -257,10 +298,15 @@ if($existeerror >0){
          INNER JOIN tsige_rol as r ON r.rol_id = ps.rol_id
 WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVING MAX(ps.rol_id) IS NOT NULL";
 
-            $message = "Error al obtener la data en la base de datos externa, revisar que los nombres de los campos sean correctos";
-            $datosencontrados = mysqli_query($DBEXTERNAL,$datosconsulta)or die(
-            redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-            );
+            $datosconsulta = config::get_string('externaluserinfoquery', $datosconsulta);
+            $message = "Error al obtener la data en la base de datos externa, revisar que la consulta configurada sea correcta.";
+            $datosencontrados = local_qrcurp_execute_template_query($DBEXTERNAL, $datosconsulta, [
+                'curp' => $curp,
+                'today' => $fechaactual,
+            ]);
+            if ($datosencontrados === false) {
+                redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR);
+            }
 
             if($datosencontrados->num_rows == 0 AND $registropublicogeneral == 1){
 //                echo "El usuario es inactivo";

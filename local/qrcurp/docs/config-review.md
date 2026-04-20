@@ -84,6 +84,11 @@ Se revisó el flujo de configuración del plugin y se detectaron oportunidades d
     - Instalación automática opcional de campos faltantes.
     - Enlace directo al instalador manual `installUserFields.php`.
 
+12. Se agregó configuración para consultas SQL externas:
+    - `externalcurpquery` para validación inicial de CURP.
+    - `externaluserinfoquery` para consulta de información del usuario.
+    - Soporte de placeholders `{{curp}}` y `{{today}}` ejecutados con prepared statements.
+
 ## Siguientes pasos recomendados
 1. Repetir la migración de SQL parametrizado en `decode.php`, `insertardb.php` y otros archivos con interpolación.
 2. Sustituir uso de `mysqli` directo por API `$DB` cuando aplique o encapsular repositorios para consultas externas.
