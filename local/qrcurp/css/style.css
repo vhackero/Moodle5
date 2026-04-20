@@ -1,0 +1,87 @@
+#resultado {
+    background-color: #EA4D4D;
+    color: white;
+    font-weight: bold;
+}
+#resultado.ok {
+    background-color: #5BC556;
+}
+.checkeable input {
+    display: none;
+}
+.checkeable svg {
+    width: 50px;
+    border: 5px solid transparent;
+}
+.checkeable input {
+    display: none;
+}
+.checkeable input:checked  + svg {
+    background-color: #5BC556;
+}
+.colors{
+    background-image: url("../iconos/Background.png");
+}
+#medio{
+    background-color: transparent;
+}
+.row{
+    background-color: transparent;
+
+}
+p.note {
+    font-size: 1rem;
+    color: red;
+}
+
+label span {
+    font-size: 1rem;
+}
+
+label.error {
+    color: red;
+    font-size: 1rem;
+    display: block;
+    margin-top: 5px;
+}
+
+input.error {
+    border: 2px solid red;
+    font-weight: 300;
+    color: red;
+}
+.password-icon {
+    float: right;
+    position: relative;
+    margin: -27px 10px 0 0;
+    cursor: pointer;
+}
+.anios-position {
+    float: right;
+    position: relative;
+    margin: -33px 40px 0 0;
+    cursor: pointer;
+}
+.check-size {
+    width:25px;
+    height:25px;
+}
+.control-data-form{
+    pointer-events: none;
+}
+.swal-button--catch{
+    background-color: #611232 !important;
+}
+.swal-button--confirm{
+    background-color: #611232 !important;
+}
+.btn-success{
+    background-color: #611232 !important;
+
+}
+.swal-modal {
+    width: 70% !important;
+}
+.red-text{
+    color: red;
+}
