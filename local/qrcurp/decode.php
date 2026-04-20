@@ -563,6 +563,49 @@ $urlsession = $CFG->wwwroot.'/login/index.php';
 $registramoodle = 'registramoodle.php';
 $urlprincipal = $CFG->wwwroot.'/index.php';
 
+// Configuración dinámica de campos del formulario.
+$formfieldsconfigraw = config::get_string('formfieldsconfig');
+$formfieldconfig = [];
+foreach (preg_split('/\r\n|\r|\n/', $formfieldsconfigraw) as $line) {
+    $line = trim($line);
+    if ($line === '' || strpos($line, '|') === false) {
+        continue;
+    }
+    $parts = array_map('trim', explode('|', $line));
+    $fieldname = $parts[0] ?? '';
+    if ($fieldname === '') {
+        continue;
+    }
+    $formfieldconfig[$fieldname] = [
+        'label' => $parts[1] ?? $fieldname,
+        'visible' => (isset($parts[2]) && (int) $parts[2] === 0) ? 0 : 1,
+    ];
+}
+
+$formextrafieldsraw = config::get_string('formextrafields');
+$formextrafields = [];
+foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
+    $line = trim($line);
+    if ($line === '' || strpos($line, '|') === false) {
+        continue;
+    }
+    $parts = array_map('trim', explode('|', $line));
+    $shortname = $parts[0] ?? '';
+    if ($shortname === '') {
+        continue;
+    }
+    $type = $parts[2] ?? 'text';
+    if (!in_array($type, ['text', 'email', 'number', 'date'])) {
+        $type = 'text';
+    }
+    $formextrafields[] = [
+        'shortname' => $shortname,
+        'label' => $parts[1] ?? ucfirst(str_replace('_', ' ', $shortname)),
+        'type' => $type,
+        'required' => isset($parts[3]) && (int) $parts[3] === 1,
+    ];
+}
+
 ?>
     <head>
         <script src="js/jquery.min.js"></script>
@@ -1339,6 +1382,20 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                             </label>
                             <textarea id="register-goals" type="textarea" name="goals" class="input-block" data-errormsg-required="Tell us your goals."></textarea>
                         </div>
+                        <?php if (!empty($formextrafields)) { ?>
+                            <?php foreach ($formextrafields as $extrafield) { ?>
+                                <div class="form-group dynamic-extra-field">
+                                    <p><?php echo s($extrafield['label']); ?>:
+                                        <?php if ($extrafield['required']) { ?><span class="red-text"> *</span><?php } ?>
+                                        <input class="form-control"
+                                               id="extra_<?php echo s($extrafield['shortname']); ?>"
+                                               name="extra_fields[<?php echo s($extrafield['shortname']); ?>]"
+                                               type="<?php echo s($extrafield['type']); ?>"
+                                            <?php if ($extrafield['required']) { ?>required<?php } ?>>
+                                    </p>
+                                </div>
+                            <?php } ?>
+                        <?php } ?>
                         <br>
                         <?php
                         ($categoryid=='')?$categoryid=0:$categoryid;
@@ -1377,6 +1434,38 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                     </form>
                 </div>
             </div>
+            <script>
+                (function() {
+                    const fieldConfig = <?php echo json_encode($formfieldconfig); ?> || {};
+                    Object.keys(fieldConfig).forEach(function(fieldName) {
+                        const config = fieldConfig[fieldName] || {};
+                        let element = document.querySelector('[name="' + fieldName + '"]');
+                        if (!element) {
+                            element = document.getElementById(fieldName);
+                        }
+                        if (!element) {
+                            return;
+                        }
+                        const group = element.closest('.form-group');
+                        if (group && Number(config.visible) === 0) {
+                            group.style.display = 'none';
+                            element.removeAttribute('required');
+                            element.disabled = true;
+                            return;
+                        }
+                        if (group && config.label) {
+                            const labelContainer = group.querySelector('p');
+                            if (labelContainer) {
+                                const current = labelContainer.innerHTML;
+                                const separator = current.indexOf(':');
+                                if (separator !== -1) {
+                                    labelContainer.innerHTML = config.label + current.substring(separator);
+                                }
+                            }
+                        }
+                    });
+                })();
+            </script>
             <script src="js/sweetalert.min.js"></script>
             <script src="js/alertsregistro.js?version=1"></script>
             <!--            <script src="https://framework-gb.cdn.gob.mx/gobmx.js"></script>-->

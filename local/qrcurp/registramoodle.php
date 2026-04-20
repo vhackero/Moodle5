@@ -67,6 +67,42 @@ function save_registration_origin_to_profile($userid, $origin) {
     }
 }
 
+/**
+ * Guarda campos extra dinámicos en user_info_data cuando existe su shortname.
+ *
+ * @param int $userid
+ * @param array $extrafields
+ * @return void
+ */
+function save_dynamic_profile_fields($userid, array $extrafields): void {
+    global $DB;
+
+    foreach ($extrafields as $shortname => $value) {
+        $shortname = clean_param($shortname, PARAM_ALPHANUMEXT);
+        if ($shortname === '') {
+            continue;
+        }
+        $field = $DB->get_record('user_info_field', ['shortname' => $shortname]);
+        if (!$field) {
+            continue;
+        }
+        $existing = $DB->get_record('user_info_data', ['userid' => $userid, 'fieldid' => $field->id]);
+        if ($existing) {
+            $existing->data = (string) $value;
+            $existing->dataformat = 0;
+            $existing->timemodified = time();
+            $DB->update_record('user_info_data', $existing);
+        } else {
+            $DB->insert_record('user_info_data', [
+                'userid' => $userid,
+                'fieldid' => $field->id,
+                'data' => (string) $value,
+                'dataformat' => 0,
+            ]);
+        }
+    }
+}
+
 define('GROUPENTIDAD',10001);
 define('GROUPMUNICIPIO',10002);
 define('GROUPENTIDADMUNICIPIO',10003);
@@ -109,6 +145,7 @@ $idcourse = $_POST['idcourse'];
 $idcreategroup = $_POST['typegrouping'];
 $namecategory = $_POST['namecategory'];
 $typeuser = $_POST['typeuser'];
+$extrafields = optional_param_array('extra_fields', [], PARAM_RAW_TRIMMED);
 
 //Extra data formulario de registro
 $curpvalida = $_POST['curpvalida'];
@@ -240,6 +277,7 @@ if($dataemail != '' || $dataname != '') {
                 $recordinfodata = $DB->insert_record('user_info_data', array('userid' => $iduserinsert, 'fieldid' => $pruebadatos->id, 'data' => $datosainsertar[$i], 'dataformat' => 1));
             }
         }
+        save_dynamic_profile_fields($iduserinsert, $extrafields);
 
         //Datos extras a importar 19-08-2024
         $insertafiel = $DB->get_record('user_info_field', array('shortname' => 'curpvalida'));

@@ -89,6 +89,12 @@ Se revisó el flujo de configuración del plugin y se detectaron oportunidades d
     - `externaluserinfoquery` para consulta de información del usuario.
     - Soporte de placeholders `{{curp}}` y `{{today}}` ejecutados con prepared statements.
 
+13. Se agregó configuración dinámica del formulario:
+    - `formfieldsconfig` para renombrar y mostrar/ocultar campos existentes.
+    - `formextrafields` para agregar campos nuevos dinámicos.
+    - Los campos dinámicos se guardan en `user_info_data` si existe su shortname en perfil.
+    - Se advierte en settings cuando un campo extra no está en `profilefieldslist`.
+
 ## Siguientes pasos recomendados
 1. Repetir la migración de SQL parametrizado en `decode.php`, `insertardb.php` y otros archivos con interpolación.
 2. Sustituir uso de `mysqli` directo por API `$DB` cuando aplique o encapsular repositorios para consultas externas.
