@@ -975,16 +975,23 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 }
 
                 var read = 0;
-                $("#texto-terminos-condiciones").on("scroll",function () {
-                    let element = document.getElementById("texto-terminos-condiciones");
-                    if (element.offsetHeight + element.scrollTop >= element.scrollHeight) {
+                if (document.getElementById("texto-terminos-condiciones") != null) {
+                    $("#texto-terminos-condiciones").on("scroll",function () {
+                        let element = document.getElementById("texto-terminos-condiciones");
+                        if (element.offsetHeight + element.scrollTop >= element.scrollHeight) {
+                            document.getElementById("register-terms_of_service").disabled = false;
+                            document.getElementById("register-terms_of_service").checked = true;
+                            read = 1;
+                            $('#leer-aviso').css('display','none');
+                            $('#readall-terminos').css('display','none');
+                        }
+                    });
+                } else {
+                    read = 1;
+                    if (document.getElementById("register-terms_of_service") != null) {
                         document.getElementById("register-terms_of_service").disabled = false;
-                        document.getElementById("register-terms_of_service").ckecked = true;
-                        read = 1;
-                        $('#leer-aviso').css('display','none');
-                        $('#readall-terminos').css('display','none');
                     }
-                });
+                }
 
                 $('#aviso-privacidad').click(function (){
                     if(read != 1){
@@ -1410,11 +1417,13 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         <br>
                         <?php
                         ($categoryid=='')?$categoryid=0:$categoryid;
-                        echo avisoDePrivacidad($categoryid);
+                        $privacynoticehtml = avisoDePrivacidad($categoryid);
+                        $hasprivacynotice = trim(strip_tags($privacynoticehtml)) !== '';
+                        echo $privacynoticehtml;
                         ?>
                         <br>
                         <label for="register-terms_of_service">
-                            <input id="register-terms_of_service" type="checkbox" disabled name="terms_of_service" class="input-block checkbox check-size" required title="Debe aceptar los Términos de Servicio de <?=$NAMEPLATAFORMQRCURP?>" >
+                            <input id="register-terms_of_service" type="checkbox" <?php if ($hasprivacynotice) { ?>disabled<?php } ?> name="terms_of_service" class="input-block checkbox check-size" required title="Debe aceptar los Términos de Servicio de <?=$NAMEPLATAFORMQRCURP?>" >
                             <u style="cursor: pointer;  text-decoration: underline; color: darkblue;">
                                 <span class="red-text" id="leer-aviso" style="display: none">Debes leer el aviso de privacidad.</span>
                                 <a id="aviso-privacidad">He leído y acepto el Aviso de privacidad</a>
