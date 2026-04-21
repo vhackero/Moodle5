@@ -1189,16 +1189,16 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         <input type="hidden" name="is_saberes_mx" value="<?php echo $is_saberes_mx ? '1' : '0'; ?>">
 
                         <div class="form-group">
-                            <p>CURP: <input style="text-transform:uppercase" class="form-control" id = "curp" name="curp" readonly type="text" value="<?php echo $campos[0];?>"></p>
+                            <p>CURP: <input style="text-transform:uppercase" class="form-control" id = "curp" name="curp" type="text" value="<?php echo $campos[0];?>"></p>
                         </div>
                         <div class="form-group">
-                            <p>Nombre de usuario:<span class="red-text"> *</span><input readonly class="form-control" id= "username" name="username" type="text" value="<?php echo $username;?>" required pattern="[a-z]{2,254}" title="Nombre de usuario: solo puede contener letras minúsculas"></p>
+                            <p>Nombre de usuario:<span class="red-text"> *</span><input class="form-control" id= "username" name="username" type="text" value="<?php echo $username;?>" required pattern="[a-z]{2,254}" title="Nombre de usuario: solo puede contener letras minúsculas"></p>
                         </div>
                         <div class="form-group">
                             <p id="contra">Contraseña:
                                 <span class="red-text"> *</span>
                                 <br>
-                                <input title="Este campo es requerido." readonly class="form-control password" id="pass" name="pass" type="password" >
+                                <input title="Este campo es requerido." class="form-control password" id="pass" name="pass" type="password" >
                                 <span class="fa fa-fw fa-eye password-icon show-password" onclick="viewPassword();"></span>
                             </p>
                             <p id="validate-pass" style="display: none; background-color: yellow"><b>La contraseña debe tener al menos 8-12 caracteres, al menos 1 dígito(s), al menos 1 letra(s) minúscula(s), al menos 1 letra(s) mayúscula(s), al menos 1(s) carácter(es) especial(es) como *, -, o #</b></p>
