@@ -52,7 +52,6 @@ function save_registration_origin_to_profile($userid, $origin) {
     if ($existing) {
         // Actualizar registro existente
         $existing->data = $origin;
-        $existing->timemodified = time();
         return $DB->update_record('user_info_data', $existing);
     } else {
         // Crear nuevo registro
@@ -61,7 +60,6 @@ function save_registration_origin_to_profile($userid, $origin) {
         $profile_data->fieldid = $field->id;
         $profile_data->data = $origin;
         $profile_data->dataformat = 0;
-        $profile_data->timemodified = time();
 
         return $DB->insert_record('user_info_data', $profile_data);
     }
@@ -90,7 +88,6 @@ function save_dynamic_profile_fields($userid, array $extrafields): void {
         if ($existing) {
             $existing->data = (string) $value;
             $existing->dataformat = 0;
-            $existing->timemodified = time();
             $DB->update_record('user_info_data', $existing);
         } else {
             $DB->insert_record('user_info_data', [
