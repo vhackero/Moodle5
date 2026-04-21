@@ -850,6 +850,8 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 var idcategoria = "<?php echo $categoryid?>";
                 var idcurso = "<?php echo $idcourse?>";
                 var idgrupo = "<?php echo $typegrouping?>";
+                var createGroupEnrol = <?= (int)$gruoactive ?>;
+                var createGroupPatternId = "<?= (int)$gruoidcreate ?>";
 
                 if (idcategoria != 0) {
                     $("<div>", {
@@ -916,9 +918,11 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         document.getElementById('idcourse').value = idcurso;
                         setTimeout("$('#categorias').val($('#idcourse').val());", 2000);
                     }
-                    setTimeout("groupsHorarios()", 3000);
+                    if (!(createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "")) {
+                        setTimeout("groupsHorarios()", 3000);
+                    }
 
-                    if (idcategoria != 0) {
+                    if (idcategoria != 0 && !(createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "")) {
                         $("<div>", {
                             'class': 'form-group'
                         }).append(
@@ -961,6 +965,11 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         if (idgrupo != 0 ) {
                             document.getElementById('typegrouping').value = idgrupo;
                             setTimeout("$('#grupos').val($('#typegrouping').val());", 4000);
+                        }
+                    } else if (createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "") {
+                        document.getElementById('typegrouping').value = createGroupPatternId;
+                        if (document.getElementById("combo-grupos") != null) {
+                            document.getElementById("combo-grupos").style.display = "none";
                         }
                     }
                 }
