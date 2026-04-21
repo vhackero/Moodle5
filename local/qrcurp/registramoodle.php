@@ -100,6 +100,27 @@ function save_dynamic_profile_fields($userid, array $extrafields): void {
     }
 }
 
+/**
+ * Normaliza el código de país para cumplir el formato de la columna user.country.
+ *
+ * @param string $countrycode
+ * @return string
+ */
+function local_qrcurp_normalize_country(string $countrycode): string {
+    $countrycode = strtoupper(trim($countrycode));
+    $countrycode = clean_param($countrycode, PARAM_ALPHANUMEXT);
+    if (strlen($countrycode) !== 2) {
+        return 'MX';
+    }
+
+    $countries = get_string_manager()->get_list_of_countries(true);
+    if (!array_key_exists($countrycode, $countries)) {
+        return 'MX';
+    }
+
+    return $countrycode;
+}
+
 define('GROUPENTIDAD',10001);
 define('GROUPMUNICIPIO',10002);
 define('GROUPENTIDADMUNICIPIO',10003);
@@ -131,7 +152,8 @@ $fechanaci = $_POST['date_nacimientos'];($fechanaci== "")?$fechanaci = "00-00-00
 $estado = $_POST['e_nacimiento'];($estado == "")?$estado = "N/A" : $estado = $_POST['e_nacimiento'];
 $municipio = $_POST['municipios'];($municipio == "")?$municipio = "N/A" : $municipio = $_POST['municipios'];
 $ocupacion = $_POST['ocupacion']; ($ocupacion == "")? $ocupacion = "N/A": $ocupacion = $_POST['ocupacion'];
-$pais = $_POST['id_country']; ($pais == "")? $pais = "N/A": $pais = $_POST['id_country'];
+$pais = $_POST['id_country'] ?? 'MX';
+$pais = local_qrcurp_normalize_country($pais);
 $cp = $_POST['codigo-postal']; ($cp == "")?$cp = "N/A" : $cp = $_POST['codigo-postal'];
 $edad = $_POST['edad'];
 $matricula = $_POST['matricula']; ($matricula == "")?$matricula = "N/A" : $matricula = $_POST['matricula'];
