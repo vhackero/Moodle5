@@ -16,6 +16,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 if ( $hassiteconfig ) {
+    global $DB;
 
     // Create the new settings page
     // - in a local plugin this is not defined as standard, so normal $settings->methods will throw an error as
@@ -26,22 +27,83 @@ if ( $hassiteconfig ) {
     $ADMIN->add('localplugins', $settings);
 
     if ($ADMIN->fulltree) {
+        $systemcontext = context_system::instance();
+        $roles = role_fix_names(get_all_roles($systemcontext), $systemcontext, ROLENAME_ORIGINAL);
+        $roleoptions = [];
+        foreach ($roles as $role) {
+            $roleoptions[$role->id] = $role->localname;
+        }
+        $defaultstudentroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'student']);
+        $defaultprofilefieldlist = implode(',', array_keys(\local_qrcurp\local\profile_fields_manager::default_fields()));
+
+        $settings->add(new admin_setting_configcheckbox('local_qrcurp/validateprofilefields', get_string('validateprofilefields', 'local_qrcurp'),
+            get_string('validateprofilefieldsinfo', 'local_qrcurp'), 1));
+        $settings->add(new admin_setting_configcheckbox('local_qrcurp/autoinstallprofilefields', get_string('autoinstallprofilefields', 'local_qrcurp'),
+            get_string('autoinstallprofilefieldsinfo', 'local_qrcurp'), 0));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/profilefieldslist', get_string('profilefieldslist', 'local_qrcurp'),
+            get_string('profilefieldslistinfo', 'local_qrcurp'), $defaultprofilefieldlist, PARAM_RAW, 500));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/formfieldsconfig', get_string('formfieldsconfig', 'local_qrcurp'),
+            get_string('formfieldsconfiginfo', 'local_qrcurp'), "curp|CURP|1|1\nusername|Nombre de usuario|1|1\nnombre|Nombre(s)|1|1\np_apellido|Primer apellido|1|1\ns_apellido|Segundo apellido|1|1\nemail|Correo electrónico|1|1\nid_country|País|1|1\ncodigo-postal|Código postal|1|1\ne_residencias|Estado de residencia|1|1\nmunicipios|Municipio|1|1\ne_nacimiento|Estado de nacimiento|1|1\ndate_nacimientos|Fecha de nacimiento|1|1\nedad|Edad|1|1\ngenero|Género|1|1\nocupacion|Ocupación|1|1\nmatricula|Matrícula|1|1\nrol|Rol|1|1", PARAM_RAW, 1200));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/formextrafields', get_string('formextrafields', 'local_qrcurp'),
+            get_string('formextrafieldsinfo', 'local_qrcurp'), '', PARAM_RAW, 1200));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/privacynoticehtml', get_string('privacynoticehtml', 'local_qrcurp'),
+            get_string('privacynoticehtmlinfo', 'local_qrcurp'), '', PARAM_RAW, 5000));
+
+        $missingprofilefields = [];
+        if ((int) get_config('local_qrcurp', 'validateprofilefields') === 1) {
+            $configuredfields = \local_qrcurp\local\profile_fields_manager::get_configured_shortnames();
+            if ((int) get_config('local_qrcurp', 'autoinstallprofilefields') === 1) {
+                \local_qrcurp\local\profile_fields_manager::ensure_fields($configuredfields);
+            }
+            $missingprofilefields = \local_qrcurp\local\profile_fields_manager::get_missing_fields($configuredfields);
+        }
+        $installerurl = new moodle_url('/local/qrcurp/installUserFields.php');
+        if (empty($missingprofilefields)) {
+            $profilefieldsstatus = get_string('profilefieldsok', 'local_qrcurp');
+        } else {
+            $profilefieldsstatus = get_string('profilefieldsmissing', 'local_qrcurp', implode(', ', $missingprofilefields));
+            $profilefieldsstatus .= '<br><a href="'.$installerurl.'">'.get_string('profilefieldsinstalllink', 'local_qrcurp').'</a>';
+        }
+
+        $extrafieldsraw = (string) get_config('local_qrcurp', 'formextrafields');
+        $extrafieldshortnames = [];
+        foreach (preg_split('/\r\n|\r|\n/', $extrafieldsraw) as $line) {
+            $line = trim($line);
+            if ($line === '' || strpos($line, '|') === false) {
+                continue;
+            }
+            $parts = array_map('trim', explode('|', $line));
+            if (!empty($parts[0])) {
+                $extrafieldshortnames[] = $parts[0];
+            }
+        }
+        $extrafieldshortnames = array_unique($extrafieldshortnames);
+        $missinginprofilelist = array_diff($extrafieldshortnames, $configuredfields ?? []);
+        if (!empty($missinginprofilelist)) {
+            $profilefieldsstatus .= '<br>'.get_string('profilefieldsextrawarning', 'local_qrcurp', implode(', ', $missinginprofilelist));
+        }
+        $settings->add(new admin_setting_heading('local_qrcurp/profilefieldsstatus', get_string('profilefieldsstatus', 'local_qrcurp'), $profilefieldsstatus));
+
         $settings->add(new admin_setting_configtext('local_qrcurp/dbhost', get_string('dbhost', 'local_qrcurp'),
-            get_string('dbhostinfo', 'local_qrcurp'), '', PARAM_URL, 30));
+            get_string('dbhostinfo', 'local_qrcurp'), '', PARAM_HOST, 100));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbport', get_string('dbport', 'local_qrcurp'),
             get_string('dbportinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbname', get_string('dbname', 'local_qrcurp'),
             get_string('dbnameinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbtable', get_string('dbtable', 'local_qrcurp'),
             get_string('dbtableinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
-        $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dbuser', get_string('dbuser', 'local_qrcurp'),
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/externalcurpquery', get_string('externalcurpquery', 'local_qrcurp'),
+            get_string('externalcurpqueryinfo', 'local_qrcurp'), "SELECT curp FROM tsige_persona WHERE curp = '{{curp}}'", PARAM_RAW, 500));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/externaluserinfoquery', get_string('externaluserinfoquery', 'local_qrcurp'),
+            get_string('externaluserinfoqueryinfo', 'local_qrcurp'), "SELECT pa.curp,pa.nombre,pa.primer_apellido,pa.segundo_apellido,pa.usuario,pa.contrasenia,MAX(ps.rol_id),r.nombre,ps.matricula,pa.fecha_nacimiento,pa.sexo,(SELECT DISTINCT LOWER(con.dato_contacto) FROM tsige_contacto con WHERE con.tipo_contacto_id = 4 AND con.vigente = 1 AND con.dato_contacto NOT LIKE '%@unad%' AND con.persona_id = ps.persona_id) 'Correo Institucional',(SELECT edo.v_estado FROM (SELECT SUBSTRING(pp.curp, 12, 2) ed, pp.persona_id 'per' FROM tsige_persona pp) x INNER JOIN cat_estado edo ON edo.v_abreviacion = x.ed WHERE x.per = pa.persona_id) 'Estado de Nacimiento',TIMESTAMPDIFF(YEAR, pa.fecha_nacimiento, '{{today}}') 'Edad',(SELECT DISTINCT LOWER(con.dato_contacto) FROM tsige_contacto con WHERE con.tipo_contacto_id = 4 AND con.vigente = 1 AND con.dato_contacto NOT LIKE '%@unad%' AND con.persona_id = ps.persona_id) email,(SELECT IF(cp.v_codigopostal IS NULL, '-', cp.v_codigopostal) FROM direccion d LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal WHERE d.i_fk_persona = ps.persona_id AND d.b_activo = 1 AND d.b_esAlternativo = 0) 'Codigo Postal',(SELECT IF(muni.v_municipio IS NULL, '-', muni.v_municipio) FROM direccion d LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio WHERE d.i_fk_persona = ps.persona_id AND d.b_activo = 1 AND d.b_esAlternativo = 0) 'Municipio de residencia',(SELECT IF(edo.v_estado IS NULL, '-', edo.v_estado) FROM direccion d LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio LEFT JOIN cat_estado edo ON edo.i_pk_estado = muni.i_fk_estado WHERE d.i_fk_persona = ps.persona_id AND d.b_activo = 1 AND d.b_esAlternativo = 0) 'Estado de residencia',(SELECT IF(pai.vc_clavealfa2 IS NULL, '-', pai.vc_clavealfa2) FROM direccion d LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio LEFT JOIN cat_estado edo ON edo.i_pk_estado = muni.i_fk_estado LEFT JOIN cat_pais pai ON pai.i_pk_pais = edo.i_fk_pais WHERE d.i_fk_persona = ps.persona_id AND d.b_activo = 1 AND d.b_esAlternativo = 0) 'País de residencia',ps.activo 'Usuario activo',(SELECT tb.descripcion FROM tsige_solicitud_baja s INNER JOIN tsige_cat_tipo_baja tb ON tb.tipo_baja_id = s.tipo_baja_id WHERE s.tipo_baja_id = 6 AND s.solicitante_id = ps.perfil_id) 'Tipo de baja' FROM tsige_persona as pa INNER JOIN tsige_perfiles as ps ON ps.persona_id = pa.persona_id INNER JOIN tsige_rol as r ON r.rol_id = ps.rol_id WHERE ps.activo = 1 and pa.curp = '{{curp}}' AND ps.matricula NOT LIKE 'AS%' HAVING MAX(ps.rol_id) IS NOT NULL", PARAM_RAW, 5000));
+        $settings->add(new admin_setting_configtext('local_qrcurp/dbuser', get_string('dbuser', 'local_qrcurp'),
             get_string('dbuserinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dbpass', get_string('dbpass', 'local_qrcurp'),
             get_string('dbpassinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/dbinsert', get_string('dbinsert', 'local_qrcurp'),
             get_string('dbinsertinfo', 'local_qrcurp'), 0));
-        $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dateregistro', get_string('dateregistro', 'local_qrcurp'),
-            get_string('dateregistroinfo', 'local_qrcurp'), '', PARAM_URL, 30));
+        $settings->add(new admin_setting_configtext('local_qrcurp/dateregistro', get_string('dateregistro', 'local_qrcurp'),
+            get_string('dateregistroinfo', 'local_qrcurp'), '', PARAM_TEXT, 30));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/textregistro', get_string('textregistro', 'local_qrcurp'),
             get_string('textregistroinfo', 'local_qrcurp'), '', PARAM_RAW, 500));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/dateperiodos', get_string('dateperiodos', 'local_qrcurp'),
@@ -58,12 +120,12 @@ if ( $hassiteconfig ) {
             get_string('rolteacherinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 3));
         $settings->add(new admin_setting_configtext('local_qrcurp/limitegroup', get_string('limitegroup', 'local_qrcurp'),
             get_string('limitegroupinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 5));
-        $settings->add(new admin_setting_configtext('local_qrcurp/studentxcategory', get_string('studentxcategory', 'local_qrcurp'),
-            get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_ALPHANUM));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategory', get_string('studentxcategory', 'local_qrcurp'),
+            get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_RAW, 120));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategorytext', get_string('studentxcategorytext', 'local_qrcurp'),
             get_string('studentxcategorytextinfo', 'local_qrcurp'), '', PARAM_RAW));
-        $settings->add(new admin_setting_configtext('local_qrcurp/rolstudent', get_string('rolstudent', 'local_qrcurp'),
-            get_string('rolstudentinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 3));
+        $settings->add(new admin_setting_configselect('local_qrcurp/rolstudent', get_string('rolstudent', 'local_qrcurp'),
+            get_string('rolstudentinfo', 'local_qrcurp'), $defaultstudentroleid, $roleoptions));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/haygroupespera', get_string('haygroupespera', 'local_qrcurp'),
             get_string('haygroupesperainfo', 'local_qrcurp'),0));
         $settings->add(new admin_setting_configtext('local_qrcurp/namegroupespera', get_string('namegroupespera', 'local_qrcurp'),
@@ -91,7 +153,7 @@ if ( $hassiteconfig ) {
         $settings->add(new admin_setting_configtext('local_qrcurp/mailsupport', get_string('mailsupport', 'local_qrcurp'),
             get_string('mailsupportinfo', 'local_qrcurp'),'', PARAM_RAW, 80));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbcatalogoshost', get_string('dbcatalogoshost', 'local_qrcurp'),
-            get_string('dbcatalogoshostinfo', 'local_qrcurp'), '', PARAM_URL, 30));
+            get_string('dbcatalogoshostinfo', 'local_qrcurp'), '', PARAM_HOST, 100));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbcatalogos', get_string('dbcatalogos', 'local_qrcurp'),
             get_string('dbcatalogosinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dbcatalogosuser', get_string('dbcatalogosuser', 'local_qrcurp'),

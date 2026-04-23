@@ -11,6 +11,50 @@ require_once('notificaciones.php');
 require_once('globalVariables.php');
 require_once('AvisosdePrivacidad.php');
 
+use local_qrcurp\local\config;
+
+/**
+ * Ejecuta una consulta SQL con placeholders tipo {{param}} de forma preparada.
+ *
+ * @param mysqli $connection
+ * @param string $template
+ * @param array $values
+ * @return mysqli_result|false
+ */
+function local_qrcurp_execute_template_query(mysqli $connection, string $template, array $values) {
+    if (trim($template) === '') {
+        return false;
+    }
+
+    $params = [];
+    $sql = preg_replace_callback('/\{\{([a-z_]+)\}\}/', static function($matches) use ($values, &$params) {
+        $key = $matches[1];
+        if (!array_key_exists($key, $values)) {
+            return $matches[0];
+        }
+        $params[] = (string) $values[$key];
+        return '?';
+    }, $template);
+
+    $statement = $connection->prepare($sql);
+    if (!$statement) {
+        return false;
+    }
+
+    if (!empty($params)) {
+        $types = str_repeat('s', count($params));
+        $bindargs = [$types];
+        foreach ($params as $index => $param) {
+            $bindargs[] = &$params[$index];
+        }
+        call_user_func_array([$statement, 'bind_param'], $bindargs);
+    }
+
+    $statement->execute();
+
+    return $statement->get_result();
+}
+
 $PAGE->set_url(new moodle_url('/local/qrcurp/decode.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title('Registro');
@@ -117,7 +161,7 @@ if($categoryid == ''){$nameCategoria = get_config('local_qrcurp','defaultnamecat
 //DATOS QUE CONTIENE EL ESCANEO DE LA CURP
 $campos = explode("|", $text);
 
-if($DBEXTERNAL->errordbportname = ''){
+if ($DBEXTERNAL->errordbportname == '') {
     $DBEXTERNAL->errordbportname =0;
 }
 //DATOS DE LA BD EXTERNA
@@ -127,7 +171,7 @@ $remoteinsertdb = $DBEXTERNAL->dbinsert;        //INFORMACIÓN PARA SABER SI SE 
 
 //CONSULTA PRINCIPAL CON LA QUE TRABAJA EL FORMULARIO  EN LA BD EXTERNA
 //$consulta ="SELECT curp FROM $remotedbtable where curp = '$campos[0]'"; //REVISAR SI LA COLUMNA ES LA CORRECTA
-$consulta = "SELECT curp FROM tsige_persona WHERE curp = '$campos[0]'";
+$consulta = config::get_string('externalcurpquery', "SELECT curp FROM tsige_persona WHERE curp = '{{curp}}'");
 
 //VALIDACIÓN PARA VERIFICAR QUE EL USUARIO NO SE ENCUENTRA REGISTRADO
 
@@ -163,16 +207,18 @@ if(isset($consultamoodle[0])) {
     $estaregis = $consultamoodle[0]; //SE EXTRAE EL USUARIO CON ESA CURP
 }
 $encuentracurp = 0;
+$esinactivo = '';
+$datosencontrados = null;
+$skipexternalqueries = ($existeerror > 0);
+$curp = '';
+$inativotogeneral = 0;
 
-if($existeerror >0){
-    //NO SE EJECUTA LA CONSULTA
-    redirect('index.php', get_string('dbconnerr','local_qrcurp') , null, \core\output\notification::NOTIFY_INFO);
-}else{
-    $esinactivo = '';
-    $message = 'Consulta fallida: ' . mysqli_error($DBEXTERNAL);
-    $datos = mysqli_query($DBEXTERNAL,$consulta)or die(
-    redirect('index.php', $message .\core\notification::error("Informar al administrador del sitio.") , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-    );
+if (!$skipexternalqueries) {
+    $message = 'Consulta fallida: revisar la consulta configurada en externalcurpquery.';
+    $datos = local_qrcurp_execute_template_query($DBEXTERNAL, $consulta, ['curp' => $campos[0]]);
+    if ($datos === false) {
+        redirect('index.php', $message .\core\notification::error("Informar al administrador del sitio.") , null, \core\output\notification::NOTIFY_ERROR);
+    }
     //EXTRAE LA CURP ENCONTRADA EN LA BASE DE DATOS EXTERNA
     $curp = ''; //INICIA VACIO
     while($row = mysqli_fetch_array($datos)) {
@@ -257,10 +303,15 @@ if($existeerror >0){
          INNER JOIN tsige_rol as r ON r.rol_id = ps.rol_id
 WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVING MAX(ps.rol_id) IS NOT NULL";
 
-            $message = "Error al obtener la data en la base de datos externa, revisar que los nombres de los campos sean correctos";
-            $datosencontrados = mysqli_query($DBEXTERNAL,$datosconsulta)or die(
-            redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-            );
+            $datosconsulta = config::get_string('externaluserinfoquery', $datosconsulta);
+            $message = "Error al obtener la data en la base de datos externa, revisar que la consulta configurada sea correcta.";
+            $datosencontrados = local_qrcurp_execute_template_query($DBEXTERNAL, $datosconsulta, [
+                'curp' => $curp,
+                'today' => $fechaactual,
+            ]);
+            if ($datosencontrados === false) {
+                redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR);
+            }
 
             if($datosencontrados->num_rows == 0 AND $registropublicogeneral == 1){
 //                echo "El usuario es inactivo";
@@ -340,7 +391,7 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
     //Validación de numero de roles para selccionar entre cada uno de ellos
     $masdeunrol = 0;
     $listahtmlroles = '';
-    if($esinactivo == ''){
+    if($esinactivo == '' && !$skipexternalqueries){
         $listaroles = "SELECT
                 DISTINCT(ps.rol_id),
                 pa.contrasenia,
@@ -462,7 +513,7 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
 
     //Valida si solo aceptará publico en general omitiendo los de la base de datos externa
     $omiteuserdbexterna = 0;
-    if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND $datosencontrados->num_rows > 0 ){
+    if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND isset($datosencontrados) AND $datosencontrados->num_rows > 0 ){
         $omiteuserdbexterna = 1;
     }
 
@@ -512,6 +563,50 @@ $urlsesion = $CFG->wwwroot.'/login/index.php';
 $urlsession = $CFG->wwwroot.'/login/index.php';
 $registramoodle = 'registramoodle.php';
 $urlprincipal = $CFG->wwwroot.'/index.php';
+
+// Configuración dinámica de campos del formulario.
+$formfieldsconfigraw = config::get_string('formfieldsconfig');
+$formfieldconfig = [];
+foreach (preg_split('/\r\n|\r|\n/', $formfieldsconfigraw) as $line) {
+    $line = trim($line);
+    if ($line === '' || strpos($line, '|') === false) {
+        continue;
+    }
+    $parts = array_map('trim', explode('|', $line));
+    $fieldname = $parts[0] ?? '';
+    if ($fieldname === '') {
+        continue;
+    }
+    $formfieldconfig[$fieldname] = [
+        'label' => $parts[1] ?? $fieldname,
+        'visible' => (isset($parts[2]) && (int) $parts[2] === 0) ? 0 : 1,
+        'required' => (isset($parts[3]) && (int) $parts[3] === 0) ? 0 : 1,
+    ];
+}
+
+$formextrafieldsraw = config::get_string('formextrafields');
+$formextrafields = [];
+foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
+    $line = trim($line);
+    if ($line === '' || strpos($line, '|') === false) {
+        continue;
+    }
+    $parts = array_map('trim', explode('|', $line));
+    $shortname = $parts[0] ?? '';
+    if ($shortname === '') {
+        continue;
+    }
+    $type = $parts[2] ?? 'text';
+    if (!in_array($type, ['text', 'email', 'number', 'date'])) {
+        $type = 'text';
+    }
+    $formextrafields[] = [
+        'shortname' => $shortname,
+        'label' => $parts[1] ?? ucfirst(str_replace('_', ' ', $shortname)),
+        'type' => $type,
+        'required' => isset($parts[3]) && (int) $parts[3] === 1,
+    ];
+}
 
 ?>
     <head>
@@ -755,6 +850,8 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                 var idcategoria = "<?php echo $categoryid?>";
                 var idcurso = "<?php echo $idcourse?>";
                 var idgrupo = "<?php echo $typegrouping?>";
+                var createGroupEnrol = <?= (int)$gruoactive ?>;
+                var createGroupPatternId = "<?= (int)$gruoidcreate ?>";
 
                 if (idcategoria != 0) {
                     $("<div>", {
@@ -821,9 +918,11 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                         document.getElementById('idcourse').value = idcurso;
                         setTimeout("$('#categorias').val($('#idcourse').val());", 2000);
                     }
-                    setTimeout("groupsHorarios()", 3000);
+                    if (!(createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "")) {
+                        setTimeout("groupsHorarios()", 3000);
+                    }
 
-                    if (idcategoria != 0) {
+                    if (idcategoria != 0 && !(createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "")) {
                         $("<div>", {
                             'class': 'form-group'
                         }).append(
@@ -867,20 +966,32 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                             document.getElementById('typegrouping').value = idgrupo;
                             setTimeout("$('#grupos').val($('#typegrouping').val());", 4000);
                         }
+                    } else if (createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "") {
+                        document.getElementById('typegrouping').value = createGroupPatternId;
+                        if (document.getElementById("combo-grupos") != null) {
+                            document.getElementById("combo-grupos").style.display = "none";
+                        }
                     }
                 }
 
                 var read = 0;
-                $("#texto-terminos-condiciones").on("scroll",function () {
-                    let element = document.getElementById("texto-terminos-condiciones");
-                    if (element.offsetHeight + element.scrollTop >= element.scrollHeight) {
+                if (document.getElementById("texto-terminos-condiciones") != null) {
+                    $("#texto-terminos-condiciones").on("scroll",function () {
+                        let element = document.getElementById("texto-terminos-condiciones");
+                        if (element.offsetHeight + element.scrollTop >= element.scrollHeight) {
+                            document.getElementById("register-terms_of_service").disabled = false;
+                            document.getElementById("register-terms_of_service").checked = true;
+                            read = 1;
+                            $('#leer-aviso').css('display','none');
+                            $('#readall-terminos').css('display','none');
+                        }
+                    });
+                } else {
+                    read = 1;
+                    if (document.getElementById("register-terms_of_service") != null) {
                         document.getElementById("register-terms_of_service").disabled = false;
-                        document.getElementById("register-terms_of_service").ckecked = true;
-                        read = 1;
-                        $('#leer-aviso').css('display','none');
-                        $('#readall-terminos').css('display','none');
                     }
-                });
+                }
 
                 $('#aviso-privacidad').click(function (){
                     if(read != 1){
@@ -992,7 +1103,7 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                         $('#rolname').val(text);
                         document.getElementById("user-not-view-info").style.display = 'none'
                         setTimeout(function () {
-                            var inactivoToGeneral = <?=$inativotogeneral ?>;
+                            var inactivoToGeneral = <?= (int)$inativotogeneral ?>;
                             dato = document.getElementById("envia-info").querySelectorAll(".form-control");
                             tam = dato.length;
                             if (inactivoToGeneral == 1) {
@@ -1094,16 +1205,16 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                         <input type="hidden" name="is_saberes_mx" value="<?php echo $is_saberes_mx ? '1' : '0'; ?>">
 
                         <div class="form-group">
-                            <p>CURP: <input style="text-transform:uppercase" class="form-control" id = "curp" name="curp" readonly type="text" value="<?php echo $campos[0];?>"></p>
+                            <p>CURP: <input style="text-transform:uppercase" class="form-control" id = "curp" name="curp" type="text" value="<?php echo $campos[0];?>"></p>
                         </div>
                         <div class="form-group">
-                            <p>Nombre de usuario:<span class="red-text"> *</span><input readonly class="form-control" id= "username" name="username" type="text" value="<?php echo $username;?>" required pattern="[a-z]{2,254}" title="Nombre de usuario: solo puede contener letras minúsculas"></p>
+                            <p>Nombre de usuario:<span class="red-text"> *</span><input class="form-control" id= "username" name="username" type="text" value="<?php echo $username;?>" required pattern="[a-z]{2,254}" title="Nombre de usuario: solo puede contener letras minúsculas"></p>
                         </div>
                         <div class="form-group">
                             <p id="contra">Contraseña:
                                 <span class="red-text"> *</span>
                                 <br>
-                                <input title="Este campo es requerido." readonly class="form-control password" id="pass" name="pass" type="password" >
+                                <input title="Este campo es requerido." class="form-control password" id="pass" name="pass" type="password" >
                                 <span class="fa fa-fw fa-eye password-icon show-password" onclick="viewPassword();"></span>
                             </p>
                             <p id="validate-pass" style="display: none; background-color: yellow"><b>La contraseña debe tener al menos 8-12 caracteres, al menos 1 dígito(s), al menos 1 letra(s) minúscula(s), al menos 1 letra(s) mayúscula(s), al menos 1(s) carácter(es) especial(es) como *, -, o #</b></p>
@@ -1289,14 +1400,30 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                             </label>
                             <textarea id="register-goals" type="textarea" name="goals" class="input-block" data-errormsg-required="Tell us your goals."></textarea>
                         </div>
+                        <?php if (!empty($formextrafields)) { ?>
+                            <?php foreach ($formextrafields as $extrafield) { ?>
+                                <div class="form-group dynamic-extra-field">
+                                    <p><?php echo s($extrafield['label']); ?>:
+                                        <?php if ($extrafield['required']) { ?><span class="red-text"> *</span><?php } ?>
+                                        <input class="form-control"
+                                               id="extra_<?php echo s($extrafield['shortname']); ?>"
+                                               name="extra_fields[<?php echo s($extrafield['shortname']); ?>]"
+                                               type="<?php echo s($extrafield['type']); ?>"
+                                            <?php if ($extrafield['required']) { ?>required<?php } ?>>
+                                    </p>
+                                </div>
+                            <?php } ?>
+                        <?php } ?>
                         <br>
                         <?php
                         ($categoryid=='')?$categoryid=0:$categoryid;
-                        echo avisoDePrivacidad($categoryid);
+                        $privacynoticehtml = avisoDePrivacidad($categoryid);
+                        $hasprivacynotice = trim(strip_tags($privacynoticehtml)) !== '';
+                        echo $privacynoticehtml;
                         ?>
                         <br>
                         <label for="register-terms_of_service">
-                            <input id="register-terms_of_service" type="checkbox" disabled name="terms_of_service" class="input-block checkbox check-size" required title="Debe aceptar los Términos de Servicio de <?=$NAMEPLATAFORMQRCURP?>" >
+                            <input id="register-terms_of_service" type="checkbox" <?php if ($hasprivacynotice) { ?>disabled<?php } ?> name="terms_of_service" class="input-block checkbox check-size" required title="Debe aceptar los Términos de Servicio de <?=$NAMEPLATAFORMQRCURP?>" >
                             <u style="cursor: pointer;  text-decoration: underline; color: darkblue;">
                                 <span class="red-text" id="leer-aviso" style="display: none">Debes leer el aviso de privacidad.</span>
                                 <a id="aviso-privacidad">He leído y acepto el Aviso de privacidad</a>
@@ -1327,6 +1454,47 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                     </form>
                 </div>
             </div>
+            <script>
+                (function() {
+                    const fieldConfig = <?php echo json_encode($formfieldconfig); ?> || {};
+                    Object.keys(fieldConfig).forEach(function(fieldName) {
+                        const config = fieldConfig[fieldName] || {};
+                        let element = document.querySelector('[name="' + fieldName + '"]');
+                        if (!element) {
+                            element = document.getElementById(fieldName);
+                        }
+                        if (!element) {
+                            return;
+                        }
+                        const group = element.closest('.form-group') || element.closest('div') || element.parentElement;
+                        if (Number(config.visible) === 0) {
+                            if (group) {
+                                group.style.display = 'none';
+                            } else {
+                                element.style.display = 'none';
+                            }
+                            element.removeAttribute('required');
+                            element.disabled = true;
+                            return;
+                        }
+                        if (Number(config.required) === 0) {
+                            element.removeAttribute('required');
+                        } else {
+                            element.setAttribute('required', 'required');
+                        }
+                        if (group && config.label) {
+                            const labelContainer = group.querySelector('p');
+                            if (labelContainer) {
+                                const current = labelContainer.innerHTML;
+                                const separator = current.indexOf(':');
+                                if (separator !== -1) {
+                                    labelContainer.innerHTML = config.label + current.substring(separator);
+                                }
+                            }
+                        }
+                    });
+                })();
+            </script>
             <script src="js/sweetalert.min.js"></script>
             <script src="js/alertsregistro.js?version=1"></script>
             <!--            <script src="https://framework-gb.cdn.gob.mx/gobmx.js"></script>-->
