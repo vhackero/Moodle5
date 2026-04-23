@@ -205,7 +205,7 @@ if($typeuser == 1){
 //COMPRUEBA NUEVAMENTE EL NÚMERO DE USUARIOS EN UN GRUPO
 $url = $CFG->wwwroot.'/login/index.php';
 if($idcreategroup == '' OR $idcourse == '') {
-    print_error("El id de curso o grupo se encuentra vacío, debes seleccionar el curso y grupo al que deseas inscribirte.");
+    redirect($url, "El id de curso o grupo se encuentra vacío, debes seleccionar el curso y grupo al que deseas inscribirte.", null, \core\output\notification::NOTIFY_ERROR);
 }else if(1){
     if($idcreategroup != '10001') {
         $eslistaEspera = $DB->get_record("groups", array('id' => $idcreategroup));
@@ -329,7 +329,7 @@ if($dataemail != '' || $dataname != '') {
         if($insertafiel){
             $recordinfodata = $DB->insert_record('user_info_data', array('userid' => $iduserinsert, 'fieldid' => $insertafiel->id, 'data' => $curpvalida, 'dataformat' => 1));
         }else{
-            print_error("El campo de perfil del usuario 'curpvalida' no se encuentra en la base de datos");
+            redirect($destination, "El campo de perfil del usuario 'curpvalida' no se encuentra en la base de datos", null, \core\output\notification::NOTIFY_ERROR);
         }
 
         $seenviaCorreo = enviacorreo($iduserinsert,4,$alias,$idcourse,$idcreategroup,$nameCategoria);
@@ -389,7 +389,8 @@ Se ha enviado un mensaje a tu dirección de correo electrónico con los detalles
                 }
             }
         } else {
-            print_error("No se agregó el nuevo usuario, verificar los datos a insertar.");
+            $destination = "$CFG->wwwroot/login/index.php";
+            redirect($destination, "No se agregó el nuevo usuario, verificar los datos a insertar.", null, \core\output\notification::NOTIFY_ERROR);
         }
     }
 }
