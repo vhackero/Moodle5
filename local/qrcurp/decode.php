@@ -914,6 +914,12 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             // ✅ NUEVO: EJECUTAR SELECCIÓN DESPUÉS DE CARGAR LOS CURSOS
                             setTimeout(function() {
                                 selectCourseFromUtm();
+                                // Asegura que el hidden idcourse quede sincronizado aunque no haya cambio manual.
+                                var selectedcourse = $('#categorias').val();
+                                if (selectedcourse && (document.getElementById('idcourse').value === '' || document.getElementById('idcourse').value === '0')) {
+                                    idcurso = selectedcourse;
+                                    document.getElementById('idcourse').value = selectedcourse;
+                                }
                             }, 100);
                         });
                     }
@@ -922,6 +928,10 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         document.getElementById('idcourse').value = idcurso;
                         setTimeout("$('#categorias').val($('#idcourse').val());", 2000);
                     }
+                    $('#categorias').change(function () {
+                        idcurso = $('#categorias').val();
+                        document.getElementById('idcourse').value = idcurso || '';
+                    });
                     if (!(createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "")) {
                         setTimeout("groupsHorarios()", 3000);
                     }
@@ -959,7 +969,6 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                 $("#grupos").html(data);
                             });
                             setTimeout(" idgrupo = $('#grupos').val();", 2000);
-                            document.getElementById('idcourse').value = idcurso;
                             document.getElementById('typegrouping').value = idgrupo;
                         })
                         $('#grupos').change(function () {
