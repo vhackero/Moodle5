@@ -108,6 +108,34 @@ function local_qrcurp_confirm_enrol_user(stdClass $user): void {
     }
 }
 
+/**
+ * Confirma usuario de manera local cuando no hay auth plugin de auto-registro activo.
+ *
+ * @param stdClass $user
+ * @param string $usersecret
+ * @return int
+ */
+function local_qrcurp_confirm_user_locally(stdClass $user, string $usersecret): int {
+    global $DB;
+
+    if ((int) $user->confirmed === 1) {
+        return AUTH_CONFIRM_ALREADY;
+    }
+
+    if ($usersecret === '' || !hash_equals((string) $user->secret, $usersecret)) {
+        return AUTH_CONFIRM_FAIL;
+    }
+
+    $updated = $DB->update_record('user', (object) [
+        'id' => $user->id,
+        'confirmed' => 1,
+        'secret' => '',
+        'timemodified' => time(),
+    ]);
+
+    return $updated ? AUTH_CONFIRM_OK : AUTH_CONFIRM_ERROR;
+}
+
 $data = optional_param('data', '', PARAM_RAW);  // Formatted as: secret/username.
 $p = optional_param('p', '', PARAM_ALPHANUM);   // Old parameter: secret.
 $s = optional_param('s', '', PARAM_RAW);        // Old parameter: username.
@@ -116,9 +144,7 @@ $redirectto = optional_param('redirect', '', PARAM_LOCALURL);
 $PAGE->set_url('/local/qrcurp/confirm.php');
 $PAGE->set_context(context_system::instance());
 
-if (!$authplugin = signup_get_user_confirmation_authplugin()) {
-    throw new moodle_exception('confirmationnotenabled');
-}
+$authplugin = signup_get_user_confirmation_authplugin();
 
 if (empty($data) && (empty($p) || empty($s))) {
     throw new moodle_exception('errorwhenconfirming');
@@ -152,7 +178,14 @@ if (!local_qrcurp_group_has_space_for_confirmation((int) $user->department, (int
     );
 }
 
-$confirmed = $authplugin->user_confirm($username, $usersecret);
+$confirmed = AUTH_CONFIRM_ERROR;
+if ($authplugin) {
+    $confirmed = $authplugin->user_confirm($username, $usersecret);
+}
+// Fallback: permitir confirmar desde este plugin incluso si el auto-registro global está deshabilitado.
+if (!$authplugin || $confirmed === AUTH_CONFIRM_ERROR) {
+    $confirmed = local_qrcurp_confirm_user_locally($user, $usersecret);
+}
 if ($confirmed !== AUTH_CONFIRM_OK && $confirmed !== AUTH_CONFIRM_ALREADY) {
     throw new moodle_exception('invalidconfirmdata');
 }
