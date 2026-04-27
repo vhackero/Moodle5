@@ -515,47 +515,47 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
 //        echo "El estado es :".$status;
     }
 
-    //Valida si solo aceptará publico en general omitiendo los de la base de datos externa
-    $omiteuserdbexterna = 0;
-    if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND isset($datosencontrados) AND $datosencontrados->num_rows > 0 ){
-        $omiteuserdbexterna = 1;
-    }
+}
 
-    $estado = strtoupper($estado);
+//Valida si solo aceptará publico en general omitiendo los de la base de datos externa
+$omiteuserdbexterna = 0;
+if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND isset($datosencontrados) AND $datosencontrados->num_rows > 0 ){
+    $omiteuserdbexterna = 1;
+}
 
-    //SI CONTINUA VACIO NO ENCONTRO LA CURP EN LA BD EXTERNA
-    if($curp == ''){
-        $despachador = 4;
-        $muestramensaje = get_string('noregisexdb','local_qrcurp');
-        //$muestramensaje = "Tus datos no han sido registrados previamente, por favor da clic en cada uno de los botones de Registrar para registrarte en la base de datos de la UnADM  o en el Portal de educación contínua.";
-    }
-    if ($curp == '' AND $estaregis != '' AND $remoteinsertdb == 0){
-        //Solo esta registrado en moodle, no en bd externa y no se debe registrar en bdexterna
-        $despachador = 3;
-        $muestramensaje = get_string('regismoodlenotexdb0','local_qrcurp');
-    }
-    if ($curp == '' AND $estaregis != '' AND $remoteinsertdb == 1){
-        //Solo esta registrado en moodle, no en bd externa y se debe registrar en bdexterna
-        $despachador = 0;
-        $soloundm = 1;//para cuando ya esta registrado en moodle pero no en undm y se requiere registar
-        $muestramensaje = get_string('regismoodlenotexdb1','local_qrcurp');
-    }
-    if ($curp != '' AND $estaregis != '' ){
-        //esta registrado en moodle, y en bd externa
-        $despachador = 3;
-        //$soloundm = 1;//para cuando ya esta registrado en moodle pero no en undm y se requiere registar
-        $muestramensaje = get_string('regismoodleyexdb','local_qrcurp');
+$estado = strtoupper($estado);
 
-    }
-    if ($curp == '' AND $estaregis == '' AND $remoteinsertdb == 1){
-        //No esta registrado en moodle, ni en bd externa y se debe registrar en bdexterna
-        $despachador = 0;
-        $soloundm = 0;//para cuando no esta registrado en moodle ni en undm y se requiere registar
-        $muestramensaje = get_string('regismoodlenotexdb','local_qrcurp');
-    }
-
+//SI CONTINUA VACIO NO ENCONTRO LA CURP EN LA BD EXTERNA
+if($curp == ''){
+    $despachador = 4;
+    $muestramensaje = get_string('noregisexdb','local_qrcurp');
+    //$muestramensaje = "Tus datos no han sido registrados previamente, por favor da clic en cada uno de los botones de Registrar para registrarte en la base de datos de la UnADM  o en el Portal de educación contínua.";
+}
+if ($curp == '' AND $estaregis != '' AND $remoteinsertdb == 0){
+    //Solo esta registrado en moodle, no en bd externa y no se debe registrar en bdexterna
+    $despachador = 3;
+    $muestramensaje = get_string('regismoodlenotexdb0','local_qrcurp');
+}
+if ($curp == '' AND $estaregis != '' AND $remoteinsertdb == 1){
+    //Solo esta registrado en moodle, no en bd externa y se debe registrar en bdexterna
+    $despachador = 0;
+    $soloundm = 1;//para cuando ya esta registrado en moodle pero no en undm y se requiere registar
+    $muestramensaje = get_string('regismoodlenotexdb1','local_qrcurp');
+}
+if ($curp != '' AND $estaregis != '' ){
+    //esta registrado en moodle, y en bd externa
+    $despachador = 3;
+    //$soloundm = 1;//para cuando ya esta registrado en moodle pero no en undm y se requiere registar
+    $muestramensaje = get_string('regismoodleyexdb','local_qrcurp');
 
 }
+if ($curp == '' AND $estaregis == '' AND $remoteinsertdb == 1){
+    //No esta registrado en moodle, ni en bd externa y se debe registrar en bdexterna
+    $despachador = 0;
+    $soloundm = 0;//para cuando no esta registrado en moodle ni en undm y se requiere registar
+    $muestramensaje = get_string('regismoodlenotexdb','local_qrcurp');
+}
+
 if($despachador == 3){
     $user = get_complete_user_data('username', $idcurpuser);
     //enviaCorreo($user->id);
