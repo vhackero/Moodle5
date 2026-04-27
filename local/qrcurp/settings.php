@@ -92,6 +92,12 @@ if ( $hassiteconfig ) {
             get_string('dbnameinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbtable', get_string('dbtable', 'local_qrcurp'),
             get_string('dbtableinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
+        $settings->add(new admin_setting_configcheckbox('local_qrcurp/validateexternalconnection',
+            get_string('validateexternalconnection', 'local_qrcurp'),
+            get_string('validateexternalconnectioninfo', 'local_qrcurp'), 1));
+        $settings->add(new admin_setting_configtext('local_qrcurp/externalconnectiontestquery',
+            get_string('externalconnectiontestquery', 'local_qrcurp'),
+            get_string('externalconnectiontestqueryinfo', 'local_qrcurp'), 'SELECT 1', PARAM_RAW, 200));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/externalcurpquery', get_string('externalcurpquery', 'local_qrcurp'),
             get_string('externalcurpqueryinfo', 'local_qrcurp'), "SELECT curp FROM tsige_persona WHERE curp = '{{curp}}'", PARAM_RAW, 500));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/externaluserinfoquery', get_string('externaluserinfoquery', 'local_qrcurp'),

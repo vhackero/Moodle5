@@ -10,6 +10,8 @@ $remotedbname = config::get_string('dbname');
 $remotedbuser = config::get_string('dbuser');
 $remotedbtable = config::get_string('dbtable');
 $remoteinsertdb = config::get_bool('dbinsert');
+$validateconnection = config::get_bool('validateexternalconnection', true);
+$connectiontestquery = trim(config::get_string('externalconnectiontestquery', 'SELECT 1'));
 
 // CREANDO CONEXION y LA VARIABLE GLOBAL PARA NUESTRA CONEXIÓN EXTERNA.
 global $DBEXTERNAL;
@@ -36,6 +38,18 @@ if (!empty($missingconfig)) {
 
 try {
     $mysqli = external_db::create_primary_connection();
+    if ($validateconnection) {
+        if ($connectiontestquery === '') {
+            $connectiontestquery = 'SELECT 1';
+        }
+        $validationresult = $mysqli->query($connectiontestquery);
+        if ($validationresult === false) {
+            throw new \mysqli_sql_exception('External DB validation query failed.');
+        }
+        if ($validationresult instanceof \mysqli_result) {
+            $validationresult->free();
+        }
+    }
     $mysqli->dbname = $remotedbname;
     $mysqli->dbtable = $remotedbtable;
     $mysqli->dbinsert = $remoteinsertdb;

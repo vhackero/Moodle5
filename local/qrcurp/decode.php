@@ -256,79 +256,14 @@ if (!$skipexternalqueries) {
             $encuentracurp = 1; //1 si encontro el curp en la primera consulta y 0 no encontro el dato
             $despachador =1;     //PARA SABER CUANDO REGRESA UN VALOR
             $muestramensaje = "Tus datos han sido registrados previamente en la base de datos de $NAMEEXTERNALDBQRCURP, da clic en aceptar, revisa tu información antes de continuar con el registro $nameCategoria"; //MENSAJE A MOSTRAR
-            //$datosconsulta = "SELECT rol,username, password, correo,nombre,apellido_p,apellido_m,genero,date_nacimiento,estado,municipio,ocupacion,pais,estado_residencia FROM $remotedbtable where curp = '$idcurp'";
-            //            Validación para cuando se encuentra activo
-            $datosconsulta ="SELECT
-       pa.curp,
-       pa.nombre,
-       pa.primer_apellido,
-       pa.segundo_apellido,
-       pa.usuario,
-       pa.contrasenia,
-       MAX(ps.rol_id),
-       r.nombre,
-       ps.matricula,
-       pa.fecha_nacimiento,
-       pa.sexo,
-       (SELECT DISTINCT LOWER(con.dato_contacto) FROM tsige_contacto con WHERE con.tipo_contacto_id = 4 AND con.vigente = 1 AND con.dato_contacto NOT LIKE '%@unad%' AND con.persona_id = ps.persona_id) 'Correo Institucional',
-       (SELECT edo.v_estado
-        FROM (SELECT SUBSTRING(pp.curp, 12, 2) ed, pp.persona_id 'per'
-              FROM tsige_persona pp) x
-                 INNER JOIN cat_estado edo ON edo.v_abreviacion = x.ed
-        WHERE x.per = pa.persona_id)                                                                                                                                                                     'Estado de Nacimiento',
-       TIMESTAMPDIFF(YEAR, pa.fecha_nacimiento, '$fechaactual')                                                                                                                                            'Edad',
-       (SELECT DISTINCT LOWER(con.dato_contacto)
-        FROM tsige_contacto con
-        WHERE con.tipo_contacto_id = 4
-          AND con.vigente = 1
-          AND con.dato_contacto
-            NOT LIKE '%@unad%'
-          AND con.persona_id = ps.persona_id)                                                                                                                                                            email,
-       (SELECT IF(cp.v_codigopostal IS NULL, '-', cp.v_codigopostal)
-        FROM direccion d
-                 LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal
-        WHERE d.i_fk_persona = ps.persona_id
-          AND d.b_activo = 1
-          AND d.b_esAlternativo = 0)                                                                                                                                                                     'Codigo Postal',
-       (SELECT IF(muni.v_municipio IS NULL, '-', muni.v_municipio)
-        FROM direccion d
-                 LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal
-                 LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento
-                 LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio
-        WHERE d.i_fk_persona = ps.persona_id
-          AND d.b_activo = 1
-          AND d.b_esAlternativo = 0)                                                                                                                                                                     'Municipio de residencia',
-       (SELECT IF(edo.v_estado IS NULL, '-', edo.v_estado)
-        FROM direccion d
-                 LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal
-                 LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento
-                 LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio
-                 LEFT JOIN cat_estado edo ON edo.i_pk_estado = muni.i_fk_estado
-        WHERE d.i_fk_persona = ps.persona_id
-          AND d.b_activo = 1
-          AND d.b_esAlternativo = 0)                                                                                                                                                                     'Estado de residencia',
-       (SELECT IF(pai.vc_clavealfa2 IS NULL, '-', pai.vc_clavealfa2)
-        FROM direccion d
-                 LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal
-                 LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento
-                 LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio
-                 LEFT JOIN cat_estado edo ON edo.i_pk_estado = muni.i_fk_estado
-                 LEFT JOIN cat_pais pai ON pai.i_pk_pais = edo.i_fk_pais
-        WHERE d.i_fk_persona = ps.persona_id
-          AND d.b_activo = 1
-          AND d.b_esAlternativo = 0)                                                                                                                                                                     'País de residencia',
-       ps.activo                                                                                                                                                                                    'Usuario activo',
-       (SELECT tb.descripcion
-     FROM tsige_solicitud_baja s
-              INNER JOIN tsige_cat_tipo_baja tb ON tb.tipo_baja_id = s.tipo_baja_id
-     WHERE s.tipo_baja_id = 6
-       AND s.solicitante_id = ps.perfil_id)                                                                                                                                                         'Tipo de baja'
-       FROM tsige_persona as pa
-         INNER JOIN tsige_perfiles as ps ON ps.persona_id = pa.persona_id
-         INNER JOIN tsige_rol as r ON r.rol_id = ps.rol_id
-WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVING MAX(ps.rol_id) IS NOT NULL";
-
-            $datosconsulta = config::get_string('externaluserinfoquery', $datosconsulta);
+            $datosconsulta = trim(config::get_string('externaluserinfoquery'));
+            if ($datosconsulta === '') {
+                redirect('index.php',
+                    'La configuración externaluserinfoquery está vacía. Configura la consulta externa de información de usuario.',
+                    null,
+                    \core\output\notification::NOTIFY_ERROR
+                );
+            }
             $message = "Error al obtener la data en la base de datos externa, revisar que la consulta configurada sea correcta.";
             $datosencontrados = local_qrcurp_execute_template_query($DBEXTERNAL, $datosconsulta, [
                 'curp' => $curp,
