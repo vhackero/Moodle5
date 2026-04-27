@@ -5,7 +5,6 @@
 require(__DIR__ . '/../../config.php');
 require(__DIR__ . '/../../login/lib.php');
 require_once($CFG->libdir . '/authlib.php');
-require_once($CFG->libdir . '/enrollib.php');
 require_once($CFG->dirroot . '/group/lib.php');
 
 require_once('lib.php');
@@ -53,59 +52,6 @@ function local_qrcurp_group_has_space_for_confirmation(int $groupid, int $userid
 
     $totalusersingroup = $DB->count_records('groups_members', ['groupid' => $groupid]);
     return $totalusersingroup < ($limitedegrupo + 1);
-}
-
-/**
- * Matricula al usuario confirmado al curso/grupo usando APIs nativas de Moodle.
- *
- * @param stdClass $user
- * @return void
- */
-function local_qrcurp_confirm_enrol_user(stdClass $user): void {
-    global $DB;
-
-    $courseid = (int) $user->institution;
-    $groupid = (int) $user->department;
-
-    if ($courseid <= 0) {
-        return;
-    }
-
-    $course = $DB->get_record('course', ['id' => $courseid], '*', IGNORE_MISSING);
-    if (!$course) {
-        throw new moodle_exception('invalidcourseid');
-    }
-
-    $manual = enrol_get_plugin('manual');
-    if (!$manual) {
-        throw new moodle_exception('manualpluginnotinstalled', 'enrol_manual');
-    }
-
-    $instance = $DB->get_record('enrol', [
-        'courseid' => $courseid,
-        'enrol' => 'manual',
-        'status' => ENROL_INSTANCE_ENABLED,
-    ], '*', IGNORE_MULTIPLE);
-
-    if (!$instance) {
-        throw new moodle_exception('enrolinstancenotfound', 'enrol');
-    }
-
-    $roleid = (int) get_config('local_qrcurp', 'rolstudent');
-    if ($roleid <= 0) {
-        $roleid = 5; // student.
-    }
-
-    if (!$DB->record_exists('user_enrolments', ['enrolid' => $instance->id, 'userid' => $user->id])) {
-        $manual->enrol_user($instance, $user->id, $roleid, time());
-    }
-
-    if ($groupid > 0) {
-        $group = $DB->get_record('groups', ['id' => $groupid, 'courseid' => $courseid], 'id', IGNORE_MISSING);
-        if ($group && !$DB->record_exists('groups_members', ['groupid' => $groupid, 'userid' => $user->id])) {
-            groups_add_member($groupid, $user->id);
-        }
-    }
 }
 
 /**
@@ -208,10 +154,12 @@ if ($confirmed === AUTH_CONFIRM_OK && !$user->suspended) {
     }
 }
 
-local_qrcurp_confirm_enrol_user($user);
-
 if (!empty($user->institution)) {
     $courseurl = new moodle_url('/course/view.php', ['id' => (int) $user->institution]);
+    if ($confirmed === AUTH_CONFIRM_OK) {
+        // Mantener flujo original del plugin para matrícula/asignación/grupo/correo.
+        SetCourseGroupMoodle((int) $user->id, (int) $user->institution, (int) $user->department);
+    }
     if ($confirmed === AUTH_CONFIRM_ALREADY) {
         redirect($courseurl, get_string('alreadyconfirmed'), null, \core\output\notification::NOTIFY_INFO);
     }
