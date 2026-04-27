@@ -27,7 +27,6 @@ $requiredconfig = [
     'dbhost' => $remotedbhost,
     'dbuser' => $remotedbuser,
     'dbname' => $remotedbname,
-    'dbtable' => $remotedbtable,
 ];
 $missingconfig = array_filter($requiredconfig, static function(string $value): bool {
     return trim($value) === '';

@@ -90,8 +90,6 @@ if ( $hassiteconfig ) {
             get_string('dbportinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configtext('local_qrcurp/dbname', get_string('dbname', 'local_qrcurp'),
             get_string('dbnameinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
-        $settings->add(new admin_setting_configtext('local_qrcurp/dbtable', get_string('dbtable', 'local_qrcurp'),
-            get_string('dbtableinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/validateexternalconnection',
             get_string('validateexternalconnection', 'local_qrcurp'),
             get_string('validateexternalconnectioninfo', 'local_qrcurp'), 1));
