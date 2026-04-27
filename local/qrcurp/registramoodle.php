@@ -257,8 +257,10 @@ $record->autosubscribe = 0;
 //Comprueba si el usuario esta registrado
 $dataname = '';
 $dataemail = '';
+$userid = 0;
+$normalizedusername = core_text::strtolower(trim((string)$username));
 
-$datos = $DB->get_record('user',array('username' => $username));
+$datos = $DB->get_record('user', array('username' => $normalizedusername, 'deleted' => 0));
 
 if(isset($datos) && is_object($datos)) {
     $dataname = $datos->username;
@@ -269,7 +271,7 @@ $datos = $DB->get_record('user',array('email' => $correo));
 
 if(isset($datos) && is_object($datos)) {
     $dataemail = $datos->email;
-    if ($userid == '') {
+    if ($userid === 0) {
         $userid = $datos->id;
     }
 }
@@ -293,10 +295,12 @@ if($dataemail != '' || $dataname != '') {
         }
 
         //Solo se registra el usuario y se guardan los datos
-        $datosinsert = $DB->insert_record('user', $record);
+        $iduserinsert = $DB->insert_record('user', $record);
         //Se enviará correo con la verificación
-        $verificaiduser = $DB->get_record('user', array('username' => $username));
-        $iduserinsert = $verificaiduser->id;
+        if (!$iduserinsert) {
+            $destination = "$CFG->wwwroot/login/index.php";
+            redirect($destination, "No se agregó el nuevo usuario, verificar los datos a insertar.", null, \core\output\notification::NOTIFY_ERROR);
+        }
 
         // ✅ NUEVO: GUARDAR EL ORIGEN DEL REGISTRO (CONFIRMACIÓN REQUERIDA)
         save_registration_origin_to_profile($iduserinsert, $origin);
@@ -344,12 +348,9 @@ if($dataemail != '' || $dataname != '') {
     else {
         //Continua con el registro sin enviar correo de confirmación
         //REGISTRA A EL NUEVO USUARIO
-        $datosinsert = $DB->insert_record('user', $record);
-        if ($datosinsert) {
+        $iduserinsert = $DB->insert_record('user', $record);
+        if ($iduserinsert) {
             //EL USUARIO SE REGISTRO CON ÉXITO
-            $verificaiduser = $DB->get_record('user', array('username' => $username));
-            $iduserinsert = $verificaiduser->id;
-
             // ✅ NUEVO: GUARDAR EL ORIGEN DEL REGISTRO (SIN CONFIRMACIÓN)
             save_registration_origin_to_profile($iduserinsert, $origin);
             $profilefieldmap = [

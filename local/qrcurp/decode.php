@@ -201,11 +201,15 @@ if($datosUser){
 
 //CONSULTA EN LA BD DE MOODLE
 $idcurp = $campos[0]; //CURP DE LA QR ESCANEADA
-$consultamoodle = array_keys($DB->get_records('user',array('username'=>$idcurp),'','username')); //CONSULTA DE LA CURP EN LA BD DE MOODLE
-$estaregis = '';
-if(isset($consultamoodle[0])) {
-    $estaregis = $consultamoodle[0]; //SE EXTRAE EL USUARIO CON ESA CURP
-}
+$idcurpuser = core_text::strtolower($idcurp); //CURP EN MINÚSCULAS PARA EL NOMBRE DE USUARIO
+$consultamoodle = $DB->get_field_sql(
+    "SELECT username
+       FROM {user}
+      WHERE LOWER(username) = LOWER(:username)
+        AND deleted = 0",
+    ['username' => $idcurpuser]
+); //CONSULTA DE LA CURP EN LA BD DE MOODLE
+$estaregis = $consultamoodle ?: '';
 $encuentracurp = 0;
 $esinactivo = '';
 $datosencontrados = null;
@@ -428,7 +432,7 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
         }
     }
 
-    $idcurpuser = strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
+    $idcurpuser = core_text::strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
 
     //EN CASO QUE LOS DATOS SE OBTENGAN DEL CURP Y NO ESTE REGISTRADO EN BASE DE DATOS EXTERNA
     $username = $idcurpuser;    //NOMBRE DE Usuario
@@ -495,7 +499,7 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
             $curp = $campos[0];
         }
         $idcurp = $curp;
-        $idcurpuser = strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
+        $idcurpuser = core_text::strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
         if($tipodebaja != null){
             $username = $idcurpuser;
         }
@@ -1208,7 +1212,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             <p>CURP: <input style="text-transform:uppercase" class="form-control" id = "curp" name="curp" type="text" value="<?php echo $campos[0];?>"></p>
                         </div>
                         <div class="form-group">
-                            <p>Nombre de usuario:<span class="red-text"> *</span><input class="form-control" id= "username" name="username" type="text" value="<?php echo $username;?>" required pattern="[a-z]{2,254}" title="Nombre de usuario: solo puede contener letras minúsculas"></p>
+                            <p>Nombre de usuario:<span class="red-text"> *</span><input class="form-control" id= "username" name="username" type="text" value="<?php echo $username;?>" required pattern="[a-z0-9]{2,254}" title="Nombre de usuario: solo puede contener letras minúsculas y números"></p>
                         </div>
                         <div class="form-group">
                             <p id="contra">Contraseña:
