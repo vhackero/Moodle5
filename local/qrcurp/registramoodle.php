@@ -253,6 +253,13 @@ $record->lang = "es_utf8";
 $record->picture = "0";
 $record->maildisplay = "2";
 $record->autosubscribe = 0;
+// Mantener compatibilidad con el flujo histórico: guardar curso/grupo destino en mdl_user.
+if (!empty($idcourse)) {
+    $record->institution = (string)$idcourse; //ID DEL COURSE EN EL QUE SE AGREGARA.
+}
+if (!empty($idcreategroup)) {
+    $record->department = (string)$idcreategroup; //ID DEL GROUP EN CASO DE QUE SE ENCUENTRE.
+}
 
 //Comprueba si el usuario esta registrado
 $dataname = '';
@@ -288,8 +295,6 @@ if($dataemail != '' || $dataname != '') {
     if($confirmemail == 1){
         $record->confirmed = "0";
         $record->secret = random_string(15);
-        $record->institution = $idcourse; //ID DEL COURSE EN EL QUE SE AGREGARA UNA VEZ CONFIRMADO
-        $record->department = $idcreategroup; //ID DEL GROUP EN CASO DE QUE SE ENCUENTRE
         if($namecategory != ''){
             $record->address = $namecategory; //Guarda el nombre de la categoría desde la que se está registrando
         }
