@@ -21,6 +21,7 @@ $DBEXTERNAL->dbname = $remotedbname;
 $DBEXTERNAL->dbtable = $remotedbtable;
 $DBEXTERNAL->dbinsert = $remoteinsertdb;
 $DBEXTERNAL->errordbportname = 0;
+$DBEXTERNAL->errormessage = '';
 
 $requiredconfig = [
     'dbhost' => $remotedbhost,
@@ -33,6 +34,7 @@ $missingconfig = array_filter($requiredconfig, static function(string $value): b
 });
 if (!empty($missingconfig)) {
     $DBEXTERNAL->errordbportname = 1;
+    $DBEXTERNAL->errormessage = 'Faltan parámetros de configuración de BD externa: '.implode(', ', array_keys($missingconfig));
     return;
 }
 
@@ -54,7 +56,9 @@ try {
     $mysqli->dbtable = $remotedbtable;
     $mysqli->dbinsert = $remoteinsertdb;
     $mysqli->errordbportname = 0;
+    $mysqli->errormessage = '';
     $DBEXTERNAL = $mysqli;
 } catch (\mysqli_sql_exception $exception) {
     $DBEXTERNAL->errordbportname = 1;
+    $DBEXTERNAL->errormessage = $exception->getMessage();
 }

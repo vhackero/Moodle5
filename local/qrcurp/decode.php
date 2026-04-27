@@ -167,6 +167,7 @@ if ($DBEXTERNAL->errordbportname == '') {
 //DATOS DE LA BD EXTERNA
 $remotedbtable = $DBEXTERNAL->dbtable;          //NOMBRE DE LA BD
 $existeerror =  $DBEXTERNAL->errordbportname;   //INFORMACIÓN PARA SABER SI FALTA ALGUN PARAMETRO POR CONFIGURAR
+$externalerrormessage = $DBEXTERNAL->errormessage ?? '';
 $remoteinsertdb = $DBEXTERNAL->dbinsert;        //INFORMACIÓN PARA SABER SI SE INSERTARAN LOS DATOS EN UN BD EXTERNA
 
 //CONSULTA PRINCIPAL CON LA QUE TRABAJA EL FORMULARIO  EN LA BD EXTERNA
@@ -213,7 +214,12 @@ $estaregis = $consultamoodle ?: '';
 $encuentracurp = 0;
 $esinactivo = '';
 $datosencontrados = null;
-$skipexternalqueries = ($existeerror > 0);
+$skipexternalqueries = ((int)$existeerror > 0);
+if ($skipexternalqueries) {
+    $detail = $externalerrormessage !== '' ? $externalerrormessage : 'No se pudo validar la conexión con la base de datos externa.';
+    echo $OUTPUT->notification('BD externa no disponible. Se omiten consultas externas. Detalle: '.$detail,
+        \core\output\notification::NOTIFY_WARNING);
+}
 $curp = '';
 $inativotogeneral = 0;
 $idcurpuser = core_text::strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
