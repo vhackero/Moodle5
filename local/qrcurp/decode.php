@@ -216,6 +216,27 @@ $datosencontrados = null;
 $skipexternalqueries = ($existeerror > 0);
 $curp = '';
 $inativotogeneral = 0;
+$idcurpuser = core_text::strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
+
+//EN CASO QUE LOS DATOS SE OBTENGAN DEL CURP Y NO ESTE REGISTRADO EN BASE DE DATOS EXTERNA
+$username = $idcurpuser;    //NOMBRE DE Usuario
+$apellido_p = (isset($campos[2])?$campos[2]:'') ;   //PRIMER APELLIDO
+$apellido_m = (isset($campos[3])?$campos[3]:'') ;   //SEGUNDO APELLIDO
+$nombre = (isset($campos[4])?$campos[4]:'') ;     //NOMBRE CURP
+$genero = (isset($campos[5])?substr($campos[5],0,1):'') ;       //GÉNERO
+$fecha_nacimiento = (isset($campos[6])?$campos[6]:'') ;  //FECHA DE NACIMIENTO
+$estado = (isset($campos[7])?$campos[7]:'') ;      //ESTADO DE RESIDENCIA
+$pais = 'MX';       //Pais por defecto
+$ocupacion = "OTRO"; //OCUPACION por defecto LFAS Modificación 25/11/22
+$idrol = "63"; //ID DEL ROL POR DEFECTO ESTUDIANTE LIC/TSU
+$status = 0;
+$tipodeusuario = 0; // 0 es publico general 1 pertenece a la bd externa
+$inativotogeneral = 0; //Para cuando se encontro en la bd externa pero no la general LFAS 26/01/23
+$tipodebaja = null;
+$correo = '';
+$matricula = '';
+$cp = '';
+$edad = '';
 
 if (!$skipexternalqueries) {
     $message = 'Consulta fallida: revisar la consulta configurada en externalcurpquery.';
@@ -432,27 +453,6 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
         }
     }
 
-    $idcurpuser = core_text::strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
-
-    //EN CASO QUE LOS DATOS SE OBTENGAN DEL CURP Y NO ESTE REGISTRADO EN BASE DE DATOS EXTERNA
-    $username = $idcurpuser;    //NOMBRE DE Usuario
-    $apellido_p = (isset($campos[2])?$campos[2]:'') ;   //PRIMER APELLIDO
-    $apellido_m = (isset($campos[3])?$campos[3]:'') ;   //SEGUNDO APELLIDO
-    $nombre = (isset($campos[4])?$campos[4]:'') ;     //NOMBRE CURP
-    $genero = (isset($campos[5])?substr($campos[5],0,1):'') ;       //GÉNERO
-    $fecha_nacimiento = (isset($campos[6])?$campos[6]:'') ;  //FECHA DE NACIMIENTO
-    $estado = (isset($campos[7])?$campos[7]:'') ;      //ESTADO DE RESIDENCIA
-    $pais = 'MX';       //Pais por defecto
-    $ocupacion = "OTRO"; //OCUPACION por defecto LFAS Modificación 25/11/22
-    $idrol = "63"; //ID DEL ROL POR DEFECTO ESTUDIANTE LIC/TSU
-    $status = 0;
-    $tipodeusuario = 0; // 0 es publico general 1 pertenece a la bd externa
-    $inativotogeneral =0; //Para cuando se encontro en la bd externa pero no la general LFAS 26/01/23
-    $tipodebaja = null;
-    $correo = '';
-    $matricula = '';
-    $cp = '';
-    $edad = '';
     if(isset($datosencontrados)) {
         while ($row = mysqli_fetch_array($datosencontrados)) {
             $curp = $row[0];    //CURP
