@@ -181,6 +181,7 @@ $remotedbtable = $DBEXTERNAL->dbtable;          //NOMBRE DE LA BD
 $existeerror =  $DBEXTERNAL->errordbportname;   //INFORMACIÓN PARA SABER SI FALTA ALGUN PARAMETRO POR CONFIGURAR
 $externalerrormessage = $DBEXTERNAL->errormessage ?? '';
 $remoteinsertdb = $DBEXTERNAL->dbinsert;        //INFORMACIÓN PARA SABER SI SE INSERTARAN LOS DATOS EN UN BD EXTERNA
+$externalconnection = $DBEXTERNAL->connection ?? null;
 
 //CONSULTA PRINCIPAL CON LA QUE TRABAJA EL FORMULARIO  EN LA BD EXTERNA
 //$consulta ="SELECT curp FROM $remotedbtable where curp = '$campos[0]'"; //REVISAR SI LA COLUMNA ES LA CORRECTA
@@ -229,7 +230,7 @@ $estaregis = $consultamoodle ?: '';
 $encuentracurp = 0;
 $esinactivo = '';
 $datosencontrados = null;
-$skipexternalqueries = ((int)$existeerror > 0);
+$skipexternalqueries = ((int)$existeerror > 0) || !($externalconnection instanceof mysqli);
 if ($skipexternalqueries) {
     $detail = $externalerrormessage !== '' ? $externalerrormessage : 'No se pudo validar la conexión con la base de datos externa.';
     echo $OUTPUT->notification('BD externa no disponible. Se omiten consultas externas. Detalle: '.$detail,
@@ -261,7 +262,7 @@ $edad = '';
 
 if (!$skipexternalqueries) {
     $message = 'Consulta fallida: revisar la consulta configurada en externalcurpquery.';
-    $datos = local_qrcurp_execute_template_query($DBEXTERNAL, $consulta, ['curp' => $campos[0]]);
+    $datos = local_qrcurp_execute_template_query($externalconnection, $consulta, ['curp' => $campos[0]]);
     if ($datos === false) {
         redirect('index.php', $message .\core\notification::error("Informar al administrador del sitio.") , null, \core\output\notification::NOTIFY_ERROR);
     }
@@ -286,7 +287,7 @@ if (!$skipexternalqueries) {
                 );
             }
             $message = "Error al obtener la data en la base de datos externa, revisar que la consulta configurada sea correcta.";
-            $datosencontrados = local_qrcurp_execute_template_query($DBEXTERNAL, $datosconsulta, [
+            $datosencontrados = local_qrcurp_execute_template_query($externalconnection, $datosconsulta, [
                 'curp' => $curp,
                 'today' => $fechaactual,
             ]);
@@ -360,9 +361,13 @@ if (!$skipexternalqueries) {
             WHERE ps.activo =0 and pa.curp  ='$curp' AND ps.matricula NOT LIKE 'AS%' HAVING MAX(ps.rol_id) IS NOT NULL";
 
                 $message = "Error al obtener la data en la base de datos externa, revisar que los nombres de los campos sean correctos";
-                $datosencontrados = mysqli_query($DBEXTERNAL,$datosconsulta)or die(
-                redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-                );
+                $datosencontrados = local_qrcurp_execute_template_query($externalconnection, $datosconsulta, [
+                    'curp' => $curp,
+                    'today' => $fechaactual,
+                ]);
+                if ($datosencontrados === false) {
+                    redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR);
+                }
                 $esinactivo =1;
             }
 
@@ -385,9 +390,10 @@ if (!$skipexternalqueries) {
                      INNER JOIN tsige_rol as r ON r.rol_id = ps.rol_id
             WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%'";
         $message = "Error al obtener la data en la base de datos externa";
-        $rolesencontrados = mysqli_query($DBEXTERNAL,$listaroles)or die(
-        redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-        );
+        $rolesencontrados = local_qrcurp_execute_template_query($externalconnection, $listaroles, ['curp' => $curp]);
+        if ($rolesencontrados === false) {
+            redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR);
+        }
         if(isset($rolesencontrados) AND $rolesencontrados->num_rows > 1 ) {
             $numrolesencontrados = $rolesencontrados->num_rows;
             $masdeunrol = 1;

@@ -22,6 +22,7 @@ $DBEXTERNAL->dbtable = $remotedbtable;
 $DBEXTERNAL->dbinsert = $remoteinsertdb;
 $DBEXTERNAL->errordbportname = 0;
 $DBEXTERNAL->errormessage = '';
+$DBEXTERNAL->connection = null;
 
 $requiredconfig = [
     'dbhost' => $remotedbhost,
@@ -51,13 +52,11 @@ try {
             $validationresult->free();
         }
     }
-    $mysqli->dbname = $remotedbname;
-    $mysqli->dbtable = $remotedbtable;
-    $mysqli->dbinsert = $remoteinsertdb;
-    $mysqli->errordbportname = 0;
-    $mysqli->errormessage = '';
-    $DBEXTERNAL = $mysqli;
+    $DBEXTERNAL->connection = $mysqli;
+    $DBEXTERNAL->errordbportname = 0;
+    $DBEXTERNAL->errormessage = '';
 } catch (\mysqli_sql_exception $exception) {
     $DBEXTERNAL->errordbportname = 1;
     $DBEXTERNAL->errormessage = $exception->getMessage();
+    $DBEXTERNAL->connection = null;
 }
