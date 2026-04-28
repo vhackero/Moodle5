@@ -27,7 +27,7 @@ function local_qrcurp_execute_template_query(mysqli $connection, string $templat
     }
 
     $params = [];
-    $sql = preg_replace_callback('/\{\{([a-z_]+)\}\}/', static function($matches) use ($values, &$params) {
+    $sql = preg_replace_callback('/\{\{([a-z0-9_]+)\}\}/i', static function($matches) use ($values, &$params) {
         $key = $matches[1];
         if (!array_key_exists($key, $values)) {
             return $matches[0];
@@ -41,16 +41,28 @@ function local_qrcurp_execute_template_query(mysqli $connection, string $templat
         return false;
     }
 
-    if (!empty($params)) {
+    $expectedparams = (int) $statement->param_count;
+    if ($expectedparams !== count($params)) {
+        $statement->close();
+        return false;
+    }
+
+    if ($expectedparams > 0) {
         $types = str_repeat('s', count($params));
         $bindargs = [$types];
         foreach ($params as $index => $param) {
             $bindargs[] = &$params[$index];
         }
-        call_user_func_array([$statement, 'bind_param'], $bindargs);
+        if (!call_user_func_array([$statement, 'bind_param'], $bindargs)) {
+            $statement->close();
+            return false;
+        }
     }
 
-    $statement->execute();
+    if (!$statement->execute()) {
+        $statement->close();
+        return false;
+    }
 
     return $statement->get_result();
 }
@@ -172,7 +184,10 @@ $remoteinsertdb = $DBEXTERNAL->dbinsert;        //INFORMACIÓN PARA SABER SI SE 
 
 //CONSULTA PRINCIPAL CON LA QUE TRABAJA EL FORMULARIO  EN LA BD EXTERNA
 //$consulta ="SELECT curp FROM $remotedbtable where curp = '$campos[0]'"; //REVISAR SI LA COLUMNA ES LA CORRECTA
-$consulta = config::get_string('externalcurpquery', "SELECT curp FROM tsige_persona WHERE curp = '{{curp}}'");
+$consulta = config::get_string('externalcurpquery');
+if ($consulta === '') {
+    $consulta = "SELECT curp FROM tsige_persona WHERE curp = '{{curp}}'";
+}
 
 //VALIDACIÓN PARA VERIFICAR QUE EL USUARIO NO SE ENCUENTRA REGISTRADO
 
