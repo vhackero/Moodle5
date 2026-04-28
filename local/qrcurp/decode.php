@@ -27,12 +27,10 @@ function local_qrcurp_execute_template_query(mysqli $connection, string $templat
     }
 
     $params = [];
-    $sql = preg_replace_callback('/\{\{([a-z0-9_]+)\}\}/i', static function($matches) use ($values, &$params) {
+    // Permite placeholders con o sin comillas en la plantilla: {{curp}} o '{{curp}}'.
+    $sql = preg_replace_callback("/'?\\{\\{([a-z0-9_]+)\\}\\}'?/i", static function($matches) use ($values, &$params) {
         $key = $matches[1];
-        if (!array_key_exists($key, $values)) {
-            return $matches[0];
-        }
-        $params[] = (string) $values[$key];
+        $params[] = (string) ($values[$key] ?? '');
         return '?';
     }, $template);
 
