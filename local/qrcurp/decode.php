@@ -829,6 +829,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 var createGroupPatternId = "<?= (int)$gruoidcreate ?>";
                 var allowAutofilledPasswordEdit = <?= $allowautofilledpasswordedit ? 'true' : 'false' ?>;
                 var editableAutofilledFields = <?= $editableautofilledfieldsjson ?: '[]' ?>;
+                var externalPlatformName = "<?= s($NAMEEXTERNALDBQRCURP !== '' ? $NAMEEXTERNALDBQRCURP : $NAMEPLATAFORMQRCURP) ?>";
 
                 if (idcategoria != 0) {
                     $("<div>", {
@@ -1030,14 +1031,14 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     }
                     var aliasValue = (aliasInput.value || '').trim();
                     if (aliasValue !== '' && aliasValue.toLowerCase() !== 'null') {
-                        passInput.placeholder = 'Misma contraseña que en ' + aliasValue;
-                        if (!allowAutofilledPasswordEdit) {
-                            passInput.setAttribute('readonly', '');
-                        } else {
-                            passInput.removeAttribute('readonly');
-                        }
+                        var shownName = externalPlatformName !== '' ? externalPlatformName : 'plataforma externa';
+                        passInput.placeholder = 'Misma contraseña que en ' + shownName;
                     } else {
                         passInput.placeholder = 'Ingresa tu contraseña';
+                    }
+                    if (!allowAutofilledPasswordEdit && aliasValue !== '' && aliasValue.toLowerCase() !== 'null') {
+                        passInput.setAttribute('readonly', '');
+                    } else {
                         passInput.removeAttribute('readonly');
                     }
                 }
@@ -1139,9 +1140,19 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                 var fieldElement = document.getElementById(fieldId);
                                 if (fieldElement) {
                                     fieldElement.removeAttribute("readonly");
+                                    fieldElement.removeAttribute("disabled");
                                     fieldElement.classList.remove('control-data-form');
                                 }
                             });
+                            if (allowAutofilledPasswordEdit) {
+                                var passElement = document.getElementById('pass');
+                                if (passElement) {
+                                    passElement.removeAttribute("readonly");
+                                    passElement.removeAttribute("disabled");
+                                    passElement.classList.remove('control-data-form');
+                                }
+                            }
+                            syncPasswordFromAlias();
                         }, 2000);
                     }
                 }
