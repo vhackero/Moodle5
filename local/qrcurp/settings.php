@@ -46,6 +46,15 @@ if ( $hassiteconfig ) {
             get_string('formfieldsconfiginfo', 'local_qrcurp'), "curp|CURP|1|1\nusername|Nombre de usuario|1|1\nnombre|Nombre(s)|1|1\np_apellido|Primer apellido|1|1\ns_apellido|Segundo apellido|1|1\nemail|Correo electrónico|1|1\nid_country|País|1|1\ncodigo-postal|Código postal|1|1\ne_residencias|Estado de residencia|1|1\nmunicipios|Municipio|1|1\ne_nacimiento|Estado de nacimiento|1|1\ndate_nacimientos|Fecha de nacimiento|1|1\nedad|Edad|1|1\ngenero|Género|1|1\nocupacion|Ocupación|1|1\nmatricula|Matrícula|1|1\nrol|Rol|1|1", PARAM_RAW, 1200));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/formextrafields', get_string('formextrafields', 'local_qrcurp'),
             get_string('formextrafieldsinfo', 'local_qrcurp'), '', PARAM_RAW, 1200));
+        $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
+            get_string('hidesitechrome', 'local_qrcurp'),
+            get_string('hidesitechromeinfo', 'local_qrcurp'), 0));
+        $settings->add(new admin_setting_configcheckbox('local_qrcurp/allowautofilledpasswordedit',
+            get_string('allowautofilledpasswordedit', 'local_qrcurp'),
+            get_string('allowautofilledpasswordeditinfo', 'local_qrcurp'), 0));
+        $settings->add(new admin_setting_configtext('local_qrcurp/editableautofilledfields',
+            get_string('editableautofilledfields', 'local_qrcurp'),
+            get_string('editableautofilledfieldsinfo', 'local_qrcurp'), 'ocupacion,categorias,grupos', PARAM_RAW, 255));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/privacynoticehtml', get_string('privacynoticehtml', 'local_qrcurp'),
             get_string('privacynoticehtmlinfo', 'local_qrcurp'), '', PARAM_RAW, 5000));
 

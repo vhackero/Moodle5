@@ -69,6 +69,15 @@ $PAGE->set_url(new moodle_url('/local/qrcurp/decode.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title('Registro');
 
+$hidechrome = config::get_bool('hidesitechrome', false);
+$allowautofilledpasswordedit = config::get_bool('allowautofilledpasswordedit', false);
+$editableautofilledfields = array_values(array_filter(array_map(static function(string $field): string {
+    return preg_replace('/[^a-zA-Z0-9_-]/', '', trim($field));
+}, config::get_csv_list('editableautofilledfields')), static function(string $field): bool {
+    return $field !== '';
+}));
+$editableautofilledfieldsjson = json_encode($editableautofilledfields);
+
 // ✅ MEJORADO: OBTENER TODOS LOS PARÁMETROS UTM
 $utm_source = optional_param('utm_source', '', PARAM_ALPHANUMEXT);
 $utm_medium = optional_param('utm_medium', '', PARAM_ALPHANUMEXT);
@@ -129,7 +138,9 @@ if($contadorVisitas){
 
 //VARAIBLES GLOBALES USADAS
 global $CFG,$DB,$DBEXTERNAL,$NAMEEXTERNALDBQRCURP,$NAMEPLATAFORMQRCURP;
-echo $OUTPUT->header();
+if (!$hidechrome) {
+    echo $OUTPUT->header();
+}
 
 
 $url = $CFG->wwwroot.'/index.php';
@@ -816,6 +827,8 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 var idgrupo = "<?php echo $typegrouping?>";
                 var createGroupEnrol = <?= (int)$gruoactive ?>;
                 var createGroupPatternId = "<?= (int)$gruoidcreate ?>";
+                var allowAutofilledPasswordEdit = <?= $allowautofilledpasswordedit ? 'true' : 'false' ?>;
+                var editableAutofilledFields = <?= $editableautofilledfieldsjson ?: '[]' ?>;
 
                 if (idcategoria != 0) {
                     $("<div>", {
@@ -1009,6 +1022,27 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
 
                 setTimeout("datacurp()",2000);
 
+                function syncPasswordFromAlias() {
+                    var passInput = document.getElementById('pass');
+                    var aliasInput = document.getElementById('session_alias');
+                    if (!passInput || !aliasInput) {
+                        return;
+                    }
+                    var aliasValue = (aliasInput.value || '').trim();
+                    if (aliasValue !== '' && aliasValue.toLowerCase() !== 'null') {
+                        passInput.placeholder = 'Misma contraseña que en ' + aliasValue;
+                        if (!allowAutofilledPasswordEdit) {
+                            passInput.setAttribute('readonly', '');
+                        } else {
+                            passInput.removeAttribute('readonly');
+                        }
+                    } else {
+                        passInput.placeholder = 'Ingresa tu contraseña';
+                        passInput.removeAttribute('readonly');
+                    }
+                }
+                syncPasswordFromAlias();
+
                 if(masdeunrol == 1 && numrolesencontrados >1 ){
                     document.getElementById('modalroles').classList.remove('not-view');
                     document.getElementById('message-modal-roles').textContent = 'Estimado(a) participante la CURP proporcionada se encuentra asociada a más de un rol, selecciona a continuación el rol con el que deseas realizar el registro y valida la información:';
@@ -1026,6 +1060,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                     document.getElementById('rol').value =  datos[2];
                                     document.getElementById('rolname').value =  datos[3];
                                     document.getElementById('email').value =  datos[4];
+                                    syncPasswordFromAlias();
 
                                     // ✅ NUEVO: CERRAR EL MODAL DESPUÉS DE SELECCIONAR
                                     closeRolesModal();
@@ -1100,6 +1135,13 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                     document.getElementById("grupos").classList.remove('control-data-form');
                                 }
                             }
+                            editableAutofilledFields.forEach(function(fieldId) {
+                                var fieldElement = document.getElementById(fieldId);
+                                if (fieldElement) {
+                                    fieldElement.removeAttribute("readonly");
+                                    fieldElement.classList.remove('control-data-form');
+                                }
+                            });
                         }, 2000);
                     }
                 }
@@ -1475,4 +1517,6 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
     </div>
 <?php
 
-echo $OUTPUT->footer();
+if (!$hidechrome) {
+    echo $OUTPUT->footer();
+}
