@@ -1020,23 +1020,37 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 }
 
                 var read = 0;
-                if (document.getElementById("texto-terminos-condiciones") != null) {
-                    $("#texto-terminos-condiciones").on("scroll",function () {
-                        let element = document.getElementById("texto-terminos-condiciones");
-                        if (element.offsetHeight + element.scrollTop >= element.scrollHeight) {
-                            document.getElementById("register-terms_of_service").disabled = false;
-                            document.getElementById("register-terms_of_service").checked = true;
+                (function setupPrivacyCheckboxFlow() {
+                    var termsContainer = document.getElementById("texto-terminos-condiciones");
+                    var termsCheckbox = document.getElementById("register-terms_of_service");
+                    if (!termsCheckbox) {
+                        return;
+                    }
+                    if (!termsContainer) {
+                        read = 1;
+                        termsCheckbox.disabled = false;
+                        return;
+                    }
+
+                    var hasScrollableContent = termsContainer.scrollHeight > termsContainer.clientHeight + 2;
+                    if (!hasScrollableContent) {
+                        read = 1;
+                        termsCheckbox.disabled = false;
+                        $('#leer-aviso').css('display','none');
+                        $('#readall-terminos').css('display','none');
+                        return;
+                    }
+
+                    termsCheckbox.disabled = true;
+                    $("#texto-terminos-condiciones").on("scroll", function () {
+                        if (termsContainer.offsetHeight + termsContainer.scrollTop >= termsContainer.scrollHeight - 2) {
+                            termsCheckbox.disabled = false;
                             read = 1;
                             $('#leer-aviso').css('display','none');
                             $('#readall-terminos').css('display','none');
                         }
                     });
-                } else {
-                    read = 1;
-                    if (document.getElementById("register-terms_of_service") != null) {
-                        document.getElementById("register-terms_of_service").disabled = false;
-                    }
-                }
+                })();
 
                 $('#aviso-privacidad').click(function (){
                     if(read != 1){
@@ -1044,7 +1058,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         $('#readall-terminos').css('display','block');
                     }else{
                         $('#leer-aviso').css('display','none');
-                        $('#readall-terminos').css('display','block');
+                        $('#readall-terminos').css('display','none');
                     }
                 });
 
@@ -1310,6 +1324,29 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 });
             }
         </script>
+        <style>
+            .modal-roles {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                background: rgba(0, 0, 0, 0.55);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 16px;
+            }
+            .modal-roles.not-view { display: none !important; }
+            .modal-roles .modal-content {
+                width: 100%;
+                max-width: 720px;
+                max-height: 85vh;
+                overflow-y: auto;
+                background: #fff;
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: 0 10px 30px rgba(0,0,0,.25);
+            }
+        </style>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     </head>
     <!--validación de roles de usuarios-->
