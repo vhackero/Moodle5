@@ -69,6 +69,12 @@ if(despachador == 1 && activedate == 1 && encuentradatos ==1  ){
                 document.getElementById("grupos").classList.remove('control-data-form');
                 }
             }
+            if (typeof window.applyEditableAutofilledOverrides === 'function') {
+                window.applyEditableAutofilledOverrides();
+            }
+            if (typeof window.syncPasswordFromAlias === 'function') {
+                window.syncPasswordFromAlias();
+            }
     },5000);
 
 }if(despachador == 4 && encuentradatos==0 && externalinsert == 1 ){
