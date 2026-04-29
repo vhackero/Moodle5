@@ -111,6 +111,25 @@ function local_qrcurp_calculate_age_from_birth(string $birth): string {
     }
 }
 
+
+function local_qrcurp_parse_basic_curp(string $curp): array {
+    $curp = strtoupper(trim($curp));
+    if (strlen($curp) < 13) {
+        return ['birth' => '', 'gender' => '', 'state' => ''];
+    }
+    $yy = substr($curp, 4, 2);
+    $mm = substr($curp, 6, 2);
+    $dd = substr($curp, 8, 2);
+    $gender = substr($curp, 10, 1);
+    $state = substr($curp, 11, 2);
+
+    $currentyy = (int)date('y');
+    $yearprefix = ((int)$yy <= $currentyy) ? '20' : '19';
+    $birth = $dd.'/'.$mm.'/'.$yearprefix.$yy;
+
+    return ['birth' => $birth, 'gender' => $gender, 'state' => $state];
+}
+
 $utm_source = optional_param('utm_source', '', PARAM_ALPHANUMEXT);
 $utm_medium = optional_param('utm_medium', '', PARAM_ALPHANUMEXT);
 $utm_campaign = optional_param('utm_campaign', '', PARAM_ALPHANUMEXT);
@@ -287,9 +306,10 @@ $username = $idcurpuser;    //NOMBRE DE Usuario
 $apellido_p = (isset($campos[2])?$campos[2]:'') ;   //PRIMER APELLIDO
 $apellido_m = (isset($campos[3])?$campos[3]:'') ;   //SEGUNDO APELLIDO
 $nombre = (isset($campos[4])?$campos[4]:'') ;     //NOMBRE CURP
-$genero = (isset($campos[5])?substr($campos[5],0,1):'') ;       //GÉNERO
-$fecha_nacimiento = (isset($campos[6])?$campos[6]:'') ;  //FECHA DE NACIMIENTO
-$estado = (isset($campos[7])?$campos[7]:'') ;      //ESTADO DE RESIDENCIA
+$curpbasic = local_qrcurp_parse_basic_curp($idcurp);
+$genero = (isset($campos[5]) && $campos[5] !== '' ? substr($campos[5],0,1) : ($curpbasic['gender'] ?? '')) ;       //GÉNERO
+$fecha_nacimiento = (isset($campos[6]) && $campos[6] !== '' ? $campos[6] : ($curpbasic['birth'] ?? '')) ;  //FECHA DE NACIMIENTO
+$estado = (isset($campos[7]) && $campos[7] !== '' ? $campos[7] : ($curpbasic['state'] ?? '')) ;      //ESTADO DE RESIDENCIA
 $pais = 'MX';       //Pais por defecto
 $ocupacion = "OTRO"; //OCUPACION por defecto LFAS Modificación 25/11/22
 $idrol = "63"; //ID DEL ROL POR DEFECTO ESTUDIANTE LIC/TSU
