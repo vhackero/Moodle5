@@ -13,6 +13,8 @@ global $DB, $data, $PAGE;
 
 $PAGE->set_context(\context_system::instance());
 
+require_sesskey();
+
 // ✅ CORREGIDO: OBTENER EL ORIGEN DEL REGISTRO
 $origin = optional_param('origin', 'default', PARAM_TEXT);
 $is_saberes_mx = optional_param('is_saberes_mx', 0, PARAM_INT);

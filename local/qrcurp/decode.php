@@ -1278,6 +1278,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     <!--                        <p><br><br><strong>Crear una cuenta</strong></p>-->
                     <!--                    </div>-->
                     <form id="envia-info" action="<?= $registramoodle?>" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="sesskey" value="<?= sesskey() ?>">
                         <!-- ✅ NUEVO: Campos ocultos para el origen -->
                         <input type="hidden" name="origin" value="<?php echo $origin; ?>">
                         <input type="hidden" name="is_saberes_mx" value="<?php echo $is_saberes_mx ? '1' : '0'; ?>">
