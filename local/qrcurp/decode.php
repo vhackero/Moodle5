@@ -680,12 +680,12 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     selectCourseFromUtm();
                 }, 500);
 
-                var yaestaregsitrado = '<?= $yaestasregistrado ?> ';
+                var yaestaregsitrado = '<?= (int)($yaestasregistrado ?? 0) ?>';
 
                 if( yaestaregsitrado == true){
                     const elurl = document.createElement('div')
                     elurl.innerHTML = "<a href='/local/qrcurp/recovery/' target='_blank'>Clic aquí</a>"
-                    menssage="Estimada(o) "+"<?= $nombreDeUsuario ?>"+", ya te encuentras registrado en "+"<?=$nameCategoria?>"+" . \n\n Inicia sesión con las credenciales de acceso que te enviamos previamente a tu correo electrónico. \n\n Si no recuerdas o no encuentras tus credenciales, da clic a continuación para recibirlas nuevamente: \n\n "
+                    menssage="Estimada(o) "+"<?= s($nombreDeUsuario ?? '') ?>"+", ya te encuentras registrado en "+"<?= s($nameCategoria ?? '') ?>"+" . \n\n Inicia sesión con las credenciales de acceso que te enviamos previamente a tu correo electrónico. \n\n Si no recuerdas o no encuentras tus credenciales, da clic a continuación para recibirlas nuevamente: \n\n "
                     document.getElementById("envia-info").remove();
                     document.getElementsByClassName("colors")[0].remove();
                     swal(menssage, {
@@ -699,11 +699,11 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         });
                 }
 
-                var masdeunrol = '<?=$masdeunrol?>';
-                var numrolesencontrados = '<?=$numrolesencontrados?>';
+                var masdeunrol = '<?= (int)($masdeunrol ?? 0) ?>';
+                var numrolesencontrados = '<?= (int)($numrolesencontrados ?? 0) ?>';
                 listarolesdecode = <?= $listarolesdecode ?>;
-                var typeuser = '<?=$tipodeusuario?>';
-                var omiteuserdbexterna = '<?=$omiteuserdbexterna?>';
+                var typeuser = '<?= (int)($tipodeusuario ?? 0) ?>';
+                var omiteuserdbexterna = '<?= (int)($omiteuserdbexterna ?? 0) ?>';
                 let curpvalida = 1;
                 document.getElementById('curpvalida').value = curpvalida
 
@@ -718,10 +718,10 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 }
 
                 if(typeuser == 0){
-                    let curpUser =  '<?= strtoupper($campos[0]);?>';
+                    let curpUser =  '<?= strtoupper($campos[0] ?? '') ?>';
                     let validausuario = 0;
-                    let validaconrenapo = '<?= $validaconrenapo?>';
-                    let omitevalidacionrenapo = '<?= $omitevalidacionrenapo?>';
+                    let validaconrenapo = '<?= (int)($validaconrenapo ?? 0) ?>';
+                    let omitevalidacionrenapo = '<?= (int)($omitevalidacionrenapo ?? 0) ?>';
                     //Valida curp con la RENAPO
                     if(curpUser != '' && validausuario == 0 && validaconrenapo == 1) {
                         // Crear una nueva instancia de XMLHttpRequest
@@ -1192,6 +1192,13 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             window.syncPasswordFromAlias();
                         }, 2000);
                         setTimeout(function() {
+                            if (document.getElementById('envia-info')) {
+                                document.querySelectorAll('#envia-info .form-control[readonly]').forEach(function(el) {
+                                    if (el.value && el.value.trim() !== '') {
+                                        el.classList.add('control-data-form');
+                                    }
+                                });
+                            }
                             if (typeof window.applyEditableAutofilledOverrides === 'function') {
                                 window.applyEditableAutofilledOverrides();
                             }
