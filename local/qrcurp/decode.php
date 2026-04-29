@@ -1023,7 +1023,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
 
                 setTimeout("datacurp()",2000);
 
-                function syncPasswordFromAlias() {
+                window.syncPasswordFromAlias = function() {
                     var passInput = document.getElementById('pass');
                     var aliasInput = document.getElementById('session_alias');
                     if (!passInput || !aliasInput) {
@@ -1041,8 +1041,8 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     } else {
                         passInput.removeAttribute('readonly');
                     }
-                }
-                function applyEditableAutofilledOverrides() {
+                };
+                window.applyEditableAutofilledOverrides = function() {
                     editableAutofilledFields.forEach(function(fieldId) {
                         var fieldElement = document.getElementById(fieldId);
                         if (fieldElement) {
@@ -1065,8 +1065,8 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             }
                         }
                     }
-                }
-                syncPasswordFromAlias();
+                };
+                window.syncPasswordFromAlias();
 
                 if(masdeunrol == 1 && numrolesencontrados >1 ){
                     document.getElementById('modalroles').classList.remove('not-view');
@@ -1085,8 +1085,8 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                     document.getElementById('rol').value =  datos[2];
                                     document.getElementById('rolname').value =  datos[3];
                                     document.getElementById('email').value =  datos[4];
-                                    syncPasswordFromAlias();
-                                    setTimeout(applyEditableAutofilledOverrides, 50);
+                                    window.syncPasswordFromAlias();
+                                    setTimeout(window.applyEditableAutofilledOverrides, 50);
 
                                     // ✅ NUEVO: CERRAR EL MODAL DESPUÉS DE SELECCIONAR
                                     closeRolesModal();
@@ -1125,8 +1125,8 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     $('#matricula').val('<?php echo $matricula ?>');
                     $('#rol').val('<?php echo $idrol ?>');
                     setTimeout(function() {
-                        applyEditableAutofilledOverrides();
-                        syncPasswordFromAlias();
+                        window.applyEditableAutofilledOverrides();
+                        window.syncPasswordFromAlias();
                     }, 100);
                 }
                 else {
@@ -1165,8 +1165,8 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                     document.getElementById("grupos").classList.remove('control-data-form');
                                 }
                             }
-                            applyEditableAutofilledOverrides();
-                            syncPasswordFromAlias();
+                            window.applyEditableAutofilledOverrides();
+                            window.syncPasswordFromAlias();
                         }, 2000);
                     }
                 }
