@@ -265,6 +265,10 @@ if($gruoactive == 1){
 $categoryid = optional_param('categoryid','', PARAM_INT);   // Category id (defaults to Site).
 $registropublicogeneral = get_config('local_qrcurp','publicogeneral');   // Aceptara registros de publico externo.
 $soloregistropublicogeneral = get_config('local_qrcurp','onlypublicogeneral');   //Solo aceptara registros de publico externo
+$publicogeneralblockedtext = config::get_string('publicogeneralblockedtext');
+if ($publicogeneralblockedtext === '') {
+    $publicogeneralblockedtext = ' El registro no esta disponible para publico en general';
+}
 
 //NOMBRE DE LA CATEGORÍA
 $nameCategoria =  $DB->get_record('course_categories',array('id'=>$categoryid));
@@ -849,7 +853,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                     //Para agregar elementos que se requieren para el tipo de usuarios
                                 }else{
                                     document.getElementById("envia-info").remove();
-                                    menssage = "Solo integrantes UnADM pueden inscribirse.";
+                                    menssage = <?= json_encode($publicogeneralblockedtext) ?>;
                                     swal(menssage, {
                                         buttons: "Aceptar",
                                         timer: 4000,
@@ -861,7 +865,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                 console.log("Continua con registro sin datos 2");
                             }else{
                                 document.getElementById("envia-info").remove();
-                                menssage = "Solo integrantes UnADM pueden inscribirse.";
+                                menssage = <?= json_encode($publicogeneralblockedtext) ?>;
                                 swal(menssage, {
                                     buttons: "Aceptar",
                                     timer: 4000,
@@ -875,7 +879,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                 console.log("Continua con registro sin datos 3");
                             }else{
                                 document.getElementById("envia-info").remove();
-                                menssage = "Solo integrantes UnADM pueden inscribirse.";
+                                menssage = <?= json_encode($publicogeneralblockedtext) ?>;
                                 swal(menssage, {
                                     buttons: "Aceptar",
                                     timer: 4000,
@@ -1607,6 +1611,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             <span>Se insertara en la bd externa</span><p id="external"><?= $remoteinsertdb ?> </p>
                             <span>Encuentra el dato en la bd externa</span><p id="existeuserdb"><?= $encuentracurp ?></p>
                             <span>Acepta registros publico general</span><p id="publicogeneral"><?= $registropublicogeneral ?></p>
+                            <span>Mensaje bloqueo público general</span><p id="publicogeneralmsg"><?= s($publicogeneralblockedtext) ?></p>
                             <span>Despachador</span> <p id="despachador"><?= $despachador ?> </p>
                             <input type="hidden" id="rolname" name="rolname" value="<?php echo $roluser ?>">
                             <span>id Curso</span><input type="hidden"  id="idcourse" name="idcourse" value="<?php echo $idcourse ?>">

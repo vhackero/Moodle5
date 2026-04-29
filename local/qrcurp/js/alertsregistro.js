@@ -14,6 +14,7 @@ var externalinsert = document.getElementById("external").innerHTML;
 var menssage = document.getElementById("message").innerHTML;
 var inactivoToGeneral = document.getElementById("inactivotogeneral").innerHTML; //LFAS 26/01/23
 var aceptaregistrospublico = document.getElementById("publicogeneral").innerHTML; //Para aceptar registros de publico en general
+var publicogeneralmsg = document.getElementById("publicogeneralmsg") ? document.getElementById("publicogeneralmsg").innerHTML : "El registro no esta disponible para publico en general";
 var nameExternalData =  localStorage.getItem('nameExternalData');
 var namePlataform =  localStorage.getItem('namePlataform');
 if(despachador == 3 && activedate == 0 && encuentradatos ==1 ){
@@ -131,7 +132,7 @@ else {
                 document.getElementById("envia-info").remove();
 
                 //cambia el envio de la información al registro de moodle
-                menssage = "Solo integrantes UnADM pueden inscribirse.";
+                menssage = publicogeneralmsg;
                 swal(menssage, {
                     buttons: "Aceptar",
                     timer: 4000,

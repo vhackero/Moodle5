@@ -125,6 +125,8 @@ if ( $hassiteconfig ) {
             get_string('dateduracionperidosinfo', 'local_qrcurp'), '', PARAM_RAW, 500));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/publicogeneral', get_string('publicogeneral', 'local_qrcurp'),
             get_string('publicogeneralinfo', 'local_qrcurp'),0));
+        $settings->add(new admin_setting_configtext('local_qrcurp/publicogeneralblockedtext', get_string('publicogeneralblockedtext', 'local_qrcurp'),
+            get_string('publicogeneralblockedtextinfo', 'local_qrcurp'), ' El registro no esta disponible para publico en general', PARAM_RAW, 120));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/onlypublicogeneral', get_string('onlypublicogeneral', 'local_qrcurp'),
             get_string('onlypublicogeneralinfo', 'local_qrcurp'),0));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/idcategories', get_string('idcategories', 'local_qrcurp'),
