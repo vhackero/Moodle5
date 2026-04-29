@@ -385,6 +385,8 @@ if (!$skipexternalqueries) {
 
     //Validación de numero de roles para selccionar entre cada uno de ellos
     $masdeunrol = 0;
+    $numrolesencontrados = 0;
+    $listarolesdecode = '[]';
     $listahtmlroles = '';
     if($esinactivo == '' && !$skipexternalqueries){
         $listaroles = "SELECT
@@ -409,7 +411,7 @@ if (!$skipexternalqueries) {
             $masdeunrol = 1;
             $listarolestohtml = [];
             while ($row = mysqli_fetch_array($rolesencontrados)) {
-                if($row['contrasenia' != '']){
+                if (!empty($row['contrasenia'])) {
                     $informacion = strtolower($row['matricula']).'|'.$row['contrasenia'].'|'.$row['rol_id'].'|'.$row['nombre_rol'].'|'.$row['correo_institucional'];
                     array_push($listarolestohtml, $informacion);
                     array_push($roleslist, $row);
@@ -699,7 +701,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
 
                 var masdeunrol = '<?=$masdeunrol?>';
                 var numrolesencontrados = '<?=$numrolesencontrados?>';
-                listarolesdecode = <?= $listarolesdecode ?: '[]' ?>;
+                listarolesdecode = <?= $listarolesdecode ?>;
                 var typeuser = '<?=$tipodeusuario?>';
                 var omiteuserdbexterna = '<?=$omiteuserdbexterna?>';
                 let curpvalida = 1;
