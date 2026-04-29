@@ -1285,7 +1285,10 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     $('#rol').val(<?php echo $idrol?>);
                     var sel = document.getElementById("rol");
                     if (sel != null) {
-                        var text = sel.options[sel.selectedIndex].text;
+                        var text = '';
+                        if (sel.selectedIndex >= 0 && sel.options[sel.selectedIndex]) {
+                            text = sel.options[sel.selectedIndex].text;
+                        }
                         $('#rolname').val(text);
                         document.getElementById("user-not-view-info").style.display = 'none'
                         setTimeout(function () {
