@@ -150,12 +150,18 @@ function local_qrcurp_resolve_role_options(string $configraw, ?mysqli $externalc
         return local_qrcurp_default_role_options();
     }
     if (preg_match('/^select\s/i', $configraw) && $externalconnection instanceof mysqli) {
-        $result = local_qrcurp_execute_template_query($externalconnection, $configraw, []);
+        $query = rtrim($configraw, " \t\n\r\0\x0B");
+        $result = local_qrcurp_execute_template_query($externalconnection, $query, []);
+        if (!($result instanceof mysqli_result)) {
+            $result = $externalconnection->query($query);
+        }
         if ($result instanceof mysqli_result) {
             $options = [];
             while ($row = $result->fetch_assoc()) {
-                if (isset($row['id']) && isset($row['name'])) {
-                    $options[(string)$row['id']] = (string)$row['name'];
+                $roleid = $row['id'] ?? $row['rol_id'] ?? null;
+                $rolename = $row['name'] ?? $row['nombre'] ?? null;
+                if ($roleid !== null && $rolename !== null && $rolename !== '') {
+                    $options[(string)$roleid] = (string)$rolename;
                 }
             }
             if (!empty($options)) {
