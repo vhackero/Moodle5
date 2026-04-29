@@ -670,7 +670,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 }
             }
 
-            var listarolesdecode = '';
+            var listarolesdecode = [];
             $(document).ready(function () {
 
                 // ✅ NUEVO: EJECUTAR SELECCIÓN AUTOMÁTICA DE CURSO AL CARGAR LA PÁGINA
@@ -699,9 +699,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
 
                 var masdeunrol = '<?=$masdeunrol?>';
                 var numrolesencontrados = '<?=$numrolesencontrados?>';
-                if('<?=$listarolesdecode?>' != ''){
-                    listarolesdecode = JSON.parse('<?=$listarolesdecode?>');
-                }
+                listarolesdecode = <?= $listarolesdecode ?: '[]' ?>;
                 var typeuser = '<?=$tipodeusuario?>';
                 var omiteuserdbexterna = '<?=$omiteuserdbexterna?>';
                 let curpvalida = 1;
