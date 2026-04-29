@@ -79,6 +79,38 @@ $editableautofilledfields = array_values(array_filter(array_map(static function(
 $editableautofilledfieldsjson = json_encode($editableautofilledfields);
 
 // ✅ MEJORADO: OBTENER TODOS LOS PARÁMETROS UTM
+
+function local_qrcurp_birthdate_for_input(string $birth): string {
+    $birth = trim($birth);
+    if ($birth === '') {
+        return '';
+    }
+    if (strpos($birth, '/') !== false) {
+        $parts = explode('/', $birth);
+        if (count($parts) === 3) {
+            return sprintf('%04d-%02d-%02d', (int)$parts[2], (int)$parts[1], (int)$parts[0]);
+        }
+    }
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $birth)) {
+        return $birth;
+    }
+    return '';
+}
+
+function local_qrcurp_calculate_age_from_birth(string $birth): string {
+    $normalized = local_qrcurp_birthdate_for_input($birth);
+    if ($normalized === '') {
+        return '';
+    }
+    try {
+        $dob = new DateTime($normalized);
+        $today = new DateTime('today');
+        return (string)$dob->diff($today)->y;
+    } catch (Exception $e) {
+        return '';
+    }
+}
+
 $utm_source = optional_param('utm_source', '', PARAM_ALPHANUMEXT);
 $utm_medium = optional_param('utm_medium', '', PARAM_ALPHANUMEXT);
 $utm_campaign = optional_param('utm_campaign', '', PARAM_ALPHANUMEXT);
@@ -138,6 +170,7 @@ if($contadorVisitas){
 
 //VARAIBLES GLOBALES USADAS
 global $CFG,$DB,$DBEXTERNAL,$NAMEEXTERNALDBQRCURP,$NAMEPLATAFORMQRCURP;
+
 if (!$hidechrome) {
     echo $OUTPUT->header();
 }
@@ -267,7 +300,8 @@ $tipodebaja = null;
 $correo = '';
 $matricula = '';
 $cp = '';
-$edad = '';
+$edad = local_qrcurp_calculate_age_from_birth($fecha_nacimiento);
+$fecha_nacimiento = local_qrcurp_birthdate_for_input($fecha_nacimiento);
 
 if (!$skipexternalqueries) {
     $message = 'Consulta fallida: revisar la consulta configurada en externalcurpquery.';
@@ -489,6 +523,9 @@ if (!$skipexternalqueries) {
 }
 
 //Valida si solo aceptará publico en general omitiendo los de la base de datos externa
+$fecha_nacimiento = local_qrcurp_birthdate_for_input($fecha_nacimiento);
+$edad = local_qrcurp_calculate_age_from_birth($fecha_nacimiento);
+
 $omiteuserdbexterna = 0;
 if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND isset($datosencontrados) AND $datosencontrados->num_rows > 0 ){
     $omiteuserdbexterna = 1;
@@ -1229,13 +1266,18 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     return;
                 }
                 edad = calcularEdad(fechacurp);
-                fechacurp = fechacurp.split('/').reverse().join('-');
+                if (fechacurp.indexOf('/') !== -1) {
+                    fechacurp = fechacurp.split('/').reverse().join('-');
+                }
                 $('#date_nacimientos').val(fechacurp);
                 document.getElementById("edad").value = edad;
             }
 
             function calcularEdad(birthday) {
-                birthday = new Date(birthday.split('/').reverse().join('-'));
+                if (birthday.indexOf('/') !== -1) {
+                    birthday = birthday.split('/').reverse().join('-');
+                }
+                birthday = new Date(birthday);
                 var ageDifMs = Date.now() - birthday.getTime();
                 var ageDate = new Date(ageDifMs);
                 return Math.abs(ageDate.getUTCFullYear() - 1970);
