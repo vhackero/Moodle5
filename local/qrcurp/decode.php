@@ -1038,13 +1038,17 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                         return;
                     }
                     var aliasValue = (aliasInput.value || '').trim();
-                    if (aliasValue !== '' && aliasValue.toLowerCase() !== 'null') {
-                        var shownName = externalPlatformName !== '' ? externalPlatformName : 'plataforma externa';
+                    var shownName = externalPlatformName !== '' ? externalPlatformName : 'plataforma externa';
+                    var hasExternalUserData = document.getElementById('existeuserdb') != null &&
+                        String(document.getElementById('existeuserdb').textContent).trim() === '1';
+                    var shouldUseExternalPassword = hasExternalUserData ||
+                        (aliasValue !== '' && aliasValue.toLowerCase() !== 'null');
+                    if (shouldUseExternalPassword) {
                         passInput.placeholder = 'Misma contraseña que en ' + shownName;
                     } else {
                         passInput.placeholder = 'Ingresa tu contraseña';
                     }
-                    if (!allowAutofilledPasswordEdit && aliasValue !== '' && aliasValue.toLowerCase() !== 'null') {
+                    if (!allowAutofilledPasswordEdit && shouldUseExternalPassword) {
                         passInput.setAttribute('readonly', '');
                     } else {
                         passInput.removeAttribute('readonly');
@@ -1052,15 +1056,23 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 };
                 window.applyEditableAutofilledOverrides = function() {
                     editableAutofilledFields.forEach(function(fieldId) {
-                        var fieldElement = document.getElementById(fieldId);
-                        if (fieldElement) {
+                        var candidates = [];
+                        var byId = document.getElementById(fieldId);
+                        if (byId) {
+                            candidates.push(byId);
+                        }
+                        document.querySelectorAll('[name="' + fieldId + '"]').forEach(function(el) {
+                            candidates.push(el);
+                        });
+                        candidates.forEach(function(fieldElement) {
                             fieldElement.removeAttribute("readonly");
                             fieldElement.removeAttribute("disabled");
                             fieldElement.classList.remove('control-data-form');
-                            if (fieldElement.parentElement) {
-                                fieldElement.parentElement.classList.remove('control-data-form');
+                            var fieldGroup = fieldElement.closest('.form-group') || fieldElement.parentElement;
+                            if (fieldGroup) {
+                                fieldGroup.classList.remove('control-data-form');
                             }
-                        }
+                        });
                     });
                     if (allowAutofilledPasswordEdit) {
                         var passElement = document.getElementById('pass');
