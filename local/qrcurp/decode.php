@@ -830,6 +830,9 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 var allowAutofilledPasswordEdit = <?= $allowautofilledpasswordedit ? 'true' : 'false' ?>;
                 var editableAutofilledFields = <?= $editableautofilledfieldsjson ?: '[]' ?>;
                 var externalPlatformName = "<?= s($NAMEEXTERNALDBQRCURP !== '' ? $NAMEEXTERNALDBQRCURP : $NAMEPLATAFORMQRCURP) ?>";
+                if (externalPlatformName && externalPlatformName.toLowerCase() === 'null') {
+                    externalPlatformName = '';
+                }
 
                 if (idcategoria != 0) {
                     $("<div>", {
@@ -1188,6 +1191,14 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             window.applyEditableAutofilledOverrides();
                             window.syncPasswordFromAlias();
                         }, 2000);
+                        setTimeout(function() {
+                            if (typeof window.applyEditableAutofilledOverrides === 'function') {
+                                window.applyEditableAutofilledOverrides();
+                            }
+                            if (typeof window.syncPasswordFromAlias === 'function') {
+                                window.syncPasswordFromAlias();
+                            }
+                        }, 2300);
                     }
                 }
             }
