@@ -438,11 +438,9 @@ if (!$skipexternalqueries) {
             $idrol = $row[6];    //ID DE ROL
             $roluser = $row[7];  //ROL NAME
             ($row[8] == '-') ? $matricula = '' : $matricula = $row[8];   //MATRICULA
-            ($row[9] == '-') ? $fecha_nacimiento = '' : $fecha_nacimiento = $row[9]; //FECHA DE NACIMIENTO
-            ($row[10] == '-') ? $genero = '' : $genero = $row[10];     //GÉNERO
+            // Mantener siempre fecha/género derivados de CURP para consistencia del flujo.
             ($row[11] == '-') ? $correo = '' : $correo = $row[11];   //CORREO
-            ($row[12] == '-') ? $estado = '' : $estado = $row[12];  //ESTADO DE NACIMIENTO
-            ($row[13] == '-') ? $edad = '' : $edad = $row[13];  //EDAD
+            // Mantener siempre estado/edad derivados de CURP para consistencia del flujo.
             $ocupacion = "EDUCATIVO"; //OCUPACION
             ($row[15] == '-') ? $cp = '' : $cp = $row[15];  //CÓDIGO POSTAL
             ($row[16] == '-') ? $municipio = '' : $municipio = $row[16]; //MUNICIPIO
@@ -1222,17 +1220,18 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
             }
 
             function hayFechaCurp(fechasend = '') {
-                if ($('#date_nacimientos').val() == '') {
-                    if(fechasend != ''){
-                        fechacurp = fechasend
-                    }else {
-                        fechacurp = "<?php echo $fecha_nacimiento?>";
-                    }
-                    edad = calcularEdad(fechacurp);
-                    fechacurp = fechacurp.split('/').reverse().join('-');
-                    $('#date_nacimientos').val(fechacurp);
-                    document.getElementById("edad").value = edad;
+                if(fechasend != ''){
+                    fechacurp = fechasend
+                }else {
+                    fechacurp = "<?php echo $fecha_nacimiento?>";
                 }
+                if (fechacurp == '') {
+                    return;
+                }
+                edad = calcularEdad(fechacurp);
+                fechacurp = fechacurp.split('/').reverse().join('-');
+                $('#date_nacimientos').val(fechacurp);
+                document.getElementById("edad").value = edad;
             }
 
             function calcularEdad(birthday) {
