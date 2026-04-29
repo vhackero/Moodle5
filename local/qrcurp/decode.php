@@ -403,21 +403,21 @@ if (!$skipexternalqueries) {
         if ($rolesencontrados === false) {
             redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR);
         }
+        $roleslist = [];
         if(isset($rolesencontrados) AND $rolesencontrados->num_rows > 1 ) {
             $numrolesencontrados = $rolesencontrados->num_rows;
             $masdeunrol = 1;
-            $listaroles = [];
             $listarolestohtml = [];
             while ($row = mysqli_fetch_array($rolesencontrados)) {
                 if($row['contrasenia' != '']){
                     $informacion = strtolower($row['matricula']).'|'.$row['contrasenia'].'|'.$row['rol_id'].'|'.$row['nombre_rol'].'|'.$row['correo_institucional'];
                     array_push($listarolestohtml, $informacion);
-                    array_push($listaroles, $row);
+                    array_push($roleslist, $row);
                 }
             }
             $listarolesdecode = json_encode($listarolestohtml);
         }
-        foreach ($listaroles as $itemrole){
+        foreach ($roleslist as $itemrole){
             $listahtmlroles = $listahtmlroles . '<button  class="swal-button swal-button--confirm m-2" data-role="'.$itemrole["rol_id"].'">
                         '.$itemrole["nombre_rol"].'
                     </button>';
@@ -1022,6 +1022,14 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 })
 
                 setTimeout("datacurp()",2000);
+                setTimeout(function() {
+                    if (typeof window.applyEditableAutofilledOverrides === 'function') {
+                        window.applyEditableAutofilledOverrides();
+                    }
+                    if (typeof window.syncPasswordFromAlias === 'function') {
+                        window.syncPasswordFromAlias();
+                    }
+                }, 2600);
 
                 window.syncPasswordFromAlias = function() {
                     var passInput = document.getElementById('pass');
