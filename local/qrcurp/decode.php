@@ -1124,6 +1124,10 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     $('#date_nacimientos').val('<?php echo $fecha_nacimiento ?>');
                     $('#matricula').val('<?php echo $matricula ?>');
                     $('#rol').val('<?php echo $idrol ?>');
+                    setTimeout(function() {
+                        applyEditableAutofilledOverrides();
+                        syncPasswordFromAlias();
+                    }, 100);
                 }
                 else {
                     hayFechaCurp();
@@ -1529,6 +1533,14 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             }
                         }
                     });
+                    setTimeout(function() {
+                        if (typeof applyEditableAutofilledOverrides === 'function') {
+                            applyEditableAutofilledOverrides();
+                        }
+                        if (typeof syncPasswordFromAlias === 'function') {
+                            syncPasswordFromAlias();
+                        }
+                    }, 100);
                 })();
             </script>
             <script src="js/sweetalert.min.js"></script>
