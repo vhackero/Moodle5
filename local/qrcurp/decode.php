@@ -130,6 +130,49 @@ function local_qrcurp_parse_basic_curp(string $curp): array {
     return ['birth' => $birth, 'gender' => $gender, 'state' => $state];
 }
 
+
+function local_qrcurp_default_role_options(): array {
+    return [
+        '1' => 'Interesado a estudiante',
+        '2' => 'Aspirante a estudiante',
+        '3' => 'Estudiante Lic/TSU',
+        '4' => 'Egresado',
+        '5' => 'Titulado',
+        '6' => 'Pasante',
+        '7' => 'Aspirante a docente en línea',
+        '8' => 'Docente en línea'
+    ];
+}
+
+function local_qrcurp_resolve_role_options(string $configraw, ?mysqli $externalconnection): array {
+    $configraw = trim($configraw);
+    if ($configraw === '') {
+        return local_qrcurp_default_role_options();
+    }
+    if (preg_match('/^select\s/i', $configraw) && $externalconnection instanceof mysqli) {
+        $result = local_qrcurp_execute_template_query($externalconnection, $configraw, []);
+        if ($result instanceof mysqli_result) {
+            $options = [];
+            while ($row = $result->fetch_assoc()) {
+                if (isset($row['id']) && isset($row['name'])) {
+                    $options[(string)$row['id']] = (string)$row['name'];
+                }
+            }
+            if (!empty($options)) {
+                return $options;
+            }
+        }
+    }
+    $options = [];
+    foreach (preg_split('/\r\n|\r|\n/', $configraw) as $line) {
+        $line = trim($line);
+        if ($line === '' || strpos($line, '|') === false) { continue; }
+        [$id, $name] = array_map('trim', explode('|', $line, 2));
+        if ($id !== '' && $name !== '') { $options[$id] = $name; }
+    }
+    return !empty($options) ? $options : local_qrcurp_default_role_options();
+}
+
 $utm_source = optional_param('utm_source', '', PARAM_ALPHANUMEXT);
 $utm_medium = optional_param('utm_medium', '', PARAM_ALPHANUMEXT);
 $utm_campaign = optional_param('utm_campaign', '', PARAM_ALPHANUMEXT);
@@ -617,6 +660,9 @@ foreach (preg_split('/\r\n|\r|\n/', $formfieldsconfigraw) as $line) {
 }
 
 $formextrafieldsraw = config::get_string('formextrafields');
+$rolesourceconfigraw = config::get_string('rolesourceconfig');
+$dynamicroleoptions = local_qrcurp_resolve_role_options($rolesourceconfigraw, $externalconnection instanceof mysqli ? $externalconnection : null);
+
 $formextrafields = [];
 foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
     $line = trim($line);
@@ -1463,69 +1509,10 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                     <br>
                                     <select class="form-control" id="rol" name="rol" required>
                                         <option value="0">Seleccionar Rol</option>
-                                        <option value="1">Interesado a estudiante</option>
-                                        <option value="2">Aspirante a estudiante</option>
-                                        <option value="3">Estudiante Lic/TSU</option>
-                                        <option value="4">Egresado</option>
-                                        <option value="5">Titulado</option>
-                                        <option value="6">Pasante</option>
-                                        <option value="7">Aspirante a docente en línea</option>
-                                        <option value="8">Docente en línea</option>
-                                        <option value="9">Asesor Académico</option>
-                                        <option value="10">Tutor</option>
-                                        <option value="11">Posdoctorante</option>
-                                        <option value="12">Personal Administrativo</option>
-                                        <option value="13">Prerregistro</option>
-                                        <option value="14">Aspirante Posgrado</option>
-                                        <option value="15">Estudiante Posgrado</option>
-                                        <option value="16">Jefe de Carrera Lic/TSU</option>
-                                        <option value="17">Jefe de División Lic/TSU</option>
-                                        <option value="18">Jefe de Carrera Posgrado</option>
-                                        <option value="19">Coordinador Lic/TSU</option>
-                                        <option value="20">Jefe de División Posgrado</option>
-                                        <option value="21">Jefe de División Posgrado</option>
-                                        <option value="22">Aspirante admitido Lic/TSU</option>
-                                        <option value="23">Aspirante admitido Posgrado</option>
-                                        <option value="24">Escolares</option>
-                                        <option value="25">Maestro</option>
-                                        <option value="26">Estudiante Innovatic</option>
-                                        <option value="27">Aspirante posgrado selección</option>
-                                        <option value="28">Apoyo docente</option>
-                                        <option value="29">Educandos</option>
-                                        <option value="30">Promotor</option>
-                                        <option value="31">Monitor Académico</option>
-                                        <option value="32">Apoyo al Monitor Académico</option>
-                                        <option value="33">Aspirante Lic/TSU No admitido</option>
-                                        <option value="34">Aspirante Posgrado No admitido</option>
-                                        <option value="35">Gestor de perfiles por grupo Lic/TSU</option>
-                                        <option value="36">Gestor de de base de datos</option>
-                                        <option value="37">Aulas</option>
-                                        <option value="38">Candidato a docente en línea</option>
-                                        <option value="39">Conapace</option>
-                                        <option value="40">Recursos Humanos</option>
-                                        <option value="41">Candidato a docente en línea admitido</option>
-                                        <option value="42">Candidato a docente en línea no admitido</option>
-                                        <option value="43">Responsable de evaluación</option>
-                                        <option value="44">Aspirante a investigador</option>
-                                        <option value="45">Investigador</option>
-                                        <option value="46">Administrador SIA</option>
-                                        <option value="47">Mesa de ayuda</option>
-                                        <option value="48">Investigador PIMITFAM</option>
-                                        <option value="50">Administrador PIMITFAM</option>
-                                        <option value="52">Apoyo a responsable de p. e.</option>
-                                        <option value="53">Asesor metodológico</option>
-                                        <option value="54">Director de Division PIIn</option>
-                                        <option value="55">Responsable de Programa Educativo PIIn</option>
-                                        <option value="56">Evaluador CIEES</option>
-                                        <option value="57">Apoyo de asuntos escolares</option>
-                                        <option value="58">Dictaminador</option>
-                                        <option value="59">Tutor en línea</option>
-                                        <option value="60">Egresado de Posgrado</option>
-                                        <option value="61">Consulta Externo</option>
-                                        <option value="62">Mesa CTIE</option>
-                                        <option value="63">Público en general</option>
-
-                                    </select>
+                                        <?php foreach ($dynamicroleoptions as $roleidoption => $rolenameoption) { ?>
+                                            <option value="<?php echo s((string)$roleidoption); ?>"><?php echo s($rolenameoption); ?></option>
+                                        <?php } ?>
+</select>
                                 </p>
                             </div>
                         </div>

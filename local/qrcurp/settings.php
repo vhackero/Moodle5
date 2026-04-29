@@ -137,7 +137,17 @@ if ( $hassiteconfig ) {
             get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_RAW, 120));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategorytext', get_string('studentxcategorytext', 'local_qrcurp'),
             get_string('studentxcategorytextinfo', 'local_qrcurp'), '', PARAM_RAW));
-        $settings->add(new admin_setting_configselect('local_qrcurp/rolstudent', get_string('rolstudent', 'local_qrcurp'),
+        
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/rolesourceconfig',
+            get_string('rolesourceconfig', 'local_qrcurp'),
+            get_string('rolesourceconfiginfo', 'local_qrcurp'),
+            "",
+            PARAM_RAW,
+            120,
+            8
+        ));
+
+$settings->add(new admin_setting_configselect('local_qrcurp/rolstudent', get_string('rolstudent', 'local_qrcurp'),
             get_string('rolstudentinfo', 'local_qrcurp'), $defaultstudentroleid, $roleoptions));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/haygroupespera', get_string('haygroupespera', 'local_qrcurp'),
             get_string('haygroupesperainfo', 'local_qrcurp'),0));

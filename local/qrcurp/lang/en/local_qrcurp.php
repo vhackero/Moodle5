@@ -169,3 +169,6 @@ $string['regismoodlenotexdb1'] = 'No existe una cuenta en la base de datos exter
 $string['errorconsulta'] = 'No existe una cuenta en la base de datos externa pero sí en este sitio, regístrate en la base de datos externa.';
 $string['correoregimoodle'] = 'Existe una cuenta registrada con ese correo en este sitio, inténtalo con otro.';
 //$string['regisexdbnotmoodle'] = "Tus datos han sido registrados previamente en la base de datos de la SIGE(UnADM), da clic en continuar para proceder con el registro en el sitio de reforma laboral, (Verifica que los datos sean correctos)";
+
+$string['rolesourceconfig'] = 'Configuración dinámica de roles';
+$string['rolesourceconfiginfo'] = 'Permite definir roles por lista o por consulta SQL externa. Opción 1 (lista): una línea por rol con formato id|nombre. Opción 2 (consulta): inicia con SELECT y debe devolver columnas id y name.';
