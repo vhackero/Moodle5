@@ -275,14 +275,11 @@ $nameCategoria =  $DB->get_record('course_categories',array('id'=>$categoryid));
 $nameCategoria = $nameCategoria->name;
 
 //valida que no exista nombre de plataforma para tomar el nombre de la categoría
-if($_POST['categoryid'] > 0){
-    if($NAMEPLATAFORMQRCURP == ''){
-        //coloca el nombre de la categoría al nombre de la plataforma
-        $NAMEPLATAFORMQRCURP = $nameCategoria;
-        echo "<script>localStorage.setItem('namePlataform','$NAMEPLATAFORMQRCURP');</script>";
-    }
+if ($NAMEPLATAFORMQRCURP == '') {
+    $NAMEPLATAFORMQRCURP = $nameCategoria;
 }
 if($categoryid == ''){$nameCategoria = get_config('local_qrcurp','defaultnamecategory'); }
+echo '<script>localStorage.setItem("namePlataform", ' . json_encode($NAMEPLATAFORMQRCURP) . ');</script>';
 
 //DATOS QUE CONTIENE EL ESCANEO DE LA CURP
 $campos = explode("|", $text);
@@ -1613,6 +1610,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             <span>Encuentra el dato en la bd externa</span><p id="existeuserdb"><?= $encuentracurp ?></p>
                             <span>Acepta registros publico general</span><p id="publicogeneral"><?= $registropublicogeneral ?></p>
                             <span>Mensaje bloqueo público general</span><p id="publicogeneralmsg"><?= s($publicogeneralblockedtext) ?></p>
+                            <span>Nombre plataforma</span><p id="nameplataformcfg"><?= s($NAMEPLATAFORMQRCURP) ?></p>
                             <span>Despachador</span> <p id="despachador"><?= $despachador ?> </p>
                             <input type="hidden" id="rolname" name="rolname" value="<?php echo $roluser ?>">
                             <span>id Curso</span><input type="hidden"  id="idcourse" name="idcourse" value="<?php echo $idcourse ?>">
