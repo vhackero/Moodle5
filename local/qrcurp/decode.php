@@ -1165,12 +1165,10 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     if (!passInput || !aliasInput) {
                         return;
                     }
-                    var aliasValue = (aliasInput.value || '').trim();
                     var shownName = externalPlatformName !== '' ? externalPlatformName : 'plataforma externa';
                     var hasExternalUserData = document.getElementById('existeuserdb') != null &&
                         String(document.getElementById('existeuserdb').textContent).trim() === '1';
-                    var shouldUseExternalPassword = hasExternalUserData ||
-                        (aliasValue !== '' && aliasValue.toLowerCase() !== 'null');
+                    var shouldUseExternalPassword = hasExternalUserData;
                     if (shouldUseExternalPassword) {
                         passInput.placeholder = 'Misma contraseña que en ' + shownName;
                     } else {
