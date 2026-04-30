@@ -11,11 +11,174 @@ require_once('notificaciones.php');
 require_once('globalVariables.php');
 require_once('AvisosdePrivacidad.php');
 
+use local_qrcurp\local\config;
+
+/**
+ * Ejecuta una consulta SQL con placeholders tipo {{param}} de forma preparada.
+ *
+ * @param mysqli $connection
+ * @param string $template
+ * @param array $values
+ * @return mysqli_result|false
+ */
+function local_qrcurp_execute_template_query(mysqli $connection, string $template, array $values) {
+    if (trim($template) === '') {
+        return false;
+    }
+
+    $params = [];
+    // Permite placeholders con o sin comillas en la plantilla: {{curp}} o '{{curp}}'.
+    $sql = preg_replace_callback("/'?\\{\\{([a-z0-9_]+)\\}\\}'?/i", static function($matches) use ($values, &$params) {
+        $key = $matches[1];
+        $params[] = (string) ($values[$key] ?? '');
+        return '?';
+    }, $template);
+
+    $statement = $connection->prepare($sql);
+    if (!$statement) {
+        return false;
+    }
+
+    $expectedparams = (int) $statement->param_count;
+    if ($expectedparams !== count($params)) {
+        $statement->close();
+        return false;
+    }
+
+    if ($expectedparams > 0) {
+        $types = str_repeat('s', count($params));
+        $bindargs = [$types];
+        foreach ($params as $index => $param) {
+            $bindargs[] = &$params[$index];
+        }
+        if (!call_user_func_array([$statement, 'bind_param'], $bindargs)) {
+            $statement->close();
+            return false;
+        }
+    }
+
+    if (!$statement->execute()) {
+        $statement->close();
+        return false;
+    }
+
+    return $statement->get_result();
+}
+
 $PAGE->set_url(new moodle_url('/local/qrcurp/decode.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title('Registro');
 
+$hidechrome = config::get_bool('hidesitechrome', false);
+$allowautofilledpasswordedit = config::get_bool('allowautofilledpasswordedit', false);
+$editableautofilledfields = array_values(array_filter(array_map(static function(string $field): string {
+    return preg_replace('/[^a-zA-Z0-9_-]/', '', trim($field));
+}, config::get_csv_list('editableautofilledfields')), static function(string $field): bool {
+    return $field !== '';
+}));
+$editableautofilledfieldsjson = json_encode($editableautofilledfields);
+
 // ✅ MEJORADO: OBTENER TODOS LOS PARÁMETROS UTM
+
+function local_qrcurp_birthdate_for_input(string $birth): string {
+    $birth = trim($birth);
+    if ($birth === '') {
+        return '';
+    }
+    if (strpos($birth, '/') !== false) {
+        $parts = explode('/', $birth);
+        if (count($parts) === 3) {
+            return sprintf('%04d-%02d-%02d', (int)$parts[2], (int)$parts[1], (int)$parts[0]);
+        }
+    }
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $birth)) {
+        return $birth;
+    }
+    return '';
+}
+
+function local_qrcurp_calculate_age_from_birth(string $birth): string {
+    $normalized = local_qrcurp_birthdate_for_input($birth);
+    if ($normalized === '') {
+        return '';
+    }
+    try {
+        $dob = new DateTime($normalized);
+        $today = new DateTime('today');
+        return (string)$dob->diff($today)->y;
+    } catch (Exception $e) {
+        return '';
+    }
+}
+
+
+function local_qrcurp_parse_basic_curp(string $curp): array {
+    $curp = strtoupper(trim($curp));
+    if (strlen($curp) < 13) {
+        return ['birth' => '', 'gender' => '', 'state' => ''];
+    }
+    $yy = substr($curp, 4, 2);
+    $mm = substr($curp, 6, 2);
+    $dd = substr($curp, 8, 2);
+    $gender = substr($curp, 10, 1);
+    $state = substr($curp, 11, 2);
+
+    $currentyy = (int)date('y');
+    $yearprefix = ((int)$yy <= $currentyy) ? '20' : '19';
+    $birth = $dd.'/'.$mm.'/'.$yearprefix.$yy;
+
+    return ['birth' => $birth, 'gender' => $gender, 'state' => $state];
+}
+
+
+function local_qrcurp_default_role_options(): array {
+    return [
+        '1' => 'Interesado a estudiante',
+        '2' => 'Aspirante a estudiante',
+        '3' => 'Estudiante Lic/TSU',
+        '4' => 'Egresado',
+        '5' => 'Titulado',
+        '6' => 'Pasante',
+        '7' => 'Aspirante a docente en línea',
+        '8' => 'Docente en línea'
+    ];
+}
+
+function local_qrcurp_resolve_role_options(string $configraw, ?mysqli $externalconnection): array {
+    $configraw = trim($configraw);
+    if ($configraw === '') {
+        return local_qrcurp_default_role_options();
+    }
+    if (preg_match('/^select\s/i', $configraw) && $externalconnection instanceof mysqli) {
+        $query = rtrim($configraw, " \t\n\r\0\x0B");
+        $result = local_qrcurp_execute_template_query($externalconnection, $query, []);
+        if (!($result instanceof mysqli_result)) {
+            $result = $externalconnection->query($query);
+        }
+        if ($result instanceof mysqli_result) {
+            $options = [];
+            while ($row = $result->fetch_assoc()) {
+                $roleid = $row['id'] ?? $row['rol_id'] ?? null;
+                $rolename = $row['name'] ?? $row['nombre'] ?? null;
+                if ($roleid !== null && $rolename !== null && $rolename !== '') {
+                    $options[(string)$roleid] = (string)$rolename;
+                }
+            }
+            if (!empty($options)) {
+                return $options;
+            }
+        }
+    }
+    $options = [];
+    foreach (preg_split('/\r\n|\r|\n/', $configraw) as $line) {
+        $line = trim($line);
+        if ($line === '' || strpos($line, '|') === false) { continue; }
+        [$id, $name] = array_map('trim', explode('|', $line, 2));
+        if ($id !== '' && $name !== '') { $options[$id] = $name; }
+    }
+    return !empty($options) ? $options : local_qrcurp_default_role_options();
+}
+
 $utm_source = optional_param('utm_source', '', PARAM_ALPHANUMEXT);
 $utm_medium = optional_param('utm_medium', '', PARAM_ALPHANUMEXT);
 $utm_campaign = optional_param('utm_campaign', '', PARAM_ALPHANUMEXT);
@@ -75,7 +238,10 @@ if($contadorVisitas){
 
 //VARAIBLES GLOBALES USADAS
 global $CFG,$DB,$DBEXTERNAL,$NAMEEXTERNALDBQRCURP,$NAMEPLATAFORMQRCURP;
-echo $OUTPUT->header();
+
+if (!$hidechrome) {
+    echo $OUTPUT->header();
+}
 
 
 $url = $CFG->wwwroot.'/index.php';
@@ -99,35 +265,41 @@ if($gruoactive == 1){
 $categoryid = optional_param('categoryid','', PARAM_INT);   // Category id (defaults to Site).
 $registropublicogeneral = get_config('local_qrcurp','publicogeneral');   // Aceptara registros de publico externo.
 $soloregistropublicogeneral = get_config('local_qrcurp','onlypublicogeneral');   //Solo aceptara registros de publico externo
+$publicogeneralblockedtext = config::get_string('publicogeneralblockedtext');
+if ($publicogeneralblockedtext === '') {
+    $publicogeneralblockedtext = ' El registro no esta disponible para publico en general';
+}
 
 //NOMBRE DE LA CATEGORÍA
 $nameCategoria =  $DB->get_record('course_categories',array('id'=>$categoryid));
 $nameCategoria = $nameCategoria->name;
 
 //valida que no exista nombre de plataforma para tomar el nombre de la categoría
-if($_POST['categoryid'] > 0){
-    if($NAMEPLATAFORMQRCURP == ''){
-        //coloca el nombre de la categoría al nombre de la plataforma
-        $NAMEPLATAFORMQRCURP = $nameCategoria;
-        echo "<script>localStorage.setItem('namePlataform','$NAMEPLATAFORMQRCURP');</script>";
-    }
+if ($NAMEPLATAFORMQRCURP == '') {
+    $NAMEPLATAFORMQRCURP = $nameCategoria;
 }
 if($categoryid == ''){$nameCategoria = get_config('local_qrcurp','defaultnamecategory'); }
+echo '<script>localStorage.setItem("namePlataform", ' . json_encode($NAMEPLATAFORMQRCURP) . ');</script>';
 
 //DATOS QUE CONTIENE EL ESCANEO DE LA CURP
 $campos = explode("|", $text);
 
-if($DBEXTERNAL->errordbportname = ''){
+if ($DBEXTERNAL->errordbportname == '') {
     $DBEXTERNAL->errordbportname =0;
 }
 //DATOS DE LA BD EXTERNA
 $remotedbtable = $DBEXTERNAL->dbtable;          //NOMBRE DE LA BD
 $existeerror =  $DBEXTERNAL->errordbportname;   //INFORMACIÓN PARA SABER SI FALTA ALGUN PARAMETRO POR CONFIGURAR
+$externalerrormessage = $DBEXTERNAL->errormessage ?? '';
 $remoteinsertdb = $DBEXTERNAL->dbinsert;        //INFORMACIÓN PARA SABER SI SE INSERTARAN LOS DATOS EN UN BD EXTERNA
+$externalconnection = $DBEXTERNAL->connection ?? null;
 
 //CONSULTA PRINCIPAL CON LA QUE TRABAJA EL FORMULARIO  EN LA BD EXTERNA
 //$consulta ="SELECT curp FROM $remotedbtable where curp = '$campos[0]'"; //REVISAR SI LA COLUMNA ES LA CORRECTA
-$consulta = "SELECT curp FROM tsige_persona WHERE curp = '$campos[0]'";
+$consulta = config::get_string('externalcurpquery');
+if ($consulta === '') {
+    $consulta = "SELECT curp FROM tsige_persona WHERE curp = '{{curp}}'";
+}
 
 //VALIDACIÓN PARA VERIFICAR QUE EL USUARIO NO SE ENCUENTRA REGISTRADO
 
@@ -157,22 +329,56 @@ if($datosUser){
 
 //CONSULTA EN LA BD DE MOODLE
 $idcurp = $campos[0]; //CURP DE LA QR ESCANEADA
-$consultamoodle = array_keys($DB->get_records('user',array('username'=>$idcurp),'','username')); //CONSULTA DE LA CURP EN LA BD DE MOODLE
-$estaregis = '';
-if(isset($consultamoodle[0])) {
-    $estaregis = $consultamoodle[0]; //SE EXTRAE EL USUARIO CON ESA CURP
-}
+$idcurpuser = core_text::strtolower($idcurp); //CURP EN MINÚSCULAS PARA EL NOMBRE DE USUARIO
+$consultamoodle = $DB->get_field_sql(
+    "SELECT username
+       FROM {user}
+      WHERE LOWER(username) = LOWER(:username)
+        AND deleted = 0",
+    ['username' => $idcurpuser]
+); //CONSULTA DE LA CURP EN LA BD DE MOODLE
+$estaregis = $consultamoodle ?: '';
 $encuentracurp = 0;
+$esinactivo = '';
+$datosencontrados = null;
+$skipexternalqueries = ((int)$existeerror > 0) || !($externalconnection instanceof mysqli);
+if ($skipexternalqueries) {
+    $detail = $externalerrormessage !== '' ? $externalerrormessage : 'No se pudo validar la conexión con la base de datos externa.';
+    echo $OUTPUT->notification('BD externa no disponible. Se omiten consultas externas. Detalle: '.$detail,
+        \core\output\notification::NOTIFY_WARNING);
+}
+$curp = '';
+$inativotogeneral = 0;
+$idcurpuser = core_text::strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
 
-if($existeerror >0){
-    //NO SE EJECUTA LA CONSULTA
-    redirect('index.php', get_string('dbconnerr','local_qrcurp') , null, \core\output\notification::NOTIFY_INFO);
-}else{
-    $esinactivo = '';
-    $message = 'Consulta fallida: ' . mysqli_error($DBEXTERNAL);
-    $datos = mysqli_query($DBEXTERNAL,$consulta)or die(
-    redirect('index.php', $message .\core\notification::error("Informar al administrador del sitio.") , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-    );
+//EN CASO QUE LOS DATOS SE OBTENGAN DEL CURP Y NO ESTE REGISTRADO EN BASE DE DATOS EXTERNA
+$username = $idcurpuser;    //NOMBRE DE Usuario
+$apellido_p = (isset($campos[2])?$campos[2]:'') ;   //PRIMER APELLIDO
+$apellido_m = (isset($campos[3])?$campos[3]:'') ;   //SEGUNDO APELLIDO
+$nombre = (isset($campos[4])?$campos[4]:'') ;     //NOMBRE CURP
+$curpbasic = local_qrcurp_parse_basic_curp($idcurp);
+$genero = (isset($campos[5]) && $campos[5] !== '' ? substr($campos[5],0,1) : ($curpbasic['gender'] ?? '')) ;       //GÉNERO
+$fecha_nacimiento = (isset($campos[6]) && $campos[6] !== '' ? $campos[6] : ($curpbasic['birth'] ?? '')) ;  //FECHA DE NACIMIENTO
+$estado = (isset($campos[7]) && $campos[7] !== '' ? $campos[7] : ($curpbasic['state'] ?? '')) ;      //ESTADO DE RESIDENCIA
+$pais = 'MX';       //Pais por defecto
+$ocupacion = "OTRO"; //OCUPACION por defecto LFAS Modificación 25/11/22
+$idrol = "63"; //ID DEL ROL POR DEFECTO ESTUDIANTE LIC/TSU
+$status = 0;
+$tipodeusuario = 0; // 0 es publico general 1 pertenece a la bd externa
+$inativotogeneral = 0; //Para cuando se encontro en la bd externa pero no la general LFAS 26/01/23
+$tipodebaja = null;
+$correo = '';
+$matricula = '';
+$cp = '';
+$edad = local_qrcurp_calculate_age_from_birth($fecha_nacimiento);
+$fecha_nacimiento = local_qrcurp_birthdate_for_input($fecha_nacimiento);
+
+if (!$skipexternalqueries) {
+    $message = 'Consulta fallida: revisar la consulta configurada en externalcurpquery.';
+    $datos = local_qrcurp_execute_template_query($externalconnection, $consulta, ['curp' => $campos[0]]);
+    if ($datos === false) {
+        redirect('index.php', $message .\core\notification::error("Informar al administrador del sitio.") , null, \core\output\notification::NOTIFY_ERROR);
+    }
     //EXTRAE LA CURP ENCONTRADA EN LA BASE DE DATOS EXTERNA
     $curp = ''; //INICIA VACIO
     while($row = mysqli_fetch_array($datos)) {
@@ -185,82 +391,22 @@ if($existeerror >0){
             $encuentracurp = 1; //1 si encontro el curp en la primera consulta y 0 no encontro el dato
             $despachador =1;     //PARA SABER CUANDO REGRESA UN VALOR
             $muestramensaje = "Tus datos han sido registrados previamente en la base de datos de $NAMEEXTERNALDBQRCURP, da clic en aceptar, revisa tu información antes de continuar con el registro $nameCategoria"; //MENSAJE A MOSTRAR
-            //$datosconsulta = "SELECT rol,username, password, correo,nombre,apellido_p,apellido_m,genero,date_nacimiento,estado,municipio,ocupacion,pais,estado_residencia FROM $remotedbtable where curp = '$idcurp'";
-            //            Validación para cuando se encuentra activo
-            $datosconsulta ="SELECT
-       pa.curp,
-       pa.nombre,
-       pa.primer_apellido,
-       pa.segundo_apellido,
-       pa.usuario,
-       pa.contrasenia,
-       MAX(ps.rol_id),
-       r.nombre,
-       ps.matricula,
-       pa.fecha_nacimiento,
-       pa.sexo,
-       (SELECT DISTINCT LOWER(con.dato_contacto) FROM tsige_contacto con WHERE con.tipo_contacto_id = 4 AND con.vigente = 1 AND con.dato_contacto NOT LIKE '%@unad%' AND con.persona_id = ps.persona_id) 'Correo Institucional',
-       (SELECT edo.v_estado
-        FROM (SELECT SUBSTRING(pp.curp, 12, 2) ed, pp.persona_id 'per'
-              FROM tsige_persona pp) x
-                 INNER JOIN cat_estado edo ON edo.v_abreviacion = x.ed
-        WHERE x.per = pa.persona_id)                                                                                                                                                                     'Estado de Nacimiento',
-       TIMESTAMPDIFF(YEAR, pa.fecha_nacimiento, '$fechaactual')                                                                                                                                            'Edad',
-       (SELECT DISTINCT LOWER(con.dato_contacto)
-        FROM tsige_contacto con
-        WHERE con.tipo_contacto_id = 4
-          AND con.vigente = 1
-          AND con.dato_contacto
-            NOT LIKE '%@unad%'
-          AND con.persona_id = ps.persona_id)                                                                                                                                                            email,
-       (SELECT IF(cp.v_codigopostal IS NULL, '-', cp.v_codigopostal)
-        FROM direccion d
-                 LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal
-        WHERE d.i_fk_persona = ps.persona_id
-          AND d.b_activo = 1
-          AND d.b_esAlternativo = 0)                                                                                                                                                                     'Codigo Postal',
-       (SELECT IF(muni.v_municipio IS NULL, '-', muni.v_municipio)
-        FROM direccion d
-                 LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal
-                 LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento
-                 LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio
-        WHERE d.i_fk_persona = ps.persona_id
-          AND d.b_activo = 1
-          AND d.b_esAlternativo = 0)                                                                                                                                                                     'Municipio de residencia',
-       (SELECT IF(edo.v_estado IS NULL, '-', edo.v_estado)
-        FROM direccion d
-                 LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal
-                 LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento
-                 LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio
-                 LEFT JOIN cat_estado edo ON edo.i_pk_estado = muni.i_fk_estado
-        WHERE d.i_fk_persona = ps.persona_id
-          AND d.b_activo = 1
-          AND d.b_esAlternativo = 0)                                                                                                                                                                     'Estado de residencia',
-       (SELECT IF(pai.vc_clavealfa2 IS NULL, '-', pai.vc_clavealfa2)
-        FROM direccion d
-                 LEFT JOIN cat_codigopostal cp ON d.i_fk_codigo_postal = cp.i_pk_codigopostal
-                 LEFT JOIN cat_asentamiento asen ON asen.i_pk_asentamiento = cp.i_fk_asentamiento
-                 LEFT JOIN cat_municipio2 muni ON muni.i_pk_municipio = asen.i_fk_municipio
-                 LEFT JOIN cat_estado edo ON edo.i_pk_estado = muni.i_fk_estado
-                 LEFT JOIN cat_pais pai ON pai.i_pk_pais = edo.i_fk_pais
-        WHERE d.i_fk_persona = ps.persona_id
-          AND d.b_activo = 1
-          AND d.b_esAlternativo = 0)                                                                                                                                                                     'País de residencia',
-       ps.activo                                                                                                                                                                                    'Usuario activo',
-       (SELECT tb.descripcion
-     FROM tsige_solicitud_baja s
-              INNER JOIN tsige_cat_tipo_baja tb ON tb.tipo_baja_id = s.tipo_baja_id
-     WHERE s.tipo_baja_id = 6
-       AND s.solicitante_id = ps.perfil_id)                                                                                                                                                         'Tipo de baja'
-       FROM tsige_persona as pa
-         INNER JOIN tsige_perfiles as ps ON ps.persona_id = pa.persona_id
-         INNER JOIN tsige_rol as r ON r.rol_id = ps.rol_id
-WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVING MAX(ps.rol_id) IS NOT NULL";
-
-            $message = "Error al obtener la data en la base de datos externa, revisar que los nombres de los campos sean correctos";
-            $datosencontrados = mysqli_query($DBEXTERNAL,$datosconsulta)or die(
-            redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-            );
+            $datosconsulta = trim(config::get_string('externaluserinfoquery'));
+            if ($datosconsulta === '') {
+                redirect('index.php',
+                    'La configuración externaluserinfoquery está vacía. Configura la consulta externa de información de usuario.',
+                    null,
+                    \core\output\notification::NOTIFY_ERROR
+                );
+            }
+            $message = "Error al obtener la data en la base de datos externa, revisar que la consulta configurada sea correcta.";
+            $datosencontrados = local_qrcurp_execute_template_query($externalconnection, $datosconsulta, [
+                'curp' => $curp,
+                'today' => $fechaactual,
+            ]);
+            if ($datosencontrados === false) {
+                redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR);
+            }
 
             if($datosencontrados->num_rows == 0 AND $registropublicogeneral == 1){
 //                echo "El usuario es inactivo";
@@ -328,9 +474,13 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
             WHERE ps.activo =0 and pa.curp  ='$curp' AND ps.matricula NOT LIKE 'AS%' HAVING MAX(ps.rol_id) IS NOT NULL";
 
                 $message = "Error al obtener la data en la base de datos externa, revisar que los nombres de los campos sean correctos";
-                $datosencontrados = mysqli_query($DBEXTERNAL,$datosconsulta)or die(
-                redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-                );
+                $datosencontrados = local_qrcurp_execute_template_query($externalconnection, $datosconsulta, [
+                    'curp' => $curp,
+                    'today' => $fechaactual,
+                ]);
+                if ($datosencontrados === false) {
+                    redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR);
+                }
                 $esinactivo =1;
             }
 
@@ -339,8 +489,10 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
 
     //Validación de numero de roles para selccionar entre cada uno de ellos
     $masdeunrol = 0;
+    $numrolesencontrados = 0;
+    $listarolesdecode = '[]';
     $listahtmlroles = '';
-    if($esinactivo == ''){
+    if($esinactivo == '' && !$skipexternalqueries){
         $listaroles = "SELECT
                 DISTINCT(ps.rol_id),
                 pa.contrasenia,
@@ -353,51 +505,31 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
                      INNER JOIN tsige_rol as r ON r.rol_id = ps.rol_id
             WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%'";
         $message = "Error al obtener la data en la base de datos externa";
-        $rolesencontrados = mysqli_query($DBEXTERNAL,$listaroles)or die(
-        redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR)//SI NO SE EJECUTA LA CONSULTA SE RETORNARA A LA PANTALLA INICAL
-        );
+        $rolesencontrados = local_qrcurp_execute_template_query($externalconnection, $listaroles, ['curp' => $curp]);
+        if ($rolesencontrados === false) {
+            redirect('index.php', $message , null, \core\output\notification::NOTIFY_ERROR);
+        }
+        $roleslist = [];
         if(isset($rolesencontrados) AND $rolesencontrados->num_rows > 1 ) {
             $numrolesencontrados = $rolesencontrados->num_rows;
             $masdeunrol = 1;
-            $listaroles = [];
             $listarolestohtml = [];
             while ($row = mysqli_fetch_array($rolesencontrados)) {
-                if($row['contrasenia' != '']){
+                if (!empty($row['contrasenia'])) {
                     $informacion = strtolower($row['matricula']).'|'.$row['contrasenia'].'|'.$row['rol_id'].'|'.$row['nombre_rol'].'|'.$row['correo_institucional'];
                     array_push($listarolestohtml, $informacion);
-                    array_push($listaroles, $row);
+                    array_push($roleslist, $row);
                 }
             }
             $listarolesdecode = json_encode($listarolestohtml);
         }
-        foreach ($listaroles as $itemrole){
+        foreach ($roleslist as $itemrole){
             $listahtmlroles = $listahtmlroles . '<button  class="swal-button swal-button--confirm m-2" data-role="'.$itemrole["rol_id"].'">
                         '.$itemrole["nombre_rol"].'
                     </button>';
         }
     }
 
-    $idcurpuser = strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
-
-    //EN CASO QUE LOS DATOS SE OBTENGAN DEL CURP Y NO ESTE REGISTRADO EN BASE DE DATOS EXTERNA
-    $username = $idcurpuser;    //NOMBRE DE Usuario
-    $apellido_p = (isset($campos[2])?$campos[2]:'') ;   //PRIMER APELLIDO
-    $apellido_m = (isset($campos[3])?$campos[3]:'') ;   //SEGUNDO APELLIDO
-    $nombre = (isset($campos[4])?$campos[4]:'') ;     //NOMBRE CURP
-    $genero = (isset($campos[5])?substr($campos[5],0,1):'') ;       //GÉNERO
-    $fecha_nacimiento = (isset($campos[6])?$campos[6]:'') ;  //FECHA DE NACIMIENTO
-    $estado = (isset($campos[7])?$campos[7]:'') ;      //ESTADO DE RESIDENCIA
-    $pais = 'MX';       //Pais por defecto
-    $ocupacion = "OTRO"; //OCUPACION por defecto LFAS Modificación 25/11/22
-    $idrol = "63"; //ID DEL ROL POR DEFECTO ESTUDIANTE LIC/TSU
-    $status = 0;
-    $tipodeusuario = 0; // 0 es publico general 1 pertenece a la bd externa
-    $inativotogeneral =0; //Para cuando se encontro en la bd externa pero no la general LFAS 26/01/23
-    $tipodebaja = null;
-    $correo = '';
-    $matricula = '';
-    $cp = '';
-    $edad = '';
     if(isset($datosencontrados)) {
         while ($row = mysqli_fetch_array($datosencontrados)) {
             $curp = $row[0];    //CURP
@@ -410,11 +542,9 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
             $idrol = $row[6];    //ID DE ROL
             $roluser = $row[7];  //ROL NAME
             ($row[8] == '-') ? $matricula = '' : $matricula = $row[8];   //MATRICULA
-            ($row[9] == '-') ? $fecha_nacimiento = '' : $fecha_nacimiento = $row[9]; //FECHA DE NACIMIENTO
-            ($row[10] == '-') ? $genero = '' : $genero = $row[10];     //GÉNERO
+            // Mantener siempre fecha/género derivados de CURP para consistencia del flujo.
             ($row[11] == '-') ? $correo = '' : $correo = $row[11];   //CORREO
-            ($row[12] == '-') ? $estado = '' : $estado = $row[12];  //ESTADO DE NACIMIENTO
-            ($row[13] == '-') ? $edad = '' : $edad = $row[13];  //EDAD
+            // Mantener siempre estado/edad derivados de CURP para consistencia del flujo.
             $ocupacion = "EDUCATIVO"; //OCUPACION
             ($row[15] == '-') ? $cp = '' : $cp = $row[15];  //CÓDIGO POSTAL
             ($row[16] == '-') ? $municipio = '' : $municipio = $row[16]; //MUNICIPIO
@@ -444,7 +574,7 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
             $curp = $campos[0];
         }
         $idcurp = $curp;
-        $idcurpuser = strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
+        $idcurpuser = core_text::strtolower($idcurp); //CURP EN MINUSCULAS PARA EL NOMBRE DE USUARIO
         if($tipodebaja != null){
             $username = $idcurpuser;
         }
@@ -460,47 +590,50 @@ WHERE ps.activo = 1 and pa.curp  = '$curp' AND ps.matricula NOT LIKE 'AS%' HAVIN
 //        echo "El estado es :".$status;
     }
 
-    //Valida si solo aceptará publico en general omitiendo los de la base de datos externa
-    $omiteuserdbexterna = 0;
-    if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND $datosencontrados->num_rows > 0 ){
-        $omiteuserdbexterna = 1;
-    }
+}
 
-    $estado = strtoupper($estado);
+//Valida si solo aceptará publico en general omitiendo los de la base de datos externa
+$fecha_nacimiento = local_qrcurp_birthdate_for_input($fecha_nacimiento);
+$edad = local_qrcurp_calculate_age_from_birth($fecha_nacimiento);
 
-    //SI CONTINUA VACIO NO ENCONTRO LA CURP EN LA BD EXTERNA
-    if($curp == ''){
-        $despachador = 4;
-        $muestramensaje = get_string('noregisexdb','local_qrcurp');
-        //$muestramensaje = "Tus datos no han sido registrados previamente, por favor da clic en cada uno de los botones de Registrar para registrarte en la base de datos de la UnADM  o en el Portal de educación contínua.";
-    }
-    if ($curp == '' AND $estaregis != '' AND $remoteinsertdb == 0){
-        //Solo esta registrado en moodle, no en bd externa y no se debe registrar en bdexterna
-        $despachador = 3;
-        $muestramensaje = get_string('regismoodlenotexdb0','local_qrcurp');
-    }
-    if ($curp == '' AND $estaregis != '' AND $remoteinsertdb == 1){
-        //Solo esta registrado en moodle, no en bd externa y se debe registrar en bdexterna
-        $despachador = 0;
-        $soloundm = 1;//para cuando ya esta registrado en moodle pero no en undm y se requiere registar
-        $muestramensaje = get_string('regismoodlenotexdb1','local_qrcurp');
-    }
-    if ($curp != '' AND $estaregis != '' ){
-        //esta registrado en moodle, y en bd externa
-        $despachador = 3;
-        //$soloundm = 1;//para cuando ya esta registrado en moodle pero no en undm y se requiere registar
-        $muestramensaje = get_string('regismoodleyexdb','local_qrcurp');
+$omiteuserdbexterna = 0;
+if($soloregistropublicogeneral == 1 AND $registropublicogeneral == 1 AND isset($datosencontrados) AND $datosencontrados->num_rows > 0 ){
+    $omiteuserdbexterna = 1;
+}
 
-    }
-    if ($curp == '' AND $estaregis == '' AND $remoteinsertdb == 1){
-        //No esta registrado en moodle, ni en bd externa y se debe registrar en bdexterna
-        $despachador = 0;
-        $soloundm = 0;//para cuando no esta registrado en moodle ni en undm y se requiere registar
-        $muestramensaje = get_string('regismoodlenotexdb','local_qrcurp');
-    }
+$estado = strtoupper($estado);
 
+//SI CONTINUA VACIO NO ENCONTRO LA CURP EN LA BD EXTERNA
+if($curp == ''){
+    $despachador = 4;
+    $muestramensaje = get_string('noregisexdb','local_qrcurp');
+    //$muestramensaje = "Tus datos no han sido registrados previamente, por favor da clic en cada uno de los botones de Registrar para registrarte en la base de datos de la UnADM  o en el Portal de educación contínua.";
+}
+if ($curp == '' AND $estaregis != '' AND $remoteinsertdb == 0){
+    //Solo esta registrado en moodle, no en bd externa y no se debe registrar en bdexterna
+    $despachador = 3;
+    $muestramensaje = get_string('regismoodlenotexdb0','local_qrcurp');
+}
+if ($curp == '' AND $estaregis != '' AND $remoteinsertdb == 1){
+    //Solo esta registrado en moodle, no en bd externa y se debe registrar en bdexterna
+    $despachador = 0;
+    $soloundm = 1;//para cuando ya esta registrado en moodle pero no en undm y se requiere registar
+    $muestramensaje = get_string('regismoodlenotexdb1','local_qrcurp');
+}
+if ($curp != '' AND $estaregis != '' ){
+    //esta registrado en moodle, y en bd externa
+    $despachador = 3;
+    //$soloundm = 1;//para cuando ya esta registrado en moodle pero no en undm y se requiere registar
+    $muestramensaje = get_string('regismoodleyexdb','local_qrcurp');
 
 }
+if ($curp == '' AND $estaregis == '' AND $remoteinsertdb == 1){
+    //No esta registrado en moodle, ni en bd externa y se debe registrar en bdexterna
+    $despachador = 0;
+    $soloundm = 0;//para cuando no esta registrado en moodle ni en undm y se requiere registar
+    $muestramensaje = get_string('regismoodlenotexdb','local_qrcurp');
+}
+
 if($despachador == 3){
     $user = get_complete_user_data('username', $idcurpuser);
     //enviaCorreo($user->id);
@@ -512,6 +645,53 @@ $urlsesion = $CFG->wwwroot.'/login/index.php';
 $urlsession = $CFG->wwwroot.'/login/index.php';
 $registramoodle = 'registramoodle.php';
 $urlprincipal = $CFG->wwwroot.'/index.php';
+
+// Configuración dinámica de campos del formulario.
+$formfieldsconfigraw = config::get_string('formfieldsconfig');
+$formfieldconfig = [];
+foreach (preg_split('/\r\n|\r|\n/', $formfieldsconfigraw) as $line) {
+    $line = trim($line);
+    if ($line === '' || strpos($line, '|') === false) {
+        continue;
+    }
+    $parts = array_map('trim', explode('|', $line));
+    $fieldname = $parts[0] ?? '';
+    if ($fieldname === '') {
+        continue;
+    }
+    $formfieldconfig[$fieldname] = [
+        'label' => $parts[1] ?? $fieldname,
+        'visible' => (isset($parts[2]) && (int) $parts[2] === 0) ? 0 : 1,
+        'required' => (isset($parts[3]) && (int) $parts[3] === 0) ? 0 : 1,
+    ];
+}
+
+$formextrafieldsraw = config::get_string('formextrafields');
+$rolesourceconfigraw = config::get_string('rolesourceconfig');
+$dynamicroleoptions = local_qrcurp_resolve_role_options($rolesourceconfigraw, $externalconnection instanceof mysqli ? $externalconnection : null);
+
+$formextrafields = [];
+foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
+    $line = trim($line);
+    if ($line === '' || strpos($line, '|') === false) {
+        continue;
+    }
+    $parts = array_map('trim', explode('|', $line));
+    $shortname = $parts[0] ?? '';
+    if ($shortname === '') {
+        continue;
+    }
+    $type = $parts[2] ?? 'text';
+    if (!in_array($type, ['text', 'email', 'number', 'date'])) {
+        $type = 'text';
+    }
+    $formextrafields[] = [
+        'shortname' => $shortname,
+        'label' => $parts[1] ?? ucfirst(str_replace('_', ' ', $shortname)),
+        'type' => $type,
+        'required' => isset($parts[3]) && (int) $parts[3] === 1,
+    ];
+}
 
 ?>
     <head>
@@ -600,7 +780,7 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                 }
             }
 
-            var listarolesdecode = '';
+            var listarolesdecode = [];
             $(document).ready(function () {
 
                 // ✅ NUEVO: EJECUTAR SELECCIÓN AUTOMÁTICA DE CURSO AL CARGAR LA PÁGINA
@@ -608,12 +788,12 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                     selectCourseFromUtm();
                 }, 500);
 
-                var yaestaregsitrado = '<?= $yaestasregistrado ?> ';
+                var yaestaregsitrado = '<?= (int)($yaestasregistrado ?? 0) ?>';
 
                 if( yaestaregsitrado == true){
                     const elurl = document.createElement('div')
                     elurl.innerHTML = "<a href='/local/qrcurp/recovery/' target='_blank'>Clic aquí</a>"
-                    menssage="Estimada(o) "+"<?= $nombreDeUsuario ?>"+", ya te encuentras registrado en "+"<?=$nameCategoria?>"+" . \n\n Inicia sesión con las credenciales de acceso que te enviamos previamente a tu correo electrónico. \n\n Si no recuerdas o no encuentras tus credenciales, da clic a continuación para recibirlas nuevamente: \n\n "
+                    menssage="Estimada(o) "+"<?= s($nombreDeUsuario ?? '') ?>"+", ya te encuentras registrado en "+"<?= s($nameCategoria ?? '') ?>"+" . \n\n Inicia sesión con las credenciales de acceso que te enviamos previamente a tu correo electrónico. \n\n Si no recuerdas o no encuentras tus credenciales, da clic a continuación para recibirlas nuevamente: \n\n "
                     document.getElementById("envia-info").remove();
                     document.getElementsByClassName("colors")[0].remove();
                     swal(menssage, {
@@ -627,13 +807,11 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                         });
                 }
 
-                var masdeunrol = '<?=$masdeunrol?>';
-                var numrolesencontrados = '<?=$numrolesencontrados?>';
-                if('<?=$listarolesdecode?>' != ''){
-                    listarolesdecode = JSON.parse('<?=$listarolesdecode?>');
-                }
-                var typeuser = '<?=$tipodeusuario?>';
-                var omiteuserdbexterna = '<?=$omiteuserdbexterna?>';
+                var masdeunrol = '<?= (int)($masdeunrol ?? 0) ?>';
+                var numrolesencontrados = '<?= (int)($numrolesencontrados ?? 0) ?>';
+                listarolesdecode = <?= $listarolesdecode ?>;
+                var typeuser = '<?= (int)($tipodeusuario ?? 0) ?>';
+                var omiteuserdbexterna = '<?= (int)($omiteuserdbexterna ?? 0) ?>';
                 let curpvalida = 1;
                 document.getElementById('curpvalida').value = curpvalida
 
@@ -648,10 +826,10 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                 }
 
                 if(typeuser == 0){
-                    let curpUser =  '<?= strtoupper($campos[0]);?>';
+                    let curpUser =  '<?= strtoupper($campos[0] ?? '') ?>';
                     let validausuario = 0;
-                    let validaconrenapo = '<?= $validaconrenapo?>';
-                    let omitevalidacionrenapo = '<?= $omitevalidacionrenapo?>';
+                    let validaconrenapo = '<?= (int)($validaconrenapo ?? 0) ?>';
+                    let omitevalidacionrenapo = '<?= (int)($omitevalidacionrenapo ?? 0) ?>';
                     //Valida curp con la RENAPO
                     if(curpUser != '' && validausuario == 0 && validaconrenapo == 1) {
                         // Crear una nueva instancia de XMLHttpRequest
@@ -672,7 +850,7 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                                     //Para agregar elementos que se requieren para el tipo de usuarios
                                 }else{
                                     document.getElementById("envia-info").remove();
-                                    menssage = "Solo integrantes UnADM pueden inscribirse.";
+                                    menssage = <?= json_encode($publicogeneralblockedtext) ?>;
                                     swal(menssage, {
                                         buttons: "Aceptar",
                                         timer: 4000,
@@ -684,7 +862,7 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                                 console.log("Continua con registro sin datos 2");
                             }else{
                                 document.getElementById("envia-info").remove();
-                                menssage = "Solo integrantes UnADM pueden inscribirse.";
+                                menssage = <?= json_encode($publicogeneralblockedtext) ?>;
                                 swal(menssage, {
                                     buttons: "Aceptar",
                                     timer: 4000,
@@ -698,7 +876,7 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                                 console.log("Continua con registro sin datos 3");
                             }else{
                                 document.getElementById("envia-info").remove();
-                                menssage = "Solo integrantes UnADM pueden inscribirse.";
+                                menssage = <?= json_encode($publicogeneralblockedtext) ?>;
                                 swal(menssage, {
                                     buttons: "Aceptar",
                                     timer: 4000,
@@ -755,6 +933,14 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                 var idcategoria = "<?php echo $categoryid?>";
                 var idcurso = "<?php echo $idcourse?>";
                 var idgrupo = "<?php echo $typegrouping?>";
+                var createGroupEnrol = <?= (int)$gruoactive ?>;
+                var createGroupPatternId = "<?= (int)$gruoidcreate ?>";
+                var allowAutofilledPasswordEdit = <?= $allowautofilledpasswordedit ? 'true' : 'false' ?>;
+                var editableAutofilledFields = <?= $editableautofilledfieldsjson ?: '[]' ?>;
+                var externalPlatformName = "<?= s($NAMEEXTERNALDBQRCURP !== '' ? $NAMEEXTERNALDBQRCURP : $NAMEPLATAFORMQRCURP) ?>";
+                if (externalPlatformName && externalPlatformName.toLowerCase() === 'null') {
+                    externalPlatformName = '';
+                }
 
                 if (idcategoria != 0) {
                     $("<div>", {
@@ -813,6 +999,12 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                             // ✅ NUEVO: EJECUTAR SELECCIÓN DESPUÉS DE CARGAR LOS CURSOS
                             setTimeout(function() {
                                 selectCourseFromUtm();
+                                // Asegura que el hidden idcourse quede sincronizado aunque no haya cambio manual.
+                                var selectedcourse = $('#categorias').val();
+                                if (selectedcourse && (document.getElementById('idcourse').value === '' || document.getElementById('idcourse').value === '0')) {
+                                    idcurso = selectedcourse;
+                                    document.getElementById('idcourse').value = selectedcourse;
+                                }
                             }, 100);
                         });
                     }
@@ -821,9 +1013,15 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                         document.getElementById('idcourse').value = idcurso;
                         setTimeout("$('#categorias').val($('#idcourse').val());", 2000);
                     }
-                    setTimeout("groupsHorarios()", 3000);
+                    $('#categorias').change(function () {
+                        idcurso = $('#categorias').val();
+                        document.getElementById('idcourse').value = idcurso || '';
+                    });
+                    if (!(createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "")) {
+                        setTimeout("groupsHorarios()", 3000);
+                    }
 
-                    if (idcategoria != 0) {
+                    if (idcategoria != 0 && !(createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "")) {
                         $("<div>", {
                             'class': 'form-group'
                         }).append(
@@ -856,7 +1054,6 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                                 $("#grupos").html(data);
                             });
                             setTimeout(" idgrupo = $('#grupos').val();", 2000);
-                            document.getElementById('idcourse').value = idcurso;
                             document.getElementById('typegrouping').value = idgrupo;
                         })
                         $('#grupos').change(function () {
@@ -867,20 +1064,46 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                             document.getElementById('typegrouping').value = idgrupo;
                             setTimeout("$('#grupos').val($('#typegrouping').val());", 4000);
                         }
+                    } else if (createGroupEnrol === 1 && createGroupPatternId !== "0" && createGroupPatternId !== "") {
+                        document.getElementById('typegrouping').value = createGroupPatternId;
+                        if (document.getElementById("combo-grupos") != null) {
+                            document.getElementById("combo-grupos").style.display = "none";
+                        }
                     }
                 }
 
                 var read = 0;
-                $("#texto-terminos-condiciones").on("scroll",function () {
-                    let element = document.getElementById("texto-terminos-condiciones");
-                    if (element.offsetHeight + element.scrollTop >= element.scrollHeight) {
-                        document.getElementById("register-terms_of_service").disabled = false;
-                        document.getElementById("register-terms_of_service").ckecked = true;
+                (function setupPrivacyCheckboxFlow() {
+                    var termsContainer = document.getElementById("texto-terminos-condiciones");
+                    var termsCheckbox = document.getElementById("register-terms_of_service");
+                    if (!termsCheckbox) {
+                        return;
+                    }
+                    if (!termsContainer) {
                         read = 1;
+                        termsCheckbox.disabled = false;
+                        return;
+                    }
+
+                    var hasScrollableContent = termsContainer.scrollHeight > termsContainer.clientHeight + 2;
+                    if (!hasScrollableContent) {
+                        read = 1;
+                        termsCheckbox.disabled = false;
                         $('#leer-aviso').css('display','none');
                         $('#readall-terminos').css('display','none');
+                        return;
                     }
-                });
+
+                    termsCheckbox.disabled = true;
+                    $("#texto-terminos-condiciones").on("scroll", function () {
+                        if (termsContainer.offsetHeight + termsContainer.scrollTop >= termsContainer.scrollHeight - 2) {
+                            termsCheckbox.disabled = false;
+                            read = 1;
+                            $('#leer-aviso').css('display','none');
+                            $('#readall-terminos').css('display','none');
+                        }
+                    });
+                })();
 
                 $('#aviso-privacidad').click(function (){
                     if(read != 1){
@@ -888,7 +1111,7 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                         $('#readall-terminos').css('display','block');
                     }else{
                         $('#leer-aviso').css('display','none');
-                        $('#readall-terminos').css('display','block');
+                        $('#readall-terminos').css('display','none');
                     }
                 });
 
@@ -924,6 +1147,69 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                 })
 
                 setTimeout("datacurp()",2000);
+                setTimeout(function() {
+                    if (typeof window.applyEditableAutofilledOverrides === 'function') {
+                        window.applyEditableAutofilledOverrides();
+                    }
+                    if (typeof window.syncPasswordFromAlias === 'function') {
+                        window.syncPasswordFromAlias();
+                    }
+                }, 2600);
+
+                window.syncPasswordFromAlias = function() {
+                    var passInput = document.getElementById('pass');
+                    var aliasInput = document.getElementById('session_alias');
+                    if (!passInput || !aliasInput) {
+                        return;
+                    }
+                    var shownName = externalPlatformName !== '' ? externalPlatformName : 'plataforma externa';
+                    var hasExternalUserData = document.getElementById('existeuserdb') != null &&
+                        String(document.getElementById('existeuserdb').textContent).trim() === '1';
+                    var shouldUseExternalPassword = hasExternalUserData;
+                    if (shouldUseExternalPassword) {
+                        passInput.placeholder = 'Misma contraseña que en ' + shownName;
+                    } else {
+                        passInput.placeholder = 'Ingresa tu contraseña';
+                    }
+                    if (!allowAutofilledPasswordEdit && shouldUseExternalPassword) {
+                        passInput.setAttribute('readonly', '');
+                    } else {
+                        passInput.removeAttribute('readonly');
+                    }
+                };
+                window.applyEditableAutofilledOverrides = function() {
+                    editableAutofilledFields.forEach(function(fieldId) {
+                        var candidates = [];
+                        var byId = document.getElementById(fieldId);
+                        if (byId) {
+                            candidates.push(byId);
+                        }
+                        document.querySelectorAll('[name="' + fieldId + '"]').forEach(function(el) {
+                            candidates.push(el);
+                        });
+                        candidates.forEach(function(fieldElement) {
+                            fieldElement.removeAttribute("readonly");
+                            fieldElement.removeAttribute("disabled");
+                            fieldElement.classList.remove('control-data-form');
+                            var fieldGroup = fieldElement.closest('.form-group') || fieldElement.parentElement;
+                            if (fieldGroup) {
+                                fieldGroup.classList.remove('control-data-form');
+                            }
+                        });
+                    });
+                    if (allowAutofilledPasswordEdit) {
+                        var passElement = document.getElementById('pass');
+                        if (passElement) {
+                            passElement.removeAttribute("readonly");
+                            passElement.removeAttribute("disabled");
+                            passElement.classList.remove('control-data-form');
+                            if (passElement.parentElement) {
+                                passElement.parentElement.classList.remove('control-data-form');
+                            }
+                        }
+                    }
+                };
+                window.syncPasswordFromAlias();
 
                 if(masdeunrol == 1 && numrolesencontrados >1 ){
                     document.getElementById('modalroles').classList.remove('not-view');
@@ -942,6 +1228,8 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                                     document.getElementById('rol').value =  datos[2];
                                     document.getElementById('rolname').value =  datos[3];
                                     document.getElementById('email').value =  datos[4];
+                                    window.syncPasswordFromAlias();
+                                    setTimeout(window.applyEditableAutofilledOverrides, 50);
 
                                     // ✅ NUEVO: CERRAR EL MODAL DESPUÉS DE SELECCIONAR
                                     closeRolesModal();
@@ -979,6 +1267,10 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                     $('#date_nacimientos').val('<?php echo $fecha_nacimiento ?>');
                     $('#matricula').val('<?php echo $matricula ?>');
                     $('#rol').val('<?php echo $idrol ?>');
+                    setTimeout(function() {
+                        window.applyEditableAutofilledOverrides();
+                        window.syncPasswordFromAlias();
+                    }, 100);
                 }
                 else {
                     hayFechaCurp();
@@ -988,11 +1280,14 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                     $('#rol').val(<?php echo $idrol?>);
                     var sel = document.getElementById("rol");
                     if (sel != null) {
-                        var text = sel.options[sel.selectedIndex].text;
+                        var text = '';
+                        if (sel.selectedIndex >= 0 && sel.options[sel.selectedIndex]) {
+                            text = sel.options[sel.selectedIndex].text;
+                        }
                         $('#rolname').val(text);
                         document.getElementById("user-not-view-info").style.display = 'none'
                         setTimeout(function () {
-                            var inactivoToGeneral = <?=$inativotogeneral ?>;
+                            var inactivoToGeneral = <?= (int)$inativotogeneral ?>;
                             dato = document.getElementById("envia-info").querySelectorAll(".form-control");
                             tam = dato.length;
                             if (inactivoToGeneral == 1) {
@@ -1016,7 +1311,24 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                                     document.getElementById("grupos").classList.remove('control-data-form');
                                 }
                             }
+                            window.applyEditableAutofilledOverrides();
+                            window.syncPasswordFromAlias();
                         }, 2000);
+                        setTimeout(function() {
+                            if (document.getElementById('envia-info')) {
+                                document.querySelectorAll('#envia-info .form-control[readonly]').forEach(function(el) {
+                                    if (el.value && el.value.trim() !== '') {
+                                        el.classList.add('control-data-form');
+                                    }
+                                });
+                            }
+                            if (typeof window.applyEditableAutofilledOverrides === 'function') {
+                                window.applyEditableAutofilledOverrides();
+                            }
+                            if (typeof window.syncPasswordFromAlias === 'function') {
+                                window.syncPasswordFromAlias();
+                            }
+                        }, 2300);
                     }
                 }
             }
@@ -1033,21 +1345,27 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
             }
 
             function hayFechaCurp(fechasend = '') {
-                if ($('#date_nacimientos').val() == '') {
-                    if(fechasend != ''){
-                        fechacurp = fechasend
-                    }else {
-                        fechacurp = "<?php echo $fecha_nacimiento?>";
-                    }
-                    edad = calcularEdad(fechacurp);
-                    fechacurp = fechacurp.split('/').reverse().join('-');
-                    $('#date_nacimientos').val(fechacurp);
-                    document.getElementById("edad").value = edad;
+                if(fechasend != ''){
+                    fechacurp = fechasend
+                }else {
+                    fechacurp = "<?php echo $fecha_nacimiento?>";
                 }
+                if (fechacurp == '') {
+                    return;
+                }
+                edad = calcularEdad(fechacurp);
+                if (fechacurp.indexOf('/') !== -1) {
+                    fechacurp = fechacurp.split('/').reverse().join('-');
+                }
+                $('#date_nacimientos').val(fechacurp);
+                document.getElementById("edad").value = edad;
             }
 
             function calcularEdad(birthday) {
-                birthday = new Date(birthday.split('/').reverse().join('-'));
+                if (birthday.indexOf('/') !== -1) {
+                    birthday = birthday.split('/').reverse().join('-');
+                }
+                birthday = new Date(birthday);
                 var ageDifMs = Date.now() - birthday.getTime();
                 var ageDate = new Date(ageDifMs);
                 return Math.abs(ageDate.getUTCFullYear() - 1970);
@@ -1060,6 +1378,29 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                 });
             }
         </script>
+        <style>
+            .modal-roles {
+                position: fixed;
+                inset: 0;
+                z-index: 9999;
+                background: rgba(0, 0, 0, 0.55);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 16px;
+            }
+            .modal-roles.not-view { display: none !important; }
+            .modal-roles .modal-content {
+                width: 100%;
+                max-width: 720px;
+                max-height: 85vh;
+                overflow-y: auto;
+                background: #fff;
+                border-radius: 8px;
+                padding: 20px;
+                box-shadow: 0 10px 30px rgba(0,0,0,.25);
+            }
+        </style>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     </head>
     <!--validación de roles de usuarios-->
@@ -1089,21 +1430,22 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                     <!--                        <p><br><br><strong>Crear una cuenta</strong></p>-->
                     <!--                    </div>-->
                     <form id="envia-info" action="<?= $registramoodle?>" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="sesskey" value="<?= sesskey() ?>">
                         <!-- ✅ NUEVO: Campos ocultos para el origen -->
                         <input type="hidden" name="origin" value="<?php echo $origin; ?>">
                         <input type="hidden" name="is_saberes_mx" value="<?php echo $is_saberes_mx ? '1' : '0'; ?>">
 
                         <div class="form-group">
-                            <p>CURP: <input style="text-transform:uppercase" class="form-control" id = "curp" name="curp" readonly type="text" value="<?php echo $campos[0];?>"></p>
+                            <p>CURP: <input style="text-transform:uppercase" class="form-control" id = "curp" name="curp" type="text" value="<?php echo $campos[0];?>"></p>
                         </div>
                         <div class="form-group">
-                            <p>Nombre de usuario:<span class="red-text"> *</span><input readonly class="form-control" id= "username" name="username" type="text" value="<?php echo $username;?>" required pattern="[a-z]{2,254}" title="Nombre de usuario: solo puede contener letras minúsculas"></p>
+                            <p>Nombre de usuario:<span class="red-text"> *</span><input class="form-control" id= "username" name="username" type="text" value="<?php echo $username;?>" required pattern="[a-z0-9]{2,254}" title="Nombre de usuario: solo puede contener letras minúsculas y números"></p>
                         </div>
                         <div class="form-group">
                             <p id="contra">Contraseña:
                                 <span class="red-text"> *</span>
                                 <br>
-                                <input title="Este campo es requerido." readonly class="form-control password" id="pass" name="pass" type="password" >
+                                <input title="Este campo es requerido." class="form-control password" id="pass" name="pass" type="password" >
                                 <span class="fa fa-fw fa-eye password-icon show-password" onclick="viewPassword();"></span>
                             </p>
                             <p id="validate-pass" style="display: none; background-color: yellow"><b>La contraseña debe tener al menos 8-12 caracteres, al menos 1 dígito(s), al menos 1 letra(s) minúscula(s), al menos 1 letra(s) mayúscula(s), al menos 1(s) carácter(es) especial(es) como *, -, o #</b></p>
@@ -1175,69 +1517,10 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                                     <br>
                                     <select class="form-control" id="rol" name="rol" required>
                                         <option value="0">Seleccionar Rol</option>
-                                        <option value="1">Interesado a estudiante</option>
-                                        <option value="2">Aspirante a estudiante</option>
-                                        <option value="3">Estudiante Lic/TSU</option>
-                                        <option value="4">Egresado</option>
-                                        <option value="5">Titulado</option>
-                                        <option value="6">Pasante</option>
-                                        <option value="7">Aspirante a docente en línea</option>
-                                        <option value="8">Docente en línea</option>
-                                        <option value="9">Asesor Académico</option>
-                                        <option value="10">Tutor</option>
-                                        <option value="11">Posdoctorante</option>
-                                        <option value="12">Personal Administrativo</option>
-                                        <option value="13">Prerregistro</option>
-                                        <option value="14">Aspirante Posgrado</option>
-                                        <option value="15">Estudiante Posgrado</option>
-                                        <option value="16">Jefe de Carrera Lic/TSU</option>
-                                        <option value="17">Jefe de División Lic/TSU</option>
-                                        <option value="18">Jefe de Carrera Posgrado</option>
-                                        <option value="19">Coordinador Lic/TSU</option>
-                                        <option value="20">Jefe de División Posgrado</option>
-                                        <option value="21">Jefe de División Posgrado</option>
-                                        <option value="22">Aspirante admitido Lic/TSU</option>
-                                        <option value="23">Aspirante admitido Posgrado</option>
-                                        <option value="24">Escolares</option>
-                                        <option value="25">Maestro</option>
-                                        <option value="26">Estudiante Innovatic</option>
-                                        <option value="27">Aspirante posgrado selección</option>
-                                        <option value="28">Apoyo docente</option>
-                                        <option value="29">Educandos</option>
-                                        <option value="30">Promotor</option>
-                                        <option value="31">Monitor Académico</option>
-                                        <option value="32">Apoyo al Monitor Académico</option>
-                                        <option value="33">Aspirante Lic/TSU No admitido</option>
-                                        <option value="34">Aspirante Posgrado No admitido</option>
-                                        <option value="35">Gestor de perfiles por grupo Lic/TSU</option>
-                                        <option value="36">Gestor de de base de datos</option>
-                                        <option value="37">Aulas</option>
-                                        <option value="38">Candidato a docente en línea</option>
-                                        <option value="39">Conapace</option>
-                                        <option value="40">Recursos Humanos</option>
-                                        <option value="41">Candidato a docente en línea admitido</option>
-                                        <option value="42">Candidato a docente en línea no admitido</option>
-                                        <option value="43">Responsable de evaluación</option>
-                                        <option value="44">Aspirante a investigador</option>
-                                        <option value="45">Investigador</option>
-                                        <option value="46">Administrador SIA</option>
-                                        <option value="47">Mesa de ayuda</option>
-                                        <option value="48">Investigador PIMITFAM</option>
-                                        <option value="50">Administrador PIMITFAM</option>
-                                        <option value="52">Apoyo a responsable de p. e.</option>
-                                        <option value="53">Asesor metodológico</option>
-                                        <option value="54">Director de Division PIIn</option>
-                                        <option value="55">Responsable de Programa Educativo PIIn</option>
-                                        <option value="56">Evaluador CIEES</option>
-                                        <option value="57">Apoyo de asuntos escolares</option>
-                                        <option value="58">Dictaminador</option>
-                                        <option value="59">Tutor en línea</option>
-                                        <option value="60">Egresado de Posgrado</option>
-                                        <option value="61">Consulta Externo</option>
-                                        <option value="62">Mesa CTIE</option>
-                                        <option value="63">Público en general</option>
-
-                                    </select>
+                                        <?php foreach ($dynamicroleoptions as $roleidoption => $rolenameoption) { ?>
+                                            <option value="<?php echo s((string)$roleidoption); ?>"><?php echo s($rolenameoption); ?></option>
+                                        <?php } ?>
+</select>
                                 </p>
                             </div>
                         </div>
@@ -1289,14 +1572,30 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                             </label>
                             <textarea id="register-goals" type="textarea" name="goals" class="input-block" data-errormsg-required="Tell us your goals."></textarea>
                         </div>
+                        <?php if (!empty($formextrafields)) { ?>
+                            <?php foreach ($formextrafields as $extrafield) { ?>
+                                <div class="form-group dynamic-extra-field">
+                                    <p><?php echo s($extrafield['label']); ?>:
+                                        <?php if ($extrafield['required']) { ?><span class="red-text"> *</span><?php } ?>
+                                        <input class="form-control"
+                                               id="extra_<?php echo s($extrafield['shortname']); ?>"
+                                               name="extra_fields[<?php echo s($extrafield['shortname']); ?>]"
+                                               type="<?php echo s($extrafield['type']); ?>"
+                                            <?php if ($extrafield['required']) { ?>required<?php } ?>>
+                                    </p>
+                                </div>
+                            <?php } ?>
+                        <?php } ?>
                         <br>
                         <?php
                         ($categoryid=='')?$categoryid=0:$categoryid;
-                        echo avisoDePrivacidad($categoryid);
+                        $privacynoticehtml = avisoDePrivacidad($categoryid);
+                        $hasprivacynotice = trim(strip_tags($privacynoticehtml)) !== '';
+                        echo $privacynoticehtml;
                         ?>
                         <br>
                         <label for="register-terms_of_service">
-                            <input id="register-terms_of_service" type="checkbox" disabled name="terms_of_service" class="input-block checkbox check-size" required title="Debe aceptar los Términos de Servicio de <?=$NAMEPLATAFORMQRCURP?>" >
+                            <input id="register-terms_of_service" type="checkbox" <?php if ($hasprivacynotice) { ?>disabled<?php } ?> name="terms_of_service" class="input-block checkbox check-size" required title="Debe aceptar los Términos de Servicio de <?=$NAMEPLATAFORMQRCURP?>" >
                             <u style="cursor: pointer;  text-decoration: underline; color: darkblue;">
                                 <span class="red-text" id="leer-aviso" style="display: none">Debes leer el aviso de privacidad.</span>
                                 <a id="aviso-privacidad">He leído y acepto el Aviso de privacidad</a>
@@ -1310,6 +1609,8 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                             <span>Se insertara en la bd externa</span><p id="external"><?= $remoteinsertdb ?> </p>
                             <span>Encuentra el dato en la bd externa</span><p id="existeuserdb"><?= $encuentracurp ?></p>
                             <span>Acepta registros publico general</span><p id="publicogeneral"><?= $registropublicogeneral ?></p>
+                            <span>Mensaje bloqueo público general</span><p id="publicogeneralmsg"><?= s($publicogeneralblockedtext) ?></p>
+                            <span>Nombre plataforma</span><p id="nameplataformcfg"><?= s($NAMEPLATAFORMQRCURP) ?></p>
                             <span>Despachador</span> <p id="despachador"><?= $despachador ?> </p>
                             <input type="hidden" id="rolname" name="rolname" value="<?php echo $roluser ?>">
                             <span>id Curso</span><input type="hidden"  id="idcourse" name="idcourse" value="<?php echo $idcourse ?>">
@@ -1327,6 +1628,55 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
                     </form>
                 </div>
             </div>
+            <script>
+                (function() {
+                    const fieldConfig = <?php echo json_encode($formfieldconfig); ?> || {};
+                    Object.keys(fieldConfig).forEach(function(fieldName) {
+                        const config = fieldConfig[fieldName] || {};
+                        let element = document.querySelector('[name="' + fieldName + '"]');
+                        if (!element) {
+                            element = document.getElementById(fieldName);
+                        }
+                        if (!element) {
+                            return;
+                        }
+                        const group = element.closest('.form-group') || element.closest('div') || element.parentElement;
+                        if (Number(config.visible) === 0) {
+                            if (group) {
+                                group.style.display = 'none';
+                            } else {
+                                element.style.display = 'none';
+                            }
+                            element.removeAttribute('required');
+                            element.disabled = true;
+                            return;
+                        }
+                        if (Number(config.required) === 0) {
+                            element.removeAttribute('required');
+                        } else {
+                            element.setAttribute('required', 'required');
+                        }
+                        if (group && config.label) {
+                            const labelContainer = group.querySelector('p');
+                            if (labelContainer) {
+                                const current = labelContainer.innerHTML;
+                                const separator = current.indexOf(':');
+                                if (separator !== -1) {
+                                    labelContainer.innerHTML = config.label + current.substring(separator);
+                                }
+                            }
+                        }
+                    });
+                    setTimeout(function() {
+                        if (typeof applyEditableAutofilledOverrides === 'function') {
+                            applyEditableAutofilledOverrides();
+                        }
+                        if (typeof syncPasswordFromAlias === 'function') {
+                            syncPasswordFromAlias();
+                        }
+                    }, 100);
+                })();
+            </script>
             <script src="js/sweetalert.min.js"></script>
             <script src="js/alertsregistro.js?version=1"></script>
             <!--            <script src="https://framework-gb.cdn.gob.mx/gobmx.js"></script>-->
@@ -1334,4 +1684,6 @@ $urlprincipal = $CFG->wwwroot.'/index.php';
     </div>
 <?php
 
-echo $OUTPUT->footer();
+if (!$hidechrome) {
+    echo $OUTPUT->footer();
+}

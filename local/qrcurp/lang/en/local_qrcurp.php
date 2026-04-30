@@ -14,11 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-$NAMEPLATAFORMQRCURP = get_config('local_qrcurp','nameplataform');
-$NAMEEXTERNALDBQRCURP = get_config('local_qrcurp','nameexternal');
-//$NAMEPLATAFORMQRCURP = "NAME";
-//$NAMEEXTERNALDBQRCURP = "NAME2";
-//NOmbre DE Los dos portales
 $string['pluginname'] = 'QRCURP';
 $string['dbhost'] = "DB Host";
 $string['dbhostinfo'] = "Remote Database host name (on which, we will be executing our SQL queries)";
@@ -32,8 +27,40 @@ $string['dbpass'] = "DB Password";
 $string['dbpassinfo'] = "Remote Database password (for above username)";
 $string['dbtable'] = "DB Table";
 $string['dbtableinfo'] = "Remote Table on Database(on which, we will be executing our SQL queries)";
+$string['validateexternalconnection'] = "Validar conexión a BD externa";
+$string['validateexternalconnectioninfo'] = "Ejecuta una consulta de validación al crear la conexión para verificar que la BD externa responde correctamente.";
+$string['externalconnectiontestquery'] = "Consulta de validación de conexión externa";
+$string['externalconnectiontestqueryinfo'] = "Consulta SQL simple para validar la conexión (ejemplo: SELECT 1).";
+$string['externalcurpquery'] = "Consulta externa de validación CURP";
+$string['externalcurpqueryinfo'] = "Consulta SQL para validar existencia de CURP en BD externa. Usa {{curp}} como parámetro.";
+$string['externaluserinfoquery'] = "Consulta externa de información de usuario";
+$string['externaluserinfoqueryinfo'] = "Consulta SQL de datos de usuario externo. Usa {{curp}} y opcionalmente {{today}}.";
 $string['dbinsert'] = "Insert SQL query external DB";
 $string['dbinsertinfo'] = "perform the query insertion in the external database";
+$string['validateprofilefields'] = "Validar campos de perfil requeridos";
+$string['validateprofilefieldsinfo'] = "Valida si existen los campos de perfil personalizados que utiliza el plugin durante el registro.";
+$string['autoinstallprofilefields'] = "Instalar automáticamente campos faltantes";
+$string['autoinstallprofilefieldsinfo'] = "Si está activo, al guardar configuración se crearán los campos faltantes de forma automática.";
+$string['profilefieldslist'] = "Campos de perfil administrados (shortname)";
+$string['profilefieldslistinfo'] = "Lista separada por comas de shortnames a validar/crear. Puedes agregar o quitar campos.";
+$string['profilefieldsstatus'] = "Estado de campos de perfil";
+$string['profilefieldsok'] = "Todos los campos de perfil requeridos existen.";
+$string['profilefieldsmissing'] = 'Campos faltantes: {$a}';
+$string['profilefieldsinstalllink'] = "Instalar campos faltantes ahora";
+$string['profilefieldscreated'] = 'Campos creados: {$a}';
+$string['formfieldsconfig'] = "Configuración de campos del formulario";
+$string['formfieldsconfiginfo'] = "Un campo por línea con formato shortname|Etiqueta|Visible(1/0)|Requerido(1/0). Permite renombrar, mostrar/ocultar y definir si el campo es obligatorio.";
+$string['formextrafields'] = "Campos extra dinámicos del formulario";
+$string['formextrafieldsinfo'] = "Un campo por línea con formato shortname|Etiqueta|tipo(text/email/number/date)|requerido(1/0). Deben existir en profilefieldslist para guardarse en perfil.";
+$string['privacynoticehtml'] = "Aviso de privacidad (HTML)";
+$string['privacynoticehtmlinfo'] = "Si se configura, este contenido reemplaza el aviso de privacidad por defecto en el formulario de registro.";
+$string['hidesitechrome'] = "Ocultar header/footer del sitio";
+$string['hidesitechromeinfo'] = "Si está activo, el formulario de registro se mostrará sin el header y footer del tema.";
+$string['allowautofilledpasswordedit'] = "Permitir editar contraseña autocompletada";
+$string['allowautofilledpasswordeditinfo'] = "Si está activo, cuando la contraseña se autocompleta desde datos externos el usuario podrá modificarla.";
+$string['editableautofilledfields'] = "Campos autocompletados editables";
+$string['editableautofilledfieldsinfo'] = "Lista separada por comas de IDs de campos que podrán editarse aunque se autocompleten (ejemplo: ocupacion,categorias,grupos,email).";
+$string['profilefieldsextrawarning'] = 'Advertencia: estos campos extra no están en profilefieldslist: {$a}';
 $string['dateregistro'] = "Fecha Límite";
 $string['dateregistroinfo'] = "Fecha límite en la que el regsitro estara activo. Formato : dd-mm-yyyy";
 $string['textregistro'] = "Texto a mostrar";
@@ -44,6 +71,8 @@ $string['dateduracionperidos'] = "Fecha de apertura y fin de acceso a cursos";
 $string['dateduracionperidosinfo'] = "Si se requiere que los cursos esten abiertos por periodos configurar el siguiente formato: <br> Nombre del periodo|fecha inicial(dd-mm-yyyy)|fechafinal(dd-mm-yyyy)|id de curso(para más de un curso separar los id con '-') Si se requiere mas de un período separar por ','<br> Ejemplo: Periodo A|03-01-2025|05-01-2025|2-3,Periodo B|08-04-2025|15-04-2025|15-25 ";
 $string['publicogeneral'] = "Registros externos";
 $string['publicogeneralinfo'] = "Acepta registros a usuarios no pertenecientes a la BD externa, publico en general";
+$string['publicogeneralblockedtext'] = 'Mensaje cuando no hay registro para público general';
+$string['publicogeneralblockedtextinfo'] = 'Texto que se mostrará cuando el registro no esté disponible para público en general.';
 $string['onlypublicogeneral'] = "Solo aceptar Registros externos";
 $string['onlypublicogeneralinfo'] = "Acepta registros a usuarios no pertenecientes a la BD externa, publico en general, aún realizando la validación para excluirlos";
 $string['idcategories'] = "Ids de Categorías";
@@ -53,7 +82,7 @@ $string['rolteacherinfo'] = "Id del rol que estará impartiendo el curso ejemplo
 $string['limitegroup'] = "Límite de participantes en grupo";
 $string['limitegroupinfo'] = "Número de participantes, contando únicamente estudiantes ";
 $string['rolstudent'] = "Rol de estudiantes";
-$string['rolstudentinfo'] = "Id del rol que estará como estudiante en el curso ejemplo: 5 = student";
+$string['rolstudentinfo'] = "Selecciona el rol de estudiante desde los roles disponibles en Moodle. Por defecto se usa 'student'.";
 $string['haygroupespera'] = "Existe grupo de espera";
 $string['haygroupesperainfo'] = "Cuando los grupos alcanzan el límite permitido se agregara un grupo de espera ";
 $string['namegroupespera'] = "Nombre del grupo en espera";
@@ -69,7 +98,7 @@ $string['confirmemailinfoexternos'] = "Cuando un nuevo usuario se registra se en
 $string['emailexterno'] = "Usar servidor de correo externo";
 $string['emailexternoinfo'] = "Hace uso de un servidor de correo smtp externo al de moodle.";
 $string['studentxcategory'] = "Límite de estudiantes totales por categoría";
-$string['studentxcategoryinfo'] = "Número de estudiantes que se aceptaran por categoría ejemplo: 100";
+$string['studentxcategoryinfo'] = "Límites por categoría. Formatos válidos: 100 (límite global), 5:100,8:200 (por categoría), *:100,8:200 (global + excepción). Vacío = sin límite.";
 $string['studentxcategorytext'] = "Texto a mostrar si se supera el límite de estudiantes en la categoría";
 $string['studentxcategorytextinfo'] = "Texto a mostrar pasado el límite de los estudiantes";
 $string['sampleregister'] = "Acepta registro sin matriculación";
@@ -132,15 +161,16 @@ $string['dbconn'] = "Exito";
 $string['dbconnerr'] = "Asegurarse de haber configurado el puerto y el nombre de la base de datos";
 
 //Mensajes emergentes
-$string['noregismoodle'] = "Tus datos no han sido registrados previamente, por favor da clic en aceptar para registrar en el sitio de $NAMEPLATAFORMQRCURP.";
-$string['noregisexdb'] = "Tus datos no han sido registrados previamente, por favor da clic en aceptar para registrar en el sitio de $NAMEPLATAFORMQRCURP";
-$string['regismoodleyexdb'] = "Ya existe una cuenta registrada en $NAMEEXTERNALDBQRCURP y en el sitio de $NAMEPLATAFORMQRCURP, inicia sesión.";
-$string['regismoodlenotexdb'] = "No existe una cuenta registrada en el sitio de $NAMEPLATAFORMQRCURP ni en $NAMEEXTERNALDBQRCURP, registrarse para continuar.";
-$string['regismoodle'] = "Ya existe una cuenta registrada en el sitio de $NAMEPLATAFORMQRCURP, inicia sesión";
-$string['regismoodlenotexdb0'] = "No existe una cuenta registrada en $NAMEEXTERNALDBQRCURP pero si en el sitio de $NAMEPLATAFORMQRCURP, inicia sesión.";
-$string['regismoodlenotexdb1'] = "No existe una cuenta registrada en $NAMEEXTERNALDBQRCURP pero si en el sitio de $NAMEPLATAFORMQRCURP, registrarse en $NAMEEXTERNALDBQRCURP.";
-$string['errorconsulta'] = "No existe una cuenta registrada en $NAMEEXTERNALDBQRCURP pero si en el sitio de $NAMEPLATAFORMQRCURP, registrarse en $NAMEEXTERNALDBQRCURP.";
-$string['correoregimoodle'] = "Existe una cuenta registrada con ese correo en el sitio de $NAMEPLATAFORMQRCURP, intentalo con otro.";
+$string['noregismoodle'] = 'Tus datos no han sido registrados previamente, por favor da clic en aceptar para registrarte en el sitio.';
+$string['noregisexdb'] = 'Tus datos no han sido registrados previamente, por favor da clic en aceptar para registrarte en el sitio.';
+$string['regismoodleyexdb'] = 'Ya existe una cuenta registrada en la base de datos externa y en este sitio, inicia sesión.';
+$string['regismoodlenotexdb'] = 'No existe una cuenta registrada ni en este sitio ni en la base de datos externa, regístrate para continuar.';
+$string['regismoodle'] = 'Ya existe una cuenta registrada en este sitio, inicia sesión.';
+$string['regismoodlenotexdb0'] = 'No existe una cuenta en la base de datos externa pero sí en este sitio, inicia sesión.';
+$string['regismoodlenotexdb1'] = 'No existe una cuenta en la base de datos externa pero sí en este sitio, regístrate en la base de datos externa.';
+$string['errorconsulta'] = 'No existe una cuenta en la base de datos externa pero sí en este sitio, regístrate en la base de datos externa.';
+$string['correoregimoodle'] = 'Existe una cuenta registrada con ese correo en este sitio, inténtalo con otro.';
 //$string['regisexdbnotmoodle'] = "Tus datos han sido registrados previamente en la base de datos de la SIGE(UnADM), da clic en continuar para proceder con el registro en el sitio de reforma laboral, (Verifica que los datos sean correctos)";
 
-
+$string['rolesourceconfig'] = 'Configuración dinámica de roles';
+$string['rolesourceconfiginfo'] = 'Permite definir roles por lista o por consulta SQL externa. Opción 1 (lista): una línea por rol con formato id|nombre. Opción 2 (consulta): inicia con SELECT y debe devolver columnas id y name.';
