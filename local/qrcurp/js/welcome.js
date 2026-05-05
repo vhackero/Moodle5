@@ -1,14 +1,16 @@
 var nameRegsitro = localStorage.getItem('nameCategoria');
-const urlPrincipal = window.location.href.split("qrcurp");
-const UrlIconos = urlPrincipal[0]+"qrcurp/iconos/";
+var urlPrincipal = window.location.href.split("qrcurp");
+var UrlIconos = urlPrincipal[0]+"qrcurp/iconos/";
 // alert(nameRegsitro);
 var inicial = document.createElement("span");
 inicial.innerHTML = " Elige una opción para registrar tus datos:";
-swal({
+var showUploadLink = (nameRegsitro === "not-image" || nameRegsitro === "not-image-site");
+var tituloRegistro = showUploadLink ? "Registrarme" : "Registrarme a " + nameRegsitro;
+var swalDialog = swal({
     content: {
         element: inicial,
     },
-    title: "Registrarme a "+nameRegsitro,
+    title: tituloRegistro,
     //background: '#91203e',
     //text: "Registrarme a la comunidad de practica del club virtual de lenguas",
     icon: UrlIconos+nameRegsitro+".jpg?v=1",
@@ -22,8 +24,16 @@ swal({
 
     },
 
-})
-    .then((value) => {
+});
+if (showUploadLink) {
+    setTimeout(function() {
+        var swalText = document.querySelector('.swal-text');
+        if (swalText) {
+            swalText.innerHTML = "No hay imagen asociada al registro.<br><a href='" + urlPrincipal[0] + "qrcurp/iconos/upload.php' target='_blank' rel='noopener noreferrer'>Subir imagen</a>";
+        }
+    }, 0);
+}
+swalDialog.then(function(value) {
         switch (value) {
             case "qrcurp":
                 $(document).ready(function(){

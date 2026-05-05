@@ -15,7 +15,7 @@ $PAGE->set_context(\context_system::instance());
 
 require_sesskey();
 
-// ✅ CORREGIDO: OBTENER EL ORIGEN DEL REGISTRO
+//  CORREGIDO: OBTENER EL ORIGEN DEL REGISTRO
 $origin = optional_param('origin', 'default', PARAM_TEXT);
 $is_saberes_mx = optional_param('is_saberes_mx', 0, PARAM_INT);
 
@@ -33,7 +33,7 @@ if (!in_array($origin, $allowed_origins)) {
     $origin = 'default';
 }
 
-// ✅ NUEVO: FUNCIÓN PARA GUARDAR EL ORIGEN EN EL CAMPO DE PERFIL
+//  NUEVO: FUNCIÓN PARA GUARDAR EL ORIGEN EN EL CAMPO DE PERFIL
 function save_registration_origin_to_profile($userid, $origin) {
     global $DB;
 
@@ -309,7 +309,7 @@ if($dataemail != '' || $dataname != '') {
             redirect($destination, "No se agregó el nuevo usuario, verificar los datos a insertar.", null, \core\output\notification::NOTIFY_ERROR);
         }
 
-        // ✅ NUEVO: GUARDAR EL ORIGEN DEL REGISTRO (CONFIRMACIÓN REQUERIDA)
+        //  NUEVO: GUARDAR EL ORIGEN DEL REGISTRO (CONFIRMACIÓN REQUERIDA)
         save_registration_origin_to_profile($iduserinsert, $origin);
 
         $idnameCategoria = $DB->get_record('course', array('id' => $idcourse));
@@ -358,7 +358,7 @@ if($dataemail != '' || $dataname != '') {
         $iduserinsert = $DB->insert_record('user', $record);
         if ($iduserinsert) {
             //EL USUARIO SE REGISTRO CON ÉXITO
-            // ✅ NUEVO: GUARDAR EL ORIGEN DEL REGISTRO (SIN CONFIRMACIÓN)
+            //  NUEVO: GUARDAR EL ORIGEN DEL REGISTRO (SIN CONFIRMACIÓN)
             save_registration_origin_to_profile($iduserinsert, $origin);
             $profilefieldmap = [
                 'ocupacion' => $ocupacion,

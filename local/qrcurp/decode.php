@@ -78,7 +78,7 @@ $editableautofilledfields = array_values(array_filter(array_map(static function(
 }));
 $editableautofilledfieldsjson = json_encode($editableautofilledfields);
 
-// ✅ MEJORADO: OBTENER TODOS LOS PARÁMETROS UTM
+//  MEJORADO: OBTENER TODOS LOS PARÁMETROS UTM
 
 function local_qrcurp_birthdate_for_input(string $birth): string {
     $birth = trim($birth);
@@ -197,7 +197,7 @@ if (!in_array($origin, $allowed_origins)) {
     $origin = 'default';
 }
 
-// ✅ MEJORADO: Guardar todos los parámetros UTM en la sesión
+//  MEJORADO: Guardar todos los parámetros UTM en la sesión
 global $SESSION;
 $SESSION->registration_origin = $origin;
 $SESSION->utm_source = $utm_source;
@@ -210,7 +210,7 @@ $SESSION->saberes_course_id = $saberes_course_id;
 $SESSION->saberes_course_name = $saberes_course_name;
 $SESSION->saberes_user_id = $saberes_user_id;
 
-// ✅ NUEVO: REGISTRAR UTM EN LOG TEMPORAL
+//  NUEVO: REGISTRAR UTM EN LOG TEMPORAL
 if (!empty($utm_source)) {
     $utm_log_entry = array(
         'timestamp' => time(),
@@ -743,7 +743,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
 
                             console.log('Curso seleccionado automáticamente desde UTM: ' + utmContent + ' - ' + courseSelect.options[i].text);
 
-                            // ✅ MOSTRAR INDICADOR VISUAL
+                            //  MOSTRAR INDICADOR VISUAL
                             showUtmCourseSelection(utmContent, courseSelect.options[i].text);
                             break;
                         }
@@ -751,7 +751,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 }
             }
 
-            // ✅ NUEVO: FUNCIÓN PARA MOSTRAR INDICADOR DE SELECCIÓN AUTOMÁTICA
+            //  NUEVO: FUNCIÓN PARA MOSTRAR INDICADOR DE SELECCIÓN AUTOMÁTICA
             function showUtmCourseSelection(courseId, courseName) {
                 // Verificar si ya existe un indicador
                 var existingIndicator = document.getElementById('utm-course-indicator');
@@ -761,7 +761,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
 
                 var indicatorHtml = `
             <div id="utm-course-indicator" class="alert alert-success" style="margin: 10px; padding: 10px; border-left: 5px solid #28a745;">
-                <strong>✅ Curso preseleccionado desde SaberesMX</strong><br>
+                <strong> Curso preseleccionado desde SaberesMX</strong><br>
                 <small>ID: ${courseId} - ${courseName}</small>
             </div>
         `;
@@ -773,7 +773,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                 }
             }
 
-            // ✅ NUEVO: FUNCIÓN PARA CERRAR EL MODAL DE ROLES
+            //  NUEVO: FUNCIÓN PARA CERRAR EL MODAL DE ROLES
             function closeRolesModal() {
                 var modal = document.getElementById('modalroles');
                 if (modal) {
@@ -800,7 +800,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
             var listarolesdecode = [];
             $(document).ready(function () {
 
-                // ✅ NUEVO: EJECUTAR SELECCIÓN AUTOMÁTICA DE CURSO AL CARGAR LA PÁGINA
+                //  NUEVO: EJECUTAR SELECCIÓN AUTOMÁTICA DE CURSO AL CARGAR LA PÁGINA
                 setTimeout(function() {
                     selectCourseFromUtm();
                 }, 500);
@@ -1013,7 +1013,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                             }
                             $("#categorias").html(data);
 
-                            // ✅ NUEVO: EJECUTAR SELECCIÓN DESPUÉS DE CARGAR LOS CURSOS
+                            //  NUEVO: EJECUTAR SELECCIÓN DESPUÉS DE CARGAR LOS CURSOS
                             setTimeout(function() {
                                 selectCourseFromUtm();
                                 // Asegura que el hidden idcourse quede sincronizado aunque no haya cambio manual.
@@ -1232,7 +1232,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     document.getElementById('modalroles').classList.remove('not-view');
                     document.getElementById('message-modal-roles').textContent = 'Estimado(a) participante la CURP proporcionada se encuentra asociada a más de un rol, selecciona a continuación el rol con el que deseas realizar el registro y valida la información:';
 
-                    // ✅ MODIFICADO: EVENT LISTENER MEJORADO PARA CERRAR EL MODAL
+                    //  MODIFICADO: EVENT LISTENER MEJORADO PARA CERRAR EL MODAL
                     document.getElementById('info-modal-roles').addEventListener('click', function(event) {
                         if (event.target.tagName === 'BUTTON') {
                             const selectedRole = event.target.getAttribute('data-role');
@@ -1248,7 +1248,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                     window.syncPasswordFromAlias();
                                     setTimeout(window.applyEditableAutofilledOverrides, 50);
 
-                                    // ✅ NUEVO: CERRAR EL MODAL DESPUÉS DE SELECCIONAR
+                                    //  NUEVO: CERRAR EL MODAL DESPUÉS DE SELECCIONAR
                                     closeRolesModal();
                                     coursesValidation(selectedRole);
                                     return;
@@ -1448,7 +1448,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                     <!--                    </div>-->
                     <form id="envia-info" action="<?= $registramoodle?>" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="sesskey" value="<?= sesskey() ?>">
-                        <!-- ✅ NUEVO: Campos ocultos para el origen -->
+                        <!--  NUEVO: Campos ocultos para el origen -->
                         <input type="hidden" name="origin" value="<?php echo $origin; ?>">
                         <input type="hidden" name="is_saberes_mx" value="<?php echo $is_saberes_mx ? '1' : '0'; ?>">
 
