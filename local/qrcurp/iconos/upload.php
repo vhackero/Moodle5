@@ -1,42 +1,92 @@
 <?php
-$currentDirectory = getcwd();
-$uploadDirectory = "/uploads/";
+require_once(__DIR__ . '/../../../config.php');
+require_login();
 
-$errors = []; // Store errors here
+if (!is_siteadmin()) {
+    throw new \moodle_exception('accessdenied', 'admin');
+}
 
-$fileExtensionsAllowed = ['jpeg','jpg','png']; // These will be the only file extensions allowed
+$context = \context_system::instance();
+require_capability('moodle/site:config', $context);
 
-$fileName = $_FILES['the_file']['name'];
-$fileSize = $_FILES['the_file']['size'];
-$fileTmpName  = $_FILES['the_file']['tmp_name'];
-$fileType = $_FILES['the_file']['type'];
-$fileExtension = strtolower(end(explode('.',$fileName)));
+$maxbytes = 4 * 1024 * 1024;
+$errors = [];
+$success = '';
 
-$uploadPath = $currentDirectory . $uploadDirectory . basename($fileName);
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
+    $categoryname = trim((string)optional_param('categoryname', '', PARAM_TEXT));
+    $categoryname = preg_replace('/[^A-Za-z0-9 _-]/', '', $categoryname);
 
-if (isset($_POST['submit'])) {
-
-    if (! in_array($fileExtension,$fileExtensionsAllowed)) {
-        $errors[] = "This file extension is not allowed. Please upload a JPEG or PNG file";
+    if ($categoryname === '') {
+        $errors[] = 'Debes indicar el nombre de la categoría.';
     }
 
-    if ($fileSize > 4000000) {
-        $errors[] = "File exceeds maximum size (4MB)";
+    if (!isset($_FILES['the_file']) || !is_uploaded_file($_FILES['the_file']['tmp_name'])) {
+        $errors[] = 'Selecciona una imagen válida para subir.';
     }
 
     if (empty($errors)) {
-        $didUpload = move_uploaded_file($fileTmpName, $uploadPath);
-
-        if ($didUpload) {
-            echo "The file " . basename($fileName) . " has been uploaded";
-        } else {
-            echo "An error occurred. Please contact the administrator.";
+        $file = $_FILES['the_file'];
+        if ((int)$file['size'] > $maxbytes) {
+            $errors[] = 'El archivo excede el tamaño máximo permitido (4 MB).';
         }
-    } else {
-        foreach ($errors as $error) {
-            echo $error . "These are the errors" . "\n";
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimetype = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        $allowed = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+        ];
+        if (!isset($allowed[$mimetype])) {
+            $errors[] = 'Solo se permiten imágenes JPG o PNG.';
+        }
+
+        $imginfo = @getimagesize($file['tmp_name']);
+        if ($imginfo === false) {
+            $errors[] = 'El archivo no es una imagen válida.';
+        }
+
+        if (empty($errors)) {
+            $targetdir = __DIR__;
+            $safe = trim(preg_replace('/\s+/', ' ', $categoryname));
+            $filename = $safe . '.' . $allowed[$mimetype];
+            $targetpath = $targetdir . DIRECTORY_SEPARATOR . $filename;
+
+            if (!move_uploaded_file($file['tmp_name'], $targetpath)) {
+                $errors[] = 'Ocurrió un error al guardar la imagen.';
+            } else {
+                @chmod($targetpath, 0644);
+                $success = 'Imagen subida correctamente como: ' . s($filename);
+            }
         }
     }
-
 }
-?>
+
+$PAGE->set_context($context);
+$PAGE->set_url(new \moodle_url('/local/qrcurp/iconos/upload.php'));
+$PAGE->set_title('Subir imagen de registro');
+$PAGE->set_heading('Subir imagen de registro');
+
+echo $OUTPUT->header();
+echo html_writer::tag('h3', 'Subida segura de iconos para registro');
+echo html_writer::tag('p', 'Solo administradores del sitio pueden usar esta página.');
+
+foreach ($errors as $error) {
+    echo $OUTPUT->notification($error, \core\output\notification::NOTIFY_ERROR);
+}
+if ($success !== '') {
+    echo $OUTPUT->notification($success, \core\output\notification::NOTIFY_SUCCESS);
+}
+
+echo '<form method="post" enctype="multipart/form-data">';
+echo '<input type="hidden" name="sesskey" value="' . sesskey() . '">';
+echo '<div><label for="categoryname">Nombre de categoría:</label><br>';
+echo '<input type="text" id="categoryname" name="categoryname" required></div><br>';
+echo '<div><label for="the_file">Imagen (JPG o PNG, máximo 4 MB):</label><br>';
+echo '<input type="file" id="the_file" name="the_file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required></div><br>';
+echo '<button type="submit">Subir imagen</button>';
+echo '</form>';
+
+echo $OUTPUT->footer();
