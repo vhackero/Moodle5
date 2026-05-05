@@ -268,6 +268,8 @@ $soloregistropublicogeneral = get_config('local_qrcurp','onlypublicogeneral');  
 $publicogeneralblockedtext = config::get_string('publicogeneralblockedtext');
 $custombackgroundimage = trim(config::get_string('custombackgroundimage'));
 $custombuttoncolor = trim(config::get_string('custombuttoncolor'));
+$customcancelbuttoncolor = trim(config::get_string('customcancelbuttoncolor'));
+$customheaderassets = trim(config::get_string('customheaderassets'));
 if ($publicogeneralblockedtext === '') {
     $publicogeneralblockedtext = ' El registro no esta disponible para publico en general';
 }
@@ -708,9 +710,12 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
             <?php if ($custombuttoncolor !== '') { ?>
             .btn-success, .btn-info { background-color: <?= s($custombuttoncolor) ?> !important; border-color: <?= s($custombuttoncolor) ?> !important; }
             <?php } ?>
+            <?php if ($customcancelbuttoncolor !== '') { ?>
+            .btn-danger { background-color: <?= s($customcancelbuttoncolor) ?> !important; border-color: <?= s($customcancelbuttoncolor) ?> !important; }
+            <?php } ?>
         </style>
 
-        <link href="https://framework-gb.cdn.gob.mx/assets/styles/main.css" rel="stylesheet">
+        <?php if ($customheaderassets !== "") { echo $customheaderassets; } ?>
         <script>
             iddelestado = 0;
 

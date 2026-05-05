@@ -52,6 +52,14 @@ if ( $hassiteconfig ) {
         $settings->add(new admin_setting_configcolourpicker('local_qrcurp/custombuttoncolor',
             get_string('custombuttoncolor', 'local_qrcurp'),
             get_string('custombuttoncolorinfo', 'local_qrcurp'), '')) ;
+        $settings->add(new admin_setting_configcolourpicker('local_qrcurp/customcancelbuttoncolor',
+            get_string('customcancelbuttoncolor', 'local_qrcurp'),
+            get_string('customcancelbuttoncolorinfo', 'local_qrcurp'), ''));
+        $settings->add(new admin_setting_configtextarea('local_qrcurp/customheaderassets',
+            get_string('customheaderassets', 'local_qrcurp'),
+            get_string('customheaderassetsinfo', 'local_qrcurp'),
+            '<link href="https://framework-gb.cdn.gob.mx/assets/styles/main.css" rel="stylesheet">',
+            PARAM_RAW, 120, 4));
 
 $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
             get_string('hidesitechrome', 'local_qrcurp'),

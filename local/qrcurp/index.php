@@ -210,6 +210,7 @@ $defaultcourse = config::get_int('defaultcourseid');
 $defaultgroup = config::get_int('defaultgroupid');
 $custombackgroundimage = trim(config::get_string('custombackgroundimage'));
 $custombuttoncolor = trim(config::get_string('custombuttoncolor'));
+$customcancelbuttoncolor = trim(config::get_string('customcancelbuttoncolor'));
 
 $categoryid = optional_param('categoryid', $defaultcategory, PARAM_INT);
 $idcourse = optional_param('courseid', $defaultcourse, PARAM_INT);
@@ -329,6 +330,9 @@ if ($is_from_saberes_mx) {
             <?php if ($custombuttoncolor !== '') { ?>
             .btn-success, .btn-info { background-color: <?= s($custombuttoncolor) ?> !important; border-color: <?= s($custombuttoncolor) ?> !important; }
             <?php } ?>
+            <?php if ($customcancelbuttoncolor !== '') { ?>
+            .btn-danger { background-color: <?= s($customcancelbuttoncolor) ?> !important; border-color: <?= s($customcancelbuttoncolor) ?> !important; }
+            <?php } ?>
         </style>
 
     </head>
@@ -414,7 +418,7 @@ if ($is_from_saberes_mx) {
                                 <pre id="resultado"></pre>
                                 </p>
                             </div>
-                            <input id="continuar" type="submit" disabled class="btn btn-md btn-block btn-info" style="background-color: #611232 !important;" value="Continuar">
+                            <input id="continuar" type="submit" disabled class="btn btn-md btn-block btn-info" value="Continuar">
                             <input type="button" class="btn btn-md btn-block btn-danger" onclick="javascript:history.back();" value="Cancelar">
                         </form>
                     </div>
