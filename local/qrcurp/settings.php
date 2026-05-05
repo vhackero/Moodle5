@@ -49,9 +49,9 @@ if ( $hassiteconfig ) {
                 $settings->add(new admin_setting_configtext('local_qrcurp/custombackgroundimage',
             get_string('custombackgroundimage', 'local_qrcurp'),
             get_string('custombackgroundimageinfo', 'local_qrcurp'), '', PARAM_RAW_TRIMMED, 200));
-        $settings->add(new admin_setting_configtext('local_qrcurp/custombuttoncolor',
+        $settings->add(new admin_setting_configcolourpicker('local_qrcurp/custombuttoncolor',
             get_string('custombuttoncolor', 'local_qrcurp'),
-            get_string('custombuttoncolorinfo', 'local_qrcurp'), '', PARAM_RAW_TRIMMED, 30));
+            get_string('custombuttoncolorinfo', 'local_qrcurp'), '')) ;
 
 $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
             get_string('hidesitechrome', 'local_qrcurp'),
