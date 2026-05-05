@@ -76,7 +76,7 @@ if($fechaporperidos != '' && !is_siteadmin()){
         }
 
 
-        $menssage = 'Estimado participante, el período de registro se encuentra en pausa, '.$text1 .' '.$fechaamostrar1.' y '.$text2.' el '.$fechaamostrar2.', revisa la página principal para obtener más información acerca del próximo período.';
+        $menssage = get_string('pausedregistrationprefix', 'local_qrcurp').', '.$text1.' '.$fechaamostrar1.' y '.$text2.' el '.$fechaamostrar2.', '.get_string('pausedregistrationsuffix', 'local_qrcurp');
         redirecionarUsuario($url,$menssage);
 
     }
