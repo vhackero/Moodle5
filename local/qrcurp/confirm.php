@@ -1,203 +1,174 @@
 <?php
 
 //CONFIRMACIÓN PARA LOS USUARIOS REGISTRADOS.
-//global $CFG,$PAGE;
 
 require(__DIR__ . '/../../config.php');
 require(__DIR__ . '/../../login/lib.php');
 require_once($CFG->libdir . '/authlib.php');
+require_once($CFG->dirroot . '/group/lib.php');
 
 require_once('lib.php');
 
-//echo "importado.";die();
+/**
+ * Valida si el grupo todavía tiene cupo disponible para confirmaciones.
+ *
+ * @param int $groupid
+ * @param int $userid
+ * @return bool
+ */
+function local_qrcurp_group_has_space_for_confirmation(int $groupid, int $userid): bool {
+    global $DB;
 
-$data = optional_param('data', '', PARAM_RAW);  // Formatted as:  secret/username
+    if ($groupid <= 0) {
+        return true;
+    }
+
+    // Si el usuario ya pertenece al grupo, no bloqueamos la confirmación.
+    if ($DB->record_exists('groups_members', ['groupid' => $groupid, 'userid' => $userid])) {
+        return true;
+    }
+
+    $group = $DB->get_record('groups', ['id' => $groupid], 'id,name', IGNORE_MISSING);
+    if (!$group) {
+        return true;
+    }
+
+    $limitedegrupo = (int) get_config('local_qrcurp', 'limitegroup');
+    $nohaylimite = false;
+
+    if ((int) get_config('local_qrcurp', 'haygroupespera') === 1) {
+        $nameListaEspera = (string) get_config('local_qrcurp', 'namegroupespera');
+        if ($nameListaEspera !== '' && stripos($group->name, $nameListaEspera) !== false) {
+            $nohaylimite = true;
+        }
+        if (stripos($group->name, 'cultura') !== false) {
+            $limitedegrupo = 40;
+        }
+    }
+
+    if ($nohaylimite || $limitedegrupo <= 0) {
+        return true;
+    }
+
+    $totalusersingroup = $DB->count_records('groups_members', ['groupid' => $groupid]);
+    return $totalusersingroup < ($limitedegrupo + 1);
+}
+
+/**
+ * Confirma usuario de manera local cuando no hay auth plugin de auto-registro activo.
+ *
+ * @param stdClass $user
+ * @param string $usersecret
+ * @return int
+ */
+function local_qrcurp_confirm_user_locally(stdClass $user, string $usersecret): int {
+    global $DB;
+
+    if ((int) $user->confirmed === 1) {
+        return AUTH_CONFIRM_ALREADY;
+    }
+
+    if ($usersecret === '' || !hash_equals((string) $user->secret, $usersecret)) {
+        return AUTH_CONFIRM_FAIL;
+    }
+
+    $updated = $DB->update_record('user', (object) [
+        'id' => $user->id,
+        'confirmed' => 1,
+        'secret' => '',
+        'timemodified' => time(),
+    ]);
+
+    return $updated ? AUTH_CONFIRM_OK : AUTH_CONFIRM_ERROR;
+}
+
+$data = optional_param('data', '', PARAM_RAW);  // Formatted as: secret/username.
+$p = optional_param('p', '', PARAM_ALPHANUM);   // Old parameter: secret.
+$s = optional_param('s', '', PARAM_RAW);        // Old parameter: username.
+$redirectto = optional_param('redirect', '', PARAM_LOCALURL);
+
 $PAGE->set_url('/local/qrcurp/confirm.php');
 $PAGE->set_context(context_system::instance());
 
-/*if (!$authplugin = signup_get_user_confirmation_authplugin()) {
-    throw new moodle_exception('confirmationnotenabled');
-}*/
-if (!empty($data) || (!empty($p) && !empty($s))) {
+$authplugin = signup_get_user_confirmation_authplugin();
 
-    if (!empty($data)) {
-        $dataelements = explode('/', $data, 2); // Stop after 1st slash. Rest is username. MDL-7647
-        $usersecret = $dataelements[0];
-        $username = $dataelements[1];
-    } else {
-        $usersecret = $p;
-        $username = $s;
-    }
-//    echo $usersecret;
-    //Cambaindo los datos a confirmados en moodle
-    //consulta si existe uyn usuario con esos datos
-    $consultauser = $DB->get_record('user', array('username' => $username, 'secret' => $usersecret));
-    if ($consultauser) {
-        //Consulta para saber si aun hay cupo
-        $totalUserGroup = (count(groups_get_members($consultauser->department, 'u.*')));
-        $limitedegrupo =$limitedegrupo = get_config('local_qrcurp','limitegroup');
-
-        $eslistaEspera = $DB->get_record("groups",array('id'=>$consultauser->department));
-        $nombredelGrupo = $eslistaEspera->name;
-        $nohaylimite =0;
-        if(get_config("local_qrcurp","haygroupespera")==1){
-            $nameListaEspera = get_config("local_qrcurp","namegroupespera");
-            if(strstr("$nombredelGrupo","$nameListaEspera")){
-                $nohaylimite = 1;
-            }
-            //todo agregar los nombres de grupos que tienn otro cupo al del límite de grupos
-            if(strstr("$nombredelGrupo","cultura")){
-                $limitedegrupo = 40; //cup para practica de la cultura
-            }
-        }
-        if($nohaylimite == 0){
-            if ($totalUserGroup >= $limitedegrupo+1) {
-                $url = $CFG->wwwroot.'/login/index.php';
-                redirect($url, "Lo sentimos, tu confirmación tardo demasiado y el grupo al que intentas registrarte ha superado el límite permitido.", null, \core\output\notification::NOTIFY_INFO);
-                die();
-                //Todo que pasasra con los usuarios que se registraron pero no confirmaron
-            }
-        }
-
-
-        if ($consultauser->confirmed == 0) {
-//            echo 'El usuario aun no esta confirmado';
-            $record = new stdClass();
-            $record->id = $consultauser->id;
-            $record->confirmed = '1';
-//            $record->secret = $consultauser->idnumber; //guarda la contraseña en secret
-//            $record->idnumber = ''; //Se guradar la contraseña tanto en id number como en secret
-            //guardando datos de curso y grupo en la tabla de info_field
-            if ($consultauser->institution != '' || $consultauser->department != '') {
-                //Nueva forma de matricular.
-                $courseid = $consultauser->institution;
-                $groupid = $consultauser->department;
-
-//                //se optiene el id del id_course y idgruop
-//                $verificaname = array('courseid', 'grouping'); //TODO los nombres tendran que ser los mismos que se agregan en los campos de usuario en moodle en base a la documentación
-//                $recorduserdata = new stdClass();
-//                $tam =sizeof($verificaname);
-////                $tam = $DB->count_records("user_info_field"); //todo se agrega en caso de que existan mas campos de perfil de usuario que los que se usan en el
-//                for ($i = 0; $i < $tam; $i++) {
-//                    //Insertará los datos de el curso y grupo al que se vinculara el usuario ya confirmado
-//                    $recolectaids = $DB->get_record('user_info_field', array('shortname' => $verificaname[$i]));
-//                    if ($recolectaids) {
-//                        if ($recolectaids->shortname == $verificaname[$i]) {
-//                            $courseid = $consultauser->institution;
-//                            $fielid = $recolectaids->id;
-//                            $recorduserdata->data = $consultauser->institution; // Course id guardado temporalmente por el registro
-//                        } else {
-//                            $groupid = $consultauser->department;
-//                            $fielid = $recolectaids->id;
-//                            $recorduserdata->data = $consultauser->department; // Group id guardado temporalmente por el registro
-//                        }
-//                        $recorduserdata->userid = $consultauser->id;
-//                        $recorduserdata->fieldid = $fielid;
-//                        $recorduserdata->dataformat = '0';
-//                        //Insertara los datos en la tabla
-//                        $insertardata = $DB->insert_record('user_info_data', $recorduserdata);
-//                    } else {
-//                        $destination = "$CFG->wwwroot/login/index.php";
-//                        $message = "ADMIN: Verificar que los nombres del apartado de moodle 'Campos de perfil del usuario' esten creados: courseid, grouping ";
-//                        redirect($destination, $message, null, \core\output\notification::NOTIFY_WARNING);
-//                    }
-//                }
-            }
-            //Update en la tabla user para cambiar el usuario a verificado
-            $confirmedrecord = $DB->update_record('user', $record);
-            ($confirmedrecord) ? $confirmed = 1 : $confirmed = 0;
-            if ($confirmed == 1) {
-                if (!$user = get_complete_user_data('username', $username)) {
-                    print_error('cannotfinduser', '', '', s($username));
-                }
-
-                if (!$user->suspended) {
-                    complete_user_login($user);
-
-                    \core\session\manager::apply_concurrent_login_limit($user->id, session_id());
-
-                    // Check where to go, $redirect has a higher preference.
-                    if (!empty($redirect)) {
-                        if (!empty($SESSION->wantsurl)) {
-                            unset($SESSION->wantsurl);
-                        }
-                        redirect($redirect);
-                    }
-                }
-
-                $PAGE->navbar->add(get_string("confirmed"));
-                $PAGE->set_title(get_string("confirmed"));
-                $PAGE->set_heading($COURSE->fullname);
-                echo $OUTPUT->header();
-                echo $OUTPUT->box_start('generalbox centerpara boxwidthnormal boxaligncenter');
-                echo "<h3>" . get_string("thanks") . ", " . fullname($USER) . "</h3>\n";
-                echo "<p>" . get_string("confirmed") . "</p>\n";
-//                echo $OUTPUT->single_button(core_login_get_return_url(), get_string('continue'));
-                //MODIFICACION QRCURP
-                $idusuario = $consultauser->id;
-                $nameCategory = $consultauser->address;
-                if ($courseid != '') {
-                    //echo "se registrara en el course que trae";
-                    if ($groupid != '') {
-                        SetCourseGroupMoodle($idusuario, $courseid, $groupid, $nameCategory);
-                        $redirect = $CFG->wwwroot . '/course/view.php?id=' . $courseid;
-                        require_logout();
-//                        redirect($redirect);
-                        $message = "Usuario verificado con éxito, Revisa tu correo electrónico : $consultauser->email para revisar tus datos de acceso";
-                        redirect($redirect, $message, 20, \core\output\notification::NOTIFY_SUCCESS);
-                    } else {
-                        SetCourseGroupMoodle($idusuario, $courseid);
-                        $redirect = $CFG->wwwroot . '/course/view.php?id=' . $courseid;
-                        require_logout();
-//                        redirect($redirect);
-                        $message = "Usuario verificado con éxito, Revisa tu correo electrónico : $consultauser->email para revisar tus datos de acceso";
-                        redirect($redirect, $message, 20, \core\output\notification::NOTIFY_SUCCESS);
-                    }
-                }
-            }
-        }
-        $consultauser = $DB->get_record('user', array('username' => $username));
-        if ($consultauser) {
-            if ($consultauser->confirmed == 1) {
-                $urltogo = $CFG->wwwroot . '/course/view.php?id=' . $consultauser->institution;
-                $user = get_complete_user_data('username', $username);
-                $PAGE->navbar->add(get_string("alreadyconfirmed"));
-                $PAGE->set_title(get_string("alreadyconfirmed"));
-                $PAGE->set_heading($COURSE->fullname);
-                echo $OUTPUT->header();
-                echo $OUTPUT->box_start('generalbox centerpara boxwidthnormal boxaligncenter');
-                echo "<p>" . get_string("alreadyconfirmed") . "</p>\n";
-                echo $OUTPUT->single_button($urltogo, get_string('courses'));
-                echo $OUTPUT->box_end();
-                echo $OUTPUT->footer();
-                exit;
-            }
-        } else {
-//            echo "el usuario no se encontro";
-            print_error("errorwhenconfirming");
-        }
-    }
-    else {
-        $consultauser = $DB->get_record('user', array('username' => $username));
-        if ($consultauser) {
-            if ($consultauser->confirmed == 1) {
-                $urltogo = $CFG->wwwroot . '/course/view.php?id=' . $consultauser->institution;
-                $user = get_complete_user_data('username', $username);
-                $PAGE->navbar->add(get_string("alreadyconfirmed"));
-                $PAGE->set_title(get_string("alreadyconfirmed"));
-                $PAGE->set_heading($COURSE->fullname);
-                echo $OUTPUT->header();
-                echo $OUTPUT->box_start('generalbox centerpara boxwidthnormal boxaligncenter');
-                echo "<p>" . get_string("alreadyconfirmed") . "</p>\n";
-                echo $OUTPUT->single_button($urltogo, get_string('courses'));
-                echo $OUTPUT->box_end();
-                echo $OUTPUT->footer();
-                exit;
-            }
-        } else {
-//            echo "el usuario no se encontro";
-            print_error("errorwhenconfirming");
-        }
-    }
-//    echo "El estado de confirmacion esta en ".$confirmed;
+if (empty($data) && (empty($p) || empty($s))) {
+    throw new moodle_exception('errorwhenconfirming');
 }
+
+if (!empty($data)) {
+    $dataelements = explode('/', $data, 2);
+    $usersecret = $dataelements[0] ?? '';
+    $username = $dataelements[1] ?? '';
+} else {
+    $usersecret = $p;
+    $username = $s;
+}
+
+if ($usersecret === '' || $username === '') {
+    throw new moodle_exception('invalidconfirmdata');
+}
+
+$username = core_text::strtolower(trim($username));
+$user = $DB->get_record('user', ['username' => $username], '*', IGNORE_MISSING);
+if (!$user) {
+    throw new moodle_exception('errorwhenconfirming');
+}
+
+if (!local_qrcurp_group_has_space_for_confirmation((int) $user->department, (int) $user->id)) {
+    $url = $CFG->wwwroot . '/login/index.php';
+    redirect($url,
+        'Lo sentimos, tu confirmación tardó demasiado y el grupo al que intentas registrarte ha superado el límite permitido.',
+        null,
+        \core\output\notification::NOTIFY_INFO
+    );
+}
+
+$confirmed = AUTH_CONFIRM_ERROR;
+if ($authplugin) {
+    $confirmed = $authplugin->user_confirm($username, $usersecret);
+}
+// Fallback: permitir confirmar desde este plugin incluso si el auto-registro global está deshabilitado.
+if (!$authplugin || $confirmed === AUTH_CONFIRM_ERROR) {
+    $confirmed = local_qrcurp_confirm_user_locally($user, $usersecret);
+}
+if ($confirmed !== AUTH_CONFIRM_OK && $confirmed !== AUTH_CONFIRM_ALREADY) {
+    throw new moodle_exception('invalidconfirmdata');
+}
+
+// Recargar usuario después de confirmar.
+$user = get_complete_user_data('id', $user->id);
+if (!$user) {
+    throw new moodle_exception('cannotfinduser', '', '', s($username));
+}
+
+if ($confirmed === AUTH_CONFIRM_OK && !$user->suspended) {
+    complete_user_login($user);
+    \core\session\manager::apply_concurrent_login_limit($user->id, session_id());
+
+    if (!empty($redirectto)) {
+        if (!empty($SESSION->wantsurl)) {
+            unset($SESSION->wantsurl);
+        }
+        redirect($redirectto);
+    }
+}
+
+if (!empty($user->institution)) {
+    $courseurl = new moodle_url('/course/view.php', ['id' => (int) $user->institution]);
+    if ($confirmed === AUTH_CONFIRM_OK) {
+        // Mantener flujo original del plugin para matrícula/asignación/grupo/correo.
+        SetCourseGroupMoodle((int) $user->id, (int) $user->institution, (int) $user->department);
+    }
+    if ($confirmed === AUTH_CONFIRM_ALREADY) {
+        redirect($courseurl, get_string('alreadyconfirmed'), null, \core\output\notification::NOTIFY_INFO);
+    }
+    $message = 'Usuario verificado con éxito. Revisa tu correo electrónico: ' . $user->email . ' para consultar tus datos de acceso.';
+    redirect($courseurl, $message, null, \core\output\notification::NOTIFY_SUCCESS);
+}
+
+if ($confirmed === AUTH_CONFIRM_ALREADY) {
+    redirect(new moodle_url('/login/index.php'), get_string('alreadyconfirmed'), null, \core\output\notification::NOTIFY_INFO);
+}
+
+redirect(core_login_get_return_url(), get_string('confirmed'), null, \core\output\notification::NOTIFY_SUCCESS);

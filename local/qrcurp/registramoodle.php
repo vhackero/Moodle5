@@ -13,6 +13,8 @@ global $DB, $data, $PAGE;
 
 $PAGE->set_context(\context_system::instance());
 
+require_sesskey();
+
 // ✅ CORREGIDO: OBTENER EL ORIGEN DEL REGISTRO
 $origin = optional_param('origin', 'default', PARAM_TEXT);
 $is_saberes_mx = optional_param('is_saberes_mx', 0, PARAM_INT);
@@ -52,7 +54,6 @@ function save_registration_origin_to_profile($userid, $origin) {
     if ($existing) {
         // Actualizar registro existente
         $existing->data = $origin;
-        $existing->timemodified = time();
         return $DB->update_record('user_info_data', $existing);
     } else {
         // Crear nuevo registro
@@ -61,10 +62,82 @@ function save_registration_origin_to_profile($userid, $origin) {
         $profile_data->fieldid = $field->id;
         $profile_data->data = $origin;
         $profile_data->dataformat = 0;
-        $profile_data->timemodified = time();
 
         return $DB->insert_record('user_info_data', $profile_data);
     }
+}
+
+/**
+ * Guarda campos extra dinámicos en user_info_data cuando existe su shortname.
+ *
+ * @param int $userid
+ * @param array $extrafields
+ * @return void
+ */
+function save_dynamic_profile_fields($userid, array $extrafields): void {
+    global $DB;
+
+    foreach ($extrafields as $shortname => $value) {
+        if ($value === null) {
+            continue;
+        }
+        if (is_string($value) && trim($value) === '') {
+            continue;
+        }
+        $shortname = clean_param($shortname, PARAM_ALPHANUMEXT);
+        if ($shortname === '') {
+            continue;
+        }
+        $field = $DB->get_record('user_info_field', ['shortname' => $shortname]);
+        if (!$field) {
+            continue;
+        }
+        $existing = $DB->get_record('user_info_data', ['userid' => $userid, 'fieldid' => $field->id]);
+        if ($existing) {
+            $existing->data = (string) $value;
+            $existing->dataformat = 0;
+            $DB->update_record('user_info_data', $existing);
+        } else {
+            $DB->insert_record('user_info_data', [
+                'userid' => $userid,
+                'fieldid' => $field->id,
+                'data' => (string) $value,
+                'dataformat' => 0,
+            ]);
+        }
+    }
+}
+
+/**
+ * Normaliza el código de país para cumplir el formato de la columna user.country.
+ *
+ * @param string $countrycode
+ * @return string
+ */
+function local_qrcurp_normalize_country(string $countrycode): string {
+    $countrycode = strtoupper(trim($countrycode));
+    $countrycode = clean_param($countrycode, PARAM_ALPHANUMEXT);
+    if (strlen($countrycode) !== 2) {
+        return 'MX';
+    }
+
+    $countries = get_string_manager()->get_list_of_countries(true);
+    if (!array_key_exists($countrycode, $countries)) {
+        return 'MX';
+    }
+
+    return $countrycode;
+}
+
+/**
+ * Guarda campos de perfil estándar y extra, omitiendo valores vacíos.
+ *
+ * @param int $userid
+ * @param array $fieldmap shortname => value
+ * @return void
+ */
+function save_profile_fields_from_map($userid, array $fieldmap): void {
+    save_dynamic_profile_fields($userid, $fieldmap);
 }
 
 define('GROUPENTIDAD',10001);
@@ -86,29 +159,35 @@ $rolestudent = get_config('local_qrcurp','rolstudent');        //rol de estudian
 $limitedegrupo = get_config('local_qrcurp','limitegroup');    //límite de alumnos en los grupos
 $supportEmail = get_config('local_qrcurp','mailsupport');    //Correo de soporte
 
-$curp = $_POST['curp'];
-$correo = $_POST['email'];
-$username = $_POST['username'];
-$alias = $_POST['session_alias']; ($alias == '')? $alias = $_POST['pass'] : $alias = $alias;
-$nombres = $_POST['nombre'];
-$apellidop = $_POST['p_apellido'];
-$apellidos = $_POST['s_apellido'];
-$genero = $_POST['genero'];
-$fechanaci = $_POST['date_nacimientos'];($fechanaci== "")?$fechanaci = "00-00-0000" : $fechanaci = $_POST['date_nacimientos'];//Todo agregar a configuraciones del pluggin
-$estado = $_POST['e_nacimiento'];($estado == "")?$estado = "N/A" : $estado = $_POST['e_nacimiento'];
-$municipio = $_POST['municipios'];($municipio == "")?$municipio = "N/A" : $municipio = $_POST['municipios'];
-$ocupacion = $_POST['ocupacion']; ($ocupacion == "")? $ocupacion = "N/A": $ocupacion = $_POST['ocupacion'];
-$pais = $_POST['id_country']; ($pais == "")? $pais = "N/A": $pais = $_POST['id_country'];
-$cp = $_POST['codigo-postal']; ($cp == "")?$cp = "N/A" : $cp = $_POST['codigo-postal'];
-$edad = $_POST['edad'];
-$matricula = $_POST['matricula']; ($matricula == "")?$matricula = "N/A" : $matricula = $_POST['matricula'];
-$estado_residen = $_POST['e_residencias']; ($estado_residen == "")?$estado_residen= "N/A" : $estado_residen = $_POST['e_residencias'];
-$rol = $_POST['rol'];
-$rolname = $_POST['rolname'];
-$idcourse = $_POST['idcourse'];
-$idcreategroup = $_POST['typegrouping'];
-$namecategory = $_POST['namecategory'];
-$typeuser = $_POST['typeuser'];
+$curp = $_POST['curp'] ?? '';
+$correo = $_POST['email'] ?? '';
+$username = $_POST['username'] ?? '';
+$alias = $_POST['session_alias'] ?? '';
+($alias == '') ? $alias = ($_POST['pass'] ?? '') : $alias = $alias;
+$nombres = $_POST['nombre'] ?? '';
+$apellidop = $_POST['p_apellido'] ?? '';
+$apellidos = $_POST['s_apellido'] ?? '';
+$genero = $_POST['genero'] ?? '';
+$fechanaci = $_POST['date_nacimientos'] ?? '';($fechanaci== "")?$fechanaci = "00-00-0000" : $fechanaci = $_POST['date_nacimientos'];//Todo agregar a configuraciones del pluggin
+$estado = $_POST['e_nacimiento'] ?? '';($estado == "")?$estado = "N/A" : $estado = $_POST['e_nacimiento'];
+$municipio = $_POST['municipios'] ?? '';($municipio == "")?$municipio = "N/A" : $municipio = $_POST['municipios'];
+$ocupacion = $_POST['ocupacion'] ?? ''; ($ocupacion == "")? $ocupacion = "N/A": $ocupacion = $_POST['ocupacion'];
+$pais = $_POST['id_country'] ?? 'MX';
+$pais = local_qrcurp_normalize_country($pais);
+$cp = $_POST['codigo-postal'] ?? ''; ($cp == "")?$cp = "N/A" : $cp = $_POST['codigo-postal'];
+$edad = $_POST['edad'] ?? '';
+$matricula = $_POST['matricula'] ?? ''; ($matricula == "")?$matricula = "N/A" : $matricula = $_POST['matricula'];
+$estado_residen = $_POST['e_residencias'] ?? ''; ($estado_residen == "")?$estado_residen= "N/A" : $estado_residen = $_POST['e_residencias'];
+$rol = $_POST['rol'] ?? '';
+$rolname = $_POST['rolname'] ?? '';
+$idcourse = $_POST['idcourse'] ?? '';
+$idcreategroup = $_POST['typegrouping'] ?? '';
+$namecategory = $_POST['namecategory'] ?? '';
+$typeuser = $_POST['typeuser'] ?? '';
+$extrafields = optional_param_array('extra_fields', [], PARAM_RAW_TRIMMED);
+if (empty($extrafields) && isset($_POST['extra_fields']) && is_array($_POST['extra_fields'])) {
+    $extrafields = clean_param_array($_POST['extra_fields'], PARAM_RAW_TRIMMED, true);
+}
 
 //Extra data formulario de registro
 $curpvalida = $_POST['curpvalida'];
@@ -128,7 +207,7 @@ if($typeuser == 1){
 //COMPRUEBA NUEVAMENTE EL NÚMERO DE USUARIOS EN UN GRUPO
 $url = $CFG->wwwroot.'/login/index.php';
 if($idcreategroup == '' OR $idcourse == '') {
-    print_error("El id de curso o grupo se encuentra vacío, debes seleccionar el curso y grupo al que deseas inscribirte.");
+    redirect($url, "El id de curso o grupo se encuentra vacío, debes seleccionar el curso y grupo al que deseas inscribirte.", null, \core\output\notification::NOTIFY_ERROR);
 }else if(1){
     if($idcreategroup != '10001') {
         $eslistaEspera = $DB->get_record("groups", array('id' => $idcreategroup));
@@ -176,12 +255,21 @@ $record->lang = "es_utf8";
 $record->picture = "0";
 $record->maildisplay = "2";
 $record->autosubscribe = 0;
+// Mantener compatibilidad con el flujo histórico: guardar curso/grupo destino en mdl_user.
+if (!empty($idcourse)) {
+    $record->institution = (string)$idcourse; //ID DEL COURSE EN EL QUE SE AGREGARA.
+}
+if (!empty($idcreategroup)) {
+    $record->department = (string)$idcreategroup; //ID DEL GROUP EN CASO DE QUE SE ENCUENTRE.
+}
 
 //Comprueba si el usuario esta registrado
 $dataname = '';
 $dataemail = '';
+$userid = 0;
+$normalizedusername = core_text::strtolower(trim((string)$username));
 
-$datos = $DB->get_record('user',array('username' => $username));
+$datos = $DB->get_record('user', array('username' => $normalizedusername, 'deleted' => 0));
 
 if(isset($datos) && is_object($datos)) {
     $dataname = $datos->username;
@@ -192,7 +280,7 @@ $datos = $DB->get_record('user',array('email' => $correo));
 
 if(isset($datos) && is_object($datos)) {
     $dataemail = $datos->email;
-    if ($userid == '') {
+    if ($userid === 0) {
         $userid = $datos->id;
     }
 }
@@ -209,17 +297,17 @@ if($dataemail != '' || $dataname != '') {
     if($confirmemail == 1){
         $record->confirmed = "0";
         $record->secret = random_string(15);
-        $record->institution = $idcourse; //ID DEL COURSE EN EL QUE SE AGREGARA UNA VEZ CONFIRMADO
-        $record->department = $idcreategroup; //ID DEL GROUP EN CASO DE QUE SE ENCUENTRE
         if($namecategory != ''){
             $record->address = $namecategory; //Guarda el nombre de la categoría desde la que se está registrando
         }
 
         //Solo se registra el usuario y se guardan los datos
-        $datosinsert = $DB->insert_record('user', $record);
+        $iduserinsert = $DB->insert_record('user', $record);
         //Se enviará correo con la verificación
-        $verificaiduser = $DB->get_record('user', array('username' => $username));
-        $iduserinsert = $verificaiduser->id;
+        if (!$iduserinsert) {
+            $destination = "$CFG->wwwroot/login/index.php";
+            redirect($destination, "No se agregó el nuevo usuario, verificar los datos a insertar.", null, \core\output\notification::NOTIFY_ERROR);
+        }
 
         // ✅ NUEVO: GUARDAR EL ORIGEN DEL REGISTRO (CONFIRMACIÓN REQUERIDA)
         save_registration_origin_to_profile($iduserinsert, $origin);
@@ -230,23 +318,29 @@ if($dataemail != '' || $dataname != '') {
         $nameCategoria = $idNameCategoria->name;
         $destination = "$CFG->wwwroot/login/index.php";
 
-        //Agrega los datos a la tabla
-        $datosentabla = array('ocupacion', 'cp', 'estado_residencia', 'estado_nacimiento', 'fecha_nacimiento', 'curp', 'genero', 'edad', 'matricula', 'rol', 'rol_name');
-        $datosainsertar = array($ocupacion, $cp, $estado_residen, $estado, $fechanaci, $curp, $genero, $edad, $matricula, $rol, $rolname);
-        $tam = $DB->count_records("user_info_field");
-        for ($i = 0; $i < sizeof($datosentabla); $i++) {
-            $pruebadatos = $DB->get_record('user_info_field', array('shortname' => $datosentabla[$i]));
-            if (isset($pruebadatos) && is_object($pruebadatos)) {
-                $recordinfodata = $DB->insert_record('user_info_data', array('userid' => $iduserinsert, 'fieldid' => $pruebadatos->id, 'data' => $datosainsertar[$i], 'dataformat' => 1));
-            }
-        }
+        // Agrega los datos del formulario al perfil de forma dinámica y omitiendo vacíos.
+        $profilefieldmap = [
+            'ocupacion' => $ocupacion,
+            'cp' => $cp,
+            'estado_residencia' => $estado_residen,
+            'estado_nacimiento' => $estado,
+            'fecha_nacimiento' => $fechanaci,
+            'curp' => $curp,
+            'genero' => $genero,
+            'edad' => $edad,
+            'matricula' => $matricula,
+            'rol' => $rol,
+            'rol_name' => $rolname,
+        ];
+        save_profile_fields_from_map($iduserinsert, $profilefieldmap);
+        save_profile_fields_from_map($iduserinsert, $extrafields);
 
         //Datos extras a importar 19-08-2024
         $insertafiel = $DB->get_record('user_info_field', array('shortname' => 'curpvalida'));
         if($insertafiel){
             $recordinfodata = $DB->insert_record('user_info_data', array('userid' => $iduserinsert, 'fieldid' => $insertafiel->id, 'data' => $curpvalida, 'dataformat' => 1));
         }else{
-            print_error("El campo de perfil del usuario 'curpvalida' no se encuentra en la base de datos");
+            redirect($destination, "El campo de perfil del usuario 'curpvalida' no se encuentra en la base de datos", null, \core\output\notification::NOTIFY_ERROR);
         }
 
         $seenviaCorreo = enviacorreo($iduserinsert,4,$alias,$idcourse,$idcreategroup,$nameCategoria);
@@ -261,14 +355,26 @@ if($dataemail != '' || $dataname != '') {
     else {
         //Continua con el registro sin enviar correo de confirmación
         //REGISTRA A EL NUEVO USUARIO
-        $datosinsert = $DB->insert_record('user', $record);
-        if ($datosinsert) {
+        $iduserinsert = $DB->insert_record('user', $record);
+        if ($iduserinsert) {
             //EL USUARIO SE REGISTRO CON ÉXITO
-            $verificaiduser = $DB->get_record('user', array('username' => $username));
-            $iduserinsert = $verificaiduser->id;
-
             // ✅ NUEVO: GUARDAR EL ORIGEN DEL REGISTRO (SIN CONFIRMACIÓN)
             save_registration_origin_to_profile($iduserinsert, $origin);
+            $profilefieldmap = [
+                'ocupacion' => $ocupacion,
+                'cp' => $cp,
+                'estado_residencia' => $estado_residen,
+                'estado_nacimiento' => $estado,
+                'fecha_nacimiento' => $fechanaci,
+                'curp' => $curp,
+                'genero' => $genero,
+                'edad' => $edad,
+                'matricula' => $matricula,
+                'rol' => $rol,
+                'rol_name' => $rolname,
+            ];
+            save_profile_fields_from_map($iduserinsert, $profilefieldmap);
+            save_profile_fields_from_map($iduserinsert, $extrafields);
 
             if ($idcourse != '') {
                 // ... (resto del código existente de matriculación) ...
@@ -291,7 +397,8 @@ Se ha enviado un mensaje a tu dirección de correo electrónico con los detalles
                 }
             }
         } else {
-            print_error("No se agregó el nuevo usuario, verificar los datos a insertar.");
+            $destination = "$CFG->wwwroot/login/index.php";
+            redirect($destination, "No se agregó el nuevo usuario, verificar los datos a insertar.", null, \core\output\notification::NOTIFY_ERROR);
         }
     }
 }

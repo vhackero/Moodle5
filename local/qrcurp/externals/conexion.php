@@ -1,16 +1,12 @@
 <?php
 require_once(__DIR__.'/../../../config.php');
 
-//CONEXIÓN A BD PARA EXTRAER LOS DICCIONARIOS DE PAISES, ESTADOS, MUNICIPIOS, ETC
-        $host =get_config('local_qrcurp','dbcatalogoshost');
-        $dbname =get_config('local_qrcurp','dbcatalogos');
-        $user =get_config('local_qrcurp','dbcatalogosuser');
-        $pass =get_config('local_qrcurp','dbcatalogospass');
-//        $mysqli = new mysqli("172.18.25.11","temporal","Pwd-pru3b4s","sepomex");  //servidor, usuario de base de datos, contraseña del usuario, nombre de base de datos
-        $mysqli = new mysqli($host,$user,$pass,$dbname);  //servidor, usuario de base de datos, contraseña del usuario, nombre de base de datos
-        mysqli_set_charset($mysqli, "utf8"); //PARA ACEPTAR ,ñ etc.
-        if(mysqli_connect_errno()){
-                    echo 'Conexion Fallida : ', mysqli_connect_error();
-                    exit();
-            }
+use local_qrcurp\local\external_db;
 
+// CONEXIÓN A BD PARA EXTRAER LOS DICCIONARIOS DE PAISES, ESTADOS, MUNICIPIOS, ETC.
+try {
+    $mysqli = external_db::create_catalog_connection();
+} catch (\mysqli_sql_exception $exception) {
+    echo 'Conexion Fallida : ' . s($exception->getMessage());
+    exit();
+}

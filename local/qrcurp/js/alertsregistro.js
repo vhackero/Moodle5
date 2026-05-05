@@ -14,8 +14,16 @@ var externalinsert = document.getElementById("external").innerHTML;
 var menssage = document.getElementById("message").innerHTML;
 var inactivoToGeneral = document.getElementById("inactivotogeneral").innerHTML; //LFAS 26/01/23
 var aceptaregistrospublico = document.getElementById("publicogeneral").innerHTML; //Para aceptar registros de publico en general
+var publicogeneralmsg = document.getElementById("publicogeneralmsg") ? document.getElementById("publicogeneralmsg").innerHTML : "El registro no esta disponible para publico en general";
 var nameExternalData =  localStorage.getItem('nameExternalData');
-var namePlataform =  localStorage.getItem('namePlataform');
+var namePlataform = localStorage.getItem('namePlataform');
+if (!namePlataform || namePlataform === 'null' || namePlataform === 'undefined') {
+    var namePlataformNode = document.getElementById('nameplataformcfg');
+    namePlataform = namePlataformNode ? namePlataformNode.innerHTML : '';
+}
+if (!namePlataform || namePlataform.trim() === '') {
+    namePlataform = 'la plataforma';
+}
 if(despachador == 3 && activedate == 0 && encuentradatos ==1 ){
     //redireccion index
     //alert("El usuario ya esta registrado en el portal de extención universitaria y en SIGE, pero se encuentra dado de baja en SIGE");
@@ -68,6 +76,12 @@ if(despachador == 1 && activedate == 1 && encuentradatos ==1  ){
                 document.getElementById("grupos").removeAttribute("readonly");
                 document.getElementById("grupos").classList.remove('control-data-form');
                 }
+            }
+            if (typeof window.applyEditableAutofilledOverrides === 'function') {
+                window.applyEditableAutofilledOverrides();
+            }
+            if (typeof window.syncPasswordFromAlias === 'function') {
+                window.syncPasswordFromAlias();
             }
     },5000);
 
@@ -125,7 +139,7 @@ else {
                 document.getElementById("envia-info").remove();
 
                 //cambia el envio de la información al registro de moodle
-                menssage = "Solo integrantes UnADM pueden inscribirse.";
+                menssage = publicogeneralmsg;
                 swal(menssage, {
                     buttons: "Aceptar",
                     timer: 4000,

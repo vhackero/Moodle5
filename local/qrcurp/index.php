@@ -9,6 +9,8 @@
 require_once(__DIR__.'/../../config.php');
 require_once('globalVariables.php');
 
+use local_qrcurp\local\config;
+
 global $DB,$PAGE,$CFG,$NAMEPLATAFORMQRCURP,$NAMEEXTERNALDBQRCURP;
 
 $PAGE->set_url(new moodle_url('/local/qrcurp/index.php'));
@@ -106,14 +108,14 @@ if(isloggedin()){
 }
 
 //FECHA LÍMITE DEL REGISTRO
-$fechaLimiteRegistro = strtotime(get_config('local_qrcurp','dateregistro'));
-$fechaporperidos = get_config('local_qrcurp','dateperiodos');
+$fechaLimiteRegistro = strtotime(config::get_string('dateregistro'));
+$fechaporperidos = config::get_string('dateperiodos');
 $fechaActual = strtotime(date('d-m-Y'));
-$menssage = get_config('local_qrcurp','textregistro');
+$menssage = config::get_string('textregistro');
 
 if($fechaporperidos != ''){
     if(!strstr($fechaporperidos,'|')){
-        $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+        $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
         redirecionarUsuario($url,$menssage);
     }
     $nombreperiodo = '';
@@ -147,14 +149,14 @@ if($fechaporperidos != ''){
             $datalimpia = trim($dataperiodo);
             $datafecha = explode('|',$datalimpia);
             if(sizeof($datafecha)>3){
-                $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+                $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
                 redirecionarUsuario($url,$menssage);
             }
             $nombreperiodo =  trim($datafecha[0]);
             $fechainicialperiodo = strtotime(trim($datafecha[1]));
             $fechafinalperiodo = strtotime(trim($datafecha[2]));
             if($fechainicialperiodo == '' OR $fechafinalperiodo == '' OR $nombreperiodo == ''){
-                $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+                $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
                 redirecionarUsuario($url,$menssage);
             }
 
@@ -180,14 +182,14 @@ if($fechaporperidos != ''){
     }else{
         $datafecha = explode('|',$fechaporperidos);
         if(sizeof($datafecha)>3){
-            $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+            $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
             redirecionarUsuario($url,$menssage);
         }
         $nombreperiodo =  trim($datafecha[0]);
         $fechainicialperiodo = strtotime(trim($datafecha[1]));
         $fechafinalperiodo = strtotime(trim($datafecha[2]));
         if($fechainicialperiodo == '' OR $fechafinalperiodo == '' OR $nombreperiodo == ''){
-            $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+            $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
             redirecionarUsuario($url,$menssage);
         }
         if (!($fechaActual >= $fechainicialperiodo AND $fechaActual <= $fechafinalperiodo) ) {
@@ -203,9 +205,12 @@ if($fechaporperidos != ''){
 }
 
 //DATOS POR DEFECTO EN LA URL SIN PARAMETROS
-$defaultcategory = get_config('local_qrcurp','defaultcategoryid');
-$defaultcourse = get_config('local_qrcurp','defaultcourse');
-$defaultgroup = get_config('local_qrcurp','defaultgroup');
+$defaultcategory = config::get_int('defaultcategoryid');
+$defaultcourse = config::get_int('defaultcourseid');
+$defaultgroup = config::get_int('defaultgroupid');
+$custombackgroundimage = trim(config::get_string('custombackgroundimage'));
+$custombuttoncolor = trim(config::get_string('custombuttoncolor'));
+$customcancelbuttoncolor = trim(config::get_string('customcancelbuttoncolor'));
 
 $categoryid = optional_param('categoryid', $defaultcategory, PARAM_INT);
 $idcourse = optional_param('courseid', $defaultcourse, PARAM_INT);
@@ -218,19 +223,28 @@ if ($is_from_saberes_mx && !empty($idcourse_from_utm)) {
 
 //COMPROBACIÓN DEL ID PARA CONTINUAR CON EL REGISTRO.
 if($categoryid != '') {
-    $rolStudent = get_config('local_qrcurp','rolstudent');
-    $consultaNumAlumnosXCategoria = "SELECT count(*) AS total
-    FROM mdl_course c JOIN mdl_course_categories ct  on ct.id = c.category
-    JOIN mdl_context ctx on ctx.instanceid = c.id JOIN mdl_role_assignments ra on ra.contextid = ctx.id
-    JOIN mdl_role rl on rl.id = ra.roleid JOIN mdl_user u on u.id = ra.userid
-    where ct.id = $categoryid AND rl.id = $rolStudent";
-    $totalAlumnos = $DB->get_records_sql($consultaNumAlumnosXCategoria);
-    $numStundentToCategory = reset($totalAlumnos)->total;
-    $totalAlumnoPorCategoria = get_config('local_qrcurp','studentxcategory');
+    $rolStudent = config::get_int('rolstudent');
+    $consultaNumAlumnosXCategoria = "SELECT COUNT(*) AS total
+      FROM {course} c
+      JOIN {course_categories} ct ON ct.id = c.category
+      JOIN {context} ctx ON ctx.instanceid = c.id AND ctx.contextlevel = :contextlevel
+      JOIN {role_assignments} ra ON ra.contextid = ctx.id
+      JOIN {role} rl ON rl.id = ra.roleid
+      JOIN {user} u ON u.id = ra.userid
+     WHERE ct.id = :categoryid AND rl.id = :roleid";
+    $params = [
+        'contextlevel' => CONTEXT_COURSE,
+        'categoryid' => $categoryid,
+        'roleid' => $rolStudent,
+    ];
+    $numStundentToCategory = (int) $DB->count_records_sql($consultaNumAlumnosXCategoria, $params);
+    $studentlimits = config::get_category_limits('studentxcategory');
+    $limitforcategory = $studentlimits['categories'][$categoryid] ?? $studentlimits['default'];
 
-    if($numStundentToCategory == $totalAlumnoPorCategoria){
+    // Si no existe configuración o el límite es <= 0, se considera sin límite.
+    if (!empty($limitforcategory) && $limitforcategory > 0 && $numStundentToCategory >= $limitforcategory) {
         $url = $CFG->wwwroot.'/index.php';
-        $menssage = get_config('local_qrcurp','studentxcategorytext');
+        $menssage = config::get_string('studentxcategorytext');
         redirect($url, $menssage , 15, \core\output\notification::NOTIFY_WARNING);
     }
 
@@ -245,7 +259,7 @@ if($categoryid != '') {
     }
 }
 else{
-    $nameCategoria = get_config('local_qrcurp','defaultnamecategory');
+    $nameCategoria = config::get_string('defaultnamecategory');
     $name = "iconos/".$nameCategoria.".jpg";
 
     if($nameCategoria != ""){
@@ -256,12 +270,12 @@ else{
             echo "<script> localStorage.setItem('nameCategoria', 'not-image-site');</script>";
         }
     }else{
-        $menssage = "Agrega un nombre del registro sin categoría válido en las configuraciones del pluggin";
+        $menssage = get_string('cfg_defaultnamecategory_error', 'local_qrcurp');
         redirect($url, $menssage, 15, \core\output\notification::NOTIFY_WARNING);
     }
 
-    if(get_config('local_qrcurp','sampleregister') == 0) {
-        $menssage = "La URL debe incluir un id de categoría para continuar con el registro. Revisar la configuración del pluggin e ingresa el id de la categoría por defecto o activar los registros sin matriculación";
+    if (!config::get_bool('sampleregister')) {
+        $menssage = get_string('cfg_categoryid_required_error', 'local_qrcurp');
         redirect($url, $menssage, 15, \core\output\notification::NOTIFY_WARNING);
     }
 }
@@ -308,6 +322,19 @@ if ($is_from_saberes_mx) {
         <script src="js/sweetalert.min.js"></script>
         <script type="text/javascript" src="js/index.min.js"></script>
         <link rel="stylesheet" href="css/style.css?version=1.0">
+
+        <style>
+            <?php if ($custombackgroundimage !== '') { ?>
+            .colors { background-image: url('<?= s($custombackgroundimage) ?>') !important; }
+            <?php } ?>
+            <?php if ($custombuttoncolor !== '') { ?>
+            .btn-success, .btn-info { background-color: <?= s($custombuttoncolor) ?> !important; border-color: <?= s($custombuttoncolor) ?> !important; }
+            <?php } ?>
+            <?php if ($customcancelbuttoncolor !== '') { ?>
+            .btn-danger { background-color: <?= s($customcancelbuttoncolor) ?> !important; border-color: <?= s($customcancelbuttoncolor) ?> !important; }
+            <?php } ?>
+        </style>
+
     </head>
     <div class="colors">
         <div class="container">
@@ -315,7 +342,7 @@ if ($is_from_saberes_mx) {
             <div style="display: none" id="dos_form" class="row">
                 <div class="col-md-6 offset-md-3 card" id="medio" >
                     <div class="panel-heading">
-                        <h1 id="texto-a-mostrar" >Por favor, teclea tu CURP. Si no la tienes consúltala aquí: <a target="_blank" href="https://www.gob.mx/curp/">Consultar CURP.</a></h1>
+                        <h1 id="texto-a-mostrar" ><?= get_string('index_curp_prompt', 'local_qrcurp') ?> <a target="_blank" href="https://www.gob.mx/curp/"><?= get_string('index_curp_consult_link', 'local_qrcurp') ?></a>.</h1>
                     </div>
                     <hr>
                     <form id="controler-curp" action="decode.php" method="post" enctype="multipart/form-data">
@@ -346,7 +373,7 @@ if ($is_from_saberes_mx) {
                                 </li>
                                 <li>Cuando se active la cámara, apunta hacia el código QR.</li>
                             </ol>
-                            <span>Si tienes dudas puedes consultar el manual dando </span><a target="_blank" href="docs/guia-qrcurp.pdf"><b>clic aquí</b></a>
+                            <span><?= get_string('index_manual_text', 'local_qrcurp') ?></span><a target="_blank" href="docs/guia-qrcurp.pdf"><b><?= get_string('index_click_here', 'local_qrcurp') ?></b></a>
                         </div>
                         <div style=" padding: 0px 30% 10px;">
                             <label class="checkeable">
@@ -383,7 +410,7 @@ if ($is_from_saberes_mx) {
                             <input type="hidden" name="saberes_course_name" value="<?php echo s($saberes_course_name); ?>">
 
                             <div class="form-group">
-                                <p>Clave Única de Registro de Población (CURP) <span class="red-text">*</span> :
+                                <p><?= get_string('index_curp_label', 'local_qrcurp') ?> <span class="red-text">*</span> :
                                     <input style="text-transform:uppercase" placeholder="Ingresa tu CURP" class="form-control" id="curp" name="curp" type="text" value="" oninput="validarInput(this)" required>
                                     <input type="hidden" name="idcourse" id="idcourse" value="<?=$idcourse?>"  >
                                     <input type="hidden" name="grouping" id="grouping" value="<?=$grouping?>"  >
@@ -391,7 +418,7 @@ if ($is_from_saberes_mx) {
                                 <pre id="resultado"></pre>
                                 </p>
                             </div>
-                            <input id="continuar" type="submit" disabled class="btn btn-md btn-block btn-info" style="background-color: #611232 !important;" value="Continuar">
+                            <input id="continuar" type="submit" disabled class="btn btn-md btn-block btn-info" value="Continuar">
                             <input type="button" class="btn btn-md btn-block btn-danger" onclick="javascript:history.back();" value="Cancelar">
                         </form>
                     </div>

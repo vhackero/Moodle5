@@ -3,6 +3,11 @@ require_once(__DIR__.'/../../config.php');
 
 function avisoDePrivacidad($idcategoria=0){
     $AVISODEPRIVACIDAD = '';
+    $customnotice = trim((string) get_config('local_qrcurp', 'privacynoticehtml'));
+    if ($customnotice !== '') {
+        return '<div id="texto-terminos-condiciones" style="border: 1px solid #6b5d4e; height: 15rem; overflow: auto; padding: 10px;">'.$customnotice.'</div>';
+    }
+
     if($idcategoria == 0){
         $AVISODEPRIVACIDAD = ' <div id="texto-terminos-condiciones"  style="border: 1px solid #6b5d4e; height: 100px; overflow: auto; padding: 10px;">
                             <h2 class="bottom-buffer">Aviso de Privacidad Simplificado de <a href="https://www.gob.mx" target="_blank">gob.mx</a></h2>&nbsp;
