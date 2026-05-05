@@ -3,8 +3,14 @@ const urlPrincipal = window.location.href.split("qrcurp");
 const UrlIconos = urlPrincipal[0]+"qrcurp/iconos/";
 // alert(nameRegsitro);
 var inicial = document.createElement("span");
-inicial.innerHTML = " Elige una opción para registrar tus datos:";
 const showUploadLink = (nameRegsitro === "not-image" || nameRegsitro === "not-image-site");
+
+if (showUploadLink) {
+    inicial.innerHTML = "No hay imagen asociada al registro.<br><a href='" + urlPrincipal[0] + "qrcurp/iconos/upload.php' target='_blank' rel='noopener noreferrer'>Subir imagen</a>";
+} else {
+    inicial.innerHTML = " Elige una opción para registrar tus datos:";
+}
+
 const tituloRegistro = showUploadLink ? "Registrarme" : "Registrarme a " + nameRegsitro;
 swal({
     content: {
@@ -47,12 +53,3 @@ swal({
             });
         }
     });
-
-if (showUploadLink) {
-    setTimeout(function() {
-        const swalText = document.querySelector('.swal-text');
-        if (swalText) {
-            swalText.innerHTML = "No hay imagen asociada al registro.<br><a href='" + urlPrincipal[0] + "qrcurp/iconos/upload.php' target='_blank' rel='noopener noreferrer'>Subir imagen</a>";
-        }
-    }, 0);
-}
