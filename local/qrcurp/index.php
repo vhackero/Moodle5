@@ -115,7 +115,7 @@ $menssage = config::get_string('textregistro');
 
 if($fechaporperidos != ''){
     if(!strstr($fechaporperidos,'|')){
-        $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+        $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
         redirecionarUsuario($url,$menssage);
     }
     $nombreperiodo = '';
@@ -149,14 +149,14 @@ if($fechaporperidos != ''){
             $datalimpia = trim($dataperiodo);
             $datafecha = explode('|',$datalimpia);
             if(sizeof($datafecha)>3){
-                $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+                $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
                 redirecionarUsuario($url,$menssage);
             }
             $nombreperiodo =  trim($datafecha[0]);
             $fechainicialperiodo = strtotime(trim($datafecha[1]));
             $fechafinalperiodo = strtotime(trim($datafecha[2]));
             if($fechainicialperiodo == '' OR $fechafinalperiodo == '' OR $nombreperiodo == ''){
-                $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+                $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
                 redirecionarUsuario($url,$menssage);
             }
 
@@ -182,14 +182,14 @@ if($fechaporperidos != ''){
     }else{
         $datafecha = explode('|',$fechaporperidos);
         if(sizeof($datafecha)>3){
-            $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+            $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
             redirecionarUsuario($url,$menssage);
         }
         $nombreperiodo =  trim($datafecha[0]);
         $fechainicialperiodo = strtotime(trim($datafecha[1]));
         $fechafinalperiodo = strtotime(trim($datafecha[2]));
         if($fechainicialperiodo == '' OR $fechafinalperiodo == '' OR $nombreperiodo == ''){
-            $menssage = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+            $menssage = get_string('cfg_dateperiodos_error', 'local_qrcurp');
             redirecionarUsuario($url,$menssage);
         }
         if (!($fechaActual >= $fechainicialperiodo AND $fechaActual <= $fechafinalperiodo) ) {
@@ -267,12 +267,12 @@ else{
             echo "<script> localStorage.setItem('nameCategoria', 'not-image-site');</script>";
         }
     }else{
-        $menssage = "Agrega un nombre del registro sin categoría válido en las configuraciones del pluggin";
+        $menssage = get_string('cfg_defaultnamecategory_error', 'local_qrcurp');
         redirect($url, $menssage, 15, \core\output\notification::NOTIFY_WARNING);
     }
 
     if (!config::get_bool('sampleregister')) {
-        $menssage = "La URL debe incluir un id de categoría para continuar con el registro. Revisar la configuración del pluggin e ingresa el id de la categoría por defecto o activar los registros sin matriculación";
+        $menssage = get_string('cfg_categoryid_required_error', 'local_qrcurp');
         redirect($url, $menssage, 15, \core\output\notification::NOTIFY_WARNING);
     }
 }
@@ -326,7 +326,7 @@ if ($is_from_saberes_mx) {
             <div style="display: none" id="dos_form" class="row">
                 <div class="col-md-6 offset-md-3 card" id="medio" >
                     <div class="panel-heading">
-                        <h1 id="texto-a-mostrar" >Por favor, teclea tu CURP. Si no la tienes consúltala aquí: <a target="_blank" href="https://www.gob.mx/curp/">Consultar CURP.</a></h1>
+                        <h1 id="texto-a-mostrar" ><?= get_string('index_curp_prompt', 'local_qrcurp') ?> <a target="_blank" href="https://www.gob.mx/curp/"><?= get_string('index_curp_consult_link', 'local_qrcurp') ?></a>.</h1>
                     </div>
                     <hr>
                     <form id="controler-curp" action="decode.php" method="post" enctype="multipart/form-data">
@@ -357,7 +357,7 @@ if ($is_from_saberes_mx) {
                                 </li>
                                 <li>Cuando se active la cámara, apunta hacia el código QR.</li>
                             </ol>
-                            <span>Si tienes dudas puedes consultar el manual dando </span><a target="_blank" href="docs/guia-qrcurp.pdf"><b>clic aquí</b></a>
+                            <span><?= get_string('index_manual_text', 'local_qrcurp') ?></span><a target="_blank" href="docs/guia-qrcurp.pdf"><b><?= get_string('index_click_here', 'local_qrcurp') ?></b></a>
                         </div>
                         <div style=" padding: 0px 30% 10px;">
                             <label class="checkeable">
@@ -394,7 +394,7 @@ if ($is_from_saberes_mx) {
                             <input type="hidden" name="saberes_course_name" value="<?php echo s($saberes_course_name); ?>">
 
                             <div class="form-group">
-                                <p>Clave Única de Registro de Población (CURP) <span class="red-text">*</span> :
+                                <p><?= get_string('index_curp_label', 'local_qrcurp') ?> <span class="red-text">*</span> :
                                     <input style="text-transform:uppercase" placeholder="Ingresa tu CURP" class="form-control" id="curp" name="curp" type="text" value="" oninput="validarInput(this)" required>
                                     <input type="hidden" name="idcourse" id="idcourse" value="<?=$idcourse?>"  >
                                     <input type="hidden" name="grouping" id="grouping" value="<?=$grouping?>"  >

@@ -174,3 +174,13 @@ $string['correoregimoodle'] = 'Existe una cuenta registrada con ese correo en es
 
 $string['rolesourceconfig'] = 'Configuración dinámica de roles';
 $string['rolesourceconfiginfo'] = 'Permite definir roles por lista o por consulta SQL externa. Opción 1 (lista): una línea por rol con formato id|nombre. Opción 2 (consulta): inicia con SELECT y debe devolver columnas id y name.';
+
+
+$string['cfg_dateperiodos_error'] = 'Configura correctamente el parametro "dateperiodos" en la configuración del plugin';
+$string['cfg_defaultnamecategory_error'] = 'Agrega un nombre del registro sin categoría válido en las configuraciones del pluggin';
+$string['cfg_categoryid_required_error'] = 'La URL debe incluir un id de categoría para continuar con el registro. Revisar la configuración del pluggin e ingresa el id de la categoría por defecto o activar los registros sin matriculación';
+$string['index_curp_prompt'] = 'Por favor, teclea tu CURP. Si no la tienes consúltala aquí:';
+$string['index_curp_consult_link'] = 'Consultar CURP';
+$string['index_manual_text'] = 'Si tienes dudas puedes consultar el manual dando ';
+$string['index_click_here'] = 'clic aquí';
+$string['index_curp_label'] = 'Clave Única de Registro de Población (CURP)';
