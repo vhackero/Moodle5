@@ -4,9 +4,9 @@ var UrlIconos = urlPrincipal[0]+"qrcurp/iconos/";
 // alert(nameRegsitro);
 var inicial = document.createElement("span");
 inicial.innerHTML = " Elige una opción para registrar tus datos:";
-var showUploadLink = (nameRegsitro === "not-image" || nameRegsitro === "not-image-site");
-var tituloRegistro = showUploadLink ? "Registrarme" : "Registrarme a " + nameRegsitro;
-var swalDialog = swal({
+const showUploadLink = (nameRegsitro === "not-image" || nameRegsitro === "not-image-site");
+const tituloRegistro = showUploadLink ? "Registrarme" : "Registrarme a " + nameRegsitro;
+swal({
     content: {
         element: inicial,
     },
@@ -24,10 +24,10 @@ var swalDialog = swal({
 
     },
 
-});
+})
 if (showUploadLink) {
     setTimeout(function() {
-        var swalText = document.querySelector('.swal-text');
+        const swalText = document.querySelector('.swal-text');
         if (swalText) {
             swalText.innerHTML = "No hay imagen asociada al registro.<br><a href='" + urlPrincipal[0] + "qrcurp/iconos/upload.php' target='_blank' rel='noopener noreferrer'>Subir imagen</a>";
         }
