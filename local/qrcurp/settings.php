@@ -72,6 +72,13 @@ $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
             get_string('editableautofilledfieldsinfo', 'local_qrcurp'), 'ocupacion,categorias,grupos', PARAM_RAW, 255));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/privacynoticehtml', get_string('privacynoticehtml', 'local_qrcurp'),
             get_string('privacynoticehtmlinfo', 'local_qrcurp'), '', PARAM_RAW, 5000));
+        $uploadiconurl = new moodle_url('/local/qrcurp/iconos/upload.php');
+        $uploadiconlink = html_writer::link($uploadiconurl, get_string('iconuploadlinklabel', 'local_qrcurp'));
+        $settings->add(new admin_setting_heading(
+            'local_qrcurp/iconuploadlink',
+            get_string('iconuploadheading', 'local_qrcurp'),
+            get_string('iconuploaddescription', 'local_qrcurp', $uploadiconlink)
+        ));
 
         $missingprofilefields = [];
         if ((int) get_config('local_qrcurp', 'validateprofilefields') === 1) {

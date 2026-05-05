@@ -17,14 +17,14 @@ $PAGE->set_url(new moodle_url('/local/qrcurp/index.php'));
 $PAGE->set_context(\context_system::instance());
 $PAGE->set_title($NAMEPLATAFORMQRCURP);
 
-// ✅ MEJORADO: DETECTAR PARÁMETROS UTM Y EXTRACT COURSE ID
+//  MEJORADO: DETECTAR PARÁMETROS UTM Y EXTRACT COURSE ID
 $utm_source = optional_param('utm_source', '', PARAM_ALPHANUMEXT);
 $utm_medium = optional_param('utm_medium', '', PARAM_ALPHANUMEXT);
 $utm_campaign = optional_param('utm_campaign', '', PARAM_ALPHANUMEXT);
 $utm_content = optional_param('utm_content', '', PARAM_ALPHANUMEXT);
 $utm_term = optional_param('utm_term', '', PARAM_ALPHANUMEXT);
 
-// ✅ NUEVO: EXTRAER ID DEL CURSO DIRECTAMENTE DESDE UTM_CONTENT
+//  NUEVO: EXTRAER ID DEL CURSO DIRECTAMENTE DESDE UTM_CONTENT
 $saberes_course_id = '';
 $saberes_course_name = '';
 $saberes_user_id = '';
@@ -38,7 +38,7 @@ if (!empty($utm_source) && strpos(strtolower($utm_source), 'saberesmx') !== fals
     if (!empty($utm_content)) {
         $saberes_course_id = $utm_content;
 
-        // ✅ NUEVO: VALIDAR QUE EL utm_content ES UN ID VÁLIDO DE CURSO
+        //  NUEVO: VALIDAR QUE EL utm_content ES UN ID VÁLIDO DE CURSO
         $valid_course_ids = array('65', '66', '67', '68', '69', '70', '71', '72', '73', '74');
         if (in_array($utm_content, $valid_course_ids)) {
             // Sobrescribir el idcourse con el ID del utm_content
@@ -139,7 +139,7 @@ if($fechaporperidos != ''){
             $text2 = 'finalizó';
         }
 
-        $menssage = 'Estimado participante, el período de registro se encuentra en pausa, '.$text1 .' '.$fechaamostrar1.' y '.$text2.' el '.$fechaamostrar2.', revisa la página principal para obtener más información acerca del próximo período.';
+        $menssage = get_string('pausedregistrationprefix', 'local_qrcurp').', '.$text1.' '.$fechaamostrar1.' y '.$text2.' el '.$fechaamostrar2.', '.get_string('pausedregistrationsuffix', 'local_qrcurp');
         redirecionarUsuario($url,$menssage);
     }
 
@@ -216,7 +216,7 @@ $categoryid = optional_param('categoryid', $defaultcategory, PARAM_INT);
 $idcourse = optional_param('courseid', $defaultcourse, PARAM_INT);
 $grouping = optional_param('grouping', $defaultgroup, PARAM_INT);
 
-// ✅ NUEVO: SI VIENE DE SABERES MX Y TENEMOS ID DE CURSO VÁLIDO, SOBRESCRIBIR
+//  NUEVO: SI VIENE DE SABERES MX Y TENEMOS ID DE CURSO VÁLIDO, SOBRESCRIBIR
 if ($is_from_saberes_mx && !empty($idcourse_from_utm)) {
     $idcourse = $idcourse_from_utm;
 }
@@ -283,7 +283,7 @@ else{
 // MOSTRAR INDICADOR VISUAL MEJORADO PARA SABERES MX
 if ($is_from_saberes_mx) {
     echo '<div class="alert alert-info text-center" style="margin: 10px; border-left: 5px solid #17a2b8; display: none">';
-    echo '<strong>🎓 Registro desde Saberes MX</strong>';
+    echo '<strong> Registro desde Saberes MX</strong>';
 
     if (!empty($saberes_course_name)) {
         echo '<br><small>Curso referido: ' . s(ucwords(str_replace('_', ' ', $saberes_course_name))) . '</small>';
@@ -300,7 +300,7 @@ if ($is_from_saberes_mx) {
     echo '</div>';
 } else if (!empty($utm_source)) {
     echo '<div class="alert alert-warning text-center" style="margin: 10px; display:none">';
-    echo '<strong>🔗 Registro desde Fuente Externa</strong>';
+    echo '<strong> Registro desde Fuente Externa</strong>';
     echo '<br><small>Fuente: ' . s($utm_source) . '</small>';
 
     if (!empty($utm_medium)) {
@@ -313,7 +313,7 @@ if ($is_from_saberes_mx) {
     echo '</div>';
 } else {
     echo '<div class="alert alert-primary text-center" style="margin: 10px;display:none">';
-    echo '<strong>🏠 Registro desde Portal Interno</strong>';
+    echo '<strong> Registro desde Portal Interno</strong>';
     echo '</div>';
 }
 ?>

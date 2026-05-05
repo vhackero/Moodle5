@@ -4,11 +4,13 @@ const UrlIconos = urlPrincipal[0]+"qrcurp/iconos/";
 // alert(nameRegsitro);
 var inicial = document.createElement("span");
 inicial.innerHTML = " Elige una opción para registrar tus datos:";
-swal({
+const showUploadLink = (nameRegsitro === "not-image" || nameRegsitro === "not-image-site");
+const tituloRegistro = showUploadLink ? "Registrarme" : "Registrarme a " + nameRegsitro;
+const swalDialog = swal({
     content: {
         element: inicial,
     },
-    title: "Registrarme a "+nameRegsitro,
+    title: tituloRegistro,
     //background: '#91203e',
     //text: "Registrarme a la comunidad de practica del club virtual de lenguas",
     icon: UrlIconos+nameRegsitro+".jpg?v=1",
@@ -22,8 +24,16 @@ swal({
 
     },
 
-})
-    .then((value) => {
+});
+if (showUploadLink) {
+    setTimeout(function() {
+        const swalText = document.querySelector('.swal-text');
+        if (swalText) {
+            swalText.innerHTML = "No hay imagen asociada al registro.<br><a href='" + urlPrincipal[0] + "qrcurp/iconos/upload.php' target='_blank' rel='noopener noreferrer'>Subir imagen</a>";
+        }
+    }, 0);
+}
+swalDialog.then((value) => {
         switch (value) {
             case "qrcurp":
                 $(document).ready(function(){
