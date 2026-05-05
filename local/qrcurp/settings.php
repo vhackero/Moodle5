@@ -133,7 +133,7 @@ $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
         $settings->add(new admin_setting_configtext('local_qrcurp/dateregistro', get_string('dateregistro', 'local_qrcurp'),
             get_string('dateregistroinfo', 'local_qrcurp'), '', PARAM_TEXT, 30));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/textregistro', get_string('textregistro', 'local_qrcurp'),
-            get_string('textregistroinfo', 'local_qrcurp'), '', PARAM_RAW, 500));
+            get_string('textregistroinfo', 'local_qrcurp'), 'El registro se encuentra cerrado.', PARAM_RAW, 500));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/dateperiodos', get_string('dateperiodos', 'local_qrcurp'),
             get_string('dateperiodosinfo', 'local_qrcurp'), '', PARAM_RAW, 500));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/dateduracionperidos', get_string('dateduracionperidos', 'local_qrcurp'),
@@ -153,7 +153,7 @@ $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategory', get_string('studentxcategory', 'local_qrcurp'),
             get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_RAW, 120));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategorytext', get_string('studentxcategorytext', 'local_qrcurp'),
-            get_string('studentxcategorytextinfo', 'local_qrcurp'), '', PARAM_RAW));
+            get_string('studentxcategorytextinfo', 'local_qrcurp'), 'El registro a alanzado el límite permitido', PARAM_RAW));
         
         $settings->add(new admin_setting_configtextarea('local_qrcurp/rolesourceconfig',
             get_string('rolesourceconfig', 'local_qrcurp'),
@@ -211,9 +211,9 @@ $settings->add(new admin_setting_configselect('local_qrcurp/rolstudent', get_str
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/groupsalredycreated', get_string('groupsalredycreated', 'local_qrcurp'),
             get_string('groupsalredycreatedinfo', 'local_qrcurp'),1));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/creategroupenrol', get_string('creategroupenrol', 'local_qrcurp'),
-            get_string('creategroupenrolinfo', 'local_qrcurp'),0));
+            get_string('creategroupenrolinfo', 'local_qrcurp'),1));
         $settings->add(new admin_setting_configtext('local_qrcurp/idcreategroup', get_string('idcreategroup', 'local_qrcurp'),
-            get_string('idcreategroupinfo', 'local_qrcurp'), '', PARAM_RAW, 50));
+            get_string('idcreategroupinfo', 'local_qrcurp'), '10001', PARAM_RAW, 50));
         $settings->add(new admin_setting_configtext('local_qrcurp/nameplataform', get_string('nameplataform', 'local_qrcurp'),
             get_string('nameplataforminfo', 'local_qrcurp'), '', PARAM_RAW, 50));
         $settings->add(new admin_setting_configtext('local_qrcurp/nameexternal', get_string('nameexternal', 'local_qrcurp'),
