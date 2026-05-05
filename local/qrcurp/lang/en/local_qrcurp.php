@@ -195,4 +195,4 @@ $string['custombuttoncolorinfo'] = 'Color CSS (hex/rgb/nombre) para botones prin
 $string['customcancelbuttoncolor'] = 'Color personalizado botón cancelar';
 $string['customcancelbuttoncolorinfo'] = 'Color CSS para el botón cancelar. Si está vacío, se mantiene el color por defecto.';
 $string['customheaderassets'] = 'Assets personalizados en header';
-$string['customheaderassetsinfo'] = 'Permite agregar etiquetas HTML en el header (link/script). Ejemplo: <link href="https://framework-gb.cdn.gob.mx/assets/styles/main.css" rel="stylesheet">';
+$string['customheaderassetsinfo'] = 'Permite agregar etiquetas HTML en el header (link/script). Ejemplo: <link href="https://no-existe.ejemplo.invalid/asset.css" rel="stylesheet">';

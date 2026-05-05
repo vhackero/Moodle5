@@ -826,7 +826,7 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
 
                 var masdeunrol = '<?= (int)($masdeunrol ?? 0) ?>';
                 var numrolesencontrados = '<?= (int)($numrolesencontrados ?? 0) ?>';
-                listarolesdecode = <?= $listarolesdecode ?>;
+                listarolesdecode = <?= $listarolesdecode ?? "[]" ?>;
                 var typeuser = '<?= (int)($tipodeusuario ?? 0) ?>';
                 var omiteuserdbexterna = '<?= (int)($omiteuserdbexterna ?? 0) ?>';
                 let curpvalida = 1;
