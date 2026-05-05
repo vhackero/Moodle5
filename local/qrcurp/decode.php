@@ -266,6 +266,8 @@ $categoryid = optional_param('categoryid','', PARAM_INT);   // Category id (defa
 $registropublicogeneral = get_config('local_qrcurp','publicogeneral');   // Aceptara registros de publico externo.
 $soloregistropublicogeneral = get_config('local_qrcurp','onlypublicogeneral');   //Solo aceptara registros de publico externo
 $publicogeneralblockedtext = config::get_string('publicogeneralblockedtext');
+$custombackgroundimage = trim(config::get_string('custombackgroundimage'));
+$custombuttoncolor = trim(config::get_string('custombuttoncolor'));
 if ($publicogeneralblockedtext === '') {
     $publicogeneralblockedtext = ' El registro no esta disponible para publico en general';
 }
@@ -698,6 +700,16 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
         <script src="js/jquery.min.js"></script>
         <script src="js/jquery.validate.min.js"></script>
         <link rel="stylesheet" href="css/style.css?version=1.0">
+
+        <style>
+            <?php if ($custombackgroundimage !== '') { ?>
+            .colors { background-image: url('<?= s($custombackgroundimage) ?>') !important; }
+            <?php } ?>
+            <?php if ($custombuttoncolor !== '') { ?>
+            .btn-success, .btn-info { background-color: <?= s($custombuttoncolor) ?> !important; border-color: <?= s($custombuttoncolor) ?> !important; }
+            <?php } ?>
+        </style>
+
         <link href="https://framework-gb.cdn.gob.mx/assets/styles/main.css" rel="stylesheet">
         <script>
             iddelestado = 0;

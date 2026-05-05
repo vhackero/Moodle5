@@ -208,6 +208,8 @@ if($fechaporperidos != ''){
 $defaultcategory = config::get_int('defaultcategoryid');
 $defaultcourse = config::get_int('defaultcourseid');
 $defaultgroup = config::get_int('defaultgroupid');
+$custombackgroundimage = trim(config::get_string('custombackgroundimage'));
+$custombuttoncolor = trim(config::get_string('custombuttoncolor'));
 
 $categoryid = optional_param('categoryid', $defaultcategory, PARAM_INT);
 $idcourse = optional_param('courseid', $defaultcourse, PARAM_INT);
@@ -319,6 +321,16 @@ if ($is_from_saberes_mx) {
         <script src="js/sweetalert.min.js"></script>
         <script type="text/javascript" src="js/index.min.js"></script>
         <link rel="stylesheet" href="css/style.css?version=1.0">
+
+        <style>
+            <?php if ($custombackgroundimage !== '') { ?>
+            .colors { background-image: url('<?= s($custombackgroundimage) ?>') !important; }
+            <?php } ?>
+            <?php if ($custombuttoncolor !== '') { ?>
+            .btn-success, .btn-info { background-color: <?= s($custombuttoncolor) ?> !important; border-color: <?= s($custombuttoncolor) ?> !important; }
+            <?php } ?>
+        </style>
+
     </head>
     <div class="colors">
         <div class="container">

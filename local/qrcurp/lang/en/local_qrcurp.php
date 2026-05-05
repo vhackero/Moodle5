@@ -184,3 +184,9 @@ $string['index_curp_consult_link'] = 'Consultar CURP';
 $string['index_manual_text'] = 'Si tienes dudas puedes consultar el manual dando ';
 $string['index_click_here'] = 'clic aquí';
 $string['index_curp_label'] = 'Clave Única de Registro de Población (CURP)';
+
+
+$string['custombackgroundimage'] = 'Imagen de fondo personalizada';
+$string['custombackgroundimageinfo'] = 'URL de imagen para el fondo de la clase colors. Si está vacía, se usa la imagen por defecto del plugin.';
+$string['custombuttoncolor'] = 'Color personalizado de botones';
+$string['custombuttoncolorinfo'] = 'Color CSS (hex/rgb/nombre) para botones principales de registro. Si está vacío, se mantiene el color por defecto.';
