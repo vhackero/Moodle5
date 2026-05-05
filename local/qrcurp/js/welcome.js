@@ -24,16 +24,7 @@ swal({
 
     },
 
-})
-if (showUploadLink) {
-    setTimeout(function() {
-        const swalText = document.querySelector('.swal-text');
-        if (swalText) {
-            swalText.innerHTML = "No hay imagen asociada al registro.<br><a href='" + urlPrincipal[0] + "qrcurp/iconos/upload.php' target='_blank' rel='noopener noreferrer'>Subir imagen</a>";
-        }
-    }, 0);
-}
-    .then((value) => {
+}).then((value) => {
         switch (value) {
             case "qrcurp":
                 $(document).ready(function(){
@@ -56,3 +47,12 @@ if (showUploadLink) {
             });
         }
     });
+
+if (showUploadLink) {
+    setTimeout(function() {
+        const swalText = document.querySelector('.swal-text');
+        if (swalText) {
+            swalText.innerHTML = "No hay imagen asociada al registro.<br><a href='" + urlPrincipal[0] + "qrcurp/iconos/upload.php' target='_blank' rel='noopener noreferrer'>Subir imagen</a>";
+        }
+    }, 0);
+}
