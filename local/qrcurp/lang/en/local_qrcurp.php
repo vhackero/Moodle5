@@ -78,7 +78,7 @@ $string['idcategoriesinfo'] = "Id o Ids de la categorías que mostrarán combo c
 $string['rolteacher'] = "Rol del usuario que impartirá el grupo";
 $string['rolteacherinfo'] = "Id del rol que estará impartiendo el curso ejemplo: 4 = teacher";
 $string['limitegroup'] = "Límite de participantes en grupo";
-$string['limitegroupinfo'] = "Número de participantes, contando únicamente estudiantes ";
+$string['limitegroupinfo'] = "Número de participantes por grupo. Acepta: 50 (global) o reglas por texto en nombre: *:50;ingles:30;frances:20";
 $string['rolstudent'] = "Rol de estudiantes";
 $string['rolstudentinfo'] = "Selecciona el rol de estudiante desde los roles disponibles en Moodle. Por defecto se usa 'student'.";
 $string['haygroupespera'] = "Existe grupo de espera";
