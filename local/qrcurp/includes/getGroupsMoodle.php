@@ -23,87 +23,61 @@ $html= "<option value=''>Seleccionar</option>";
 //groups_get_members_by_role();
 
 if($onegroupattime == 1){
+    $consultamoodle = $DB->get_records('groups', array('courseid' => $idcurso), 'name ASC');
+    $html= "<option value=''>Seleccionar</option>";
+    $nohaycupo = false;
+    $selectedgroup = null;
+
     foreach ($consultamoodle as $data) {
         if ($permitegrupodeespera == 1 && trim((string)$nombregroup) !== '' && (string)$data->name === (string)$nombregroup) {
             continue;
         }
 
-        $query = "SELEct distinct(u.id) FROM {$CFG->prefix}role_assignments AS ra
-         JOIN {$CFG->prefix}context AS ctx ON ra.contextid = ctx.id
-         JOIN {$CFG->prefix}user AS u ON u.id = ra.userid
-         JOIN {$CFG->prefix}groups_members AS gm ON gm.userid = u.id
-         JOIN {$CFG->prefix}user_enrolments AS enr ON gm.userid = enr.userid AND enr.status = 0
-         WHERE ra.roleid = $roleidprofesor
-         AND ctx.instanceid = $idcurso
-         AND gm.groupid = $data->id";
-        $consultas = $DB->get_records_sql($query);
-        $consultacupo = 0 ;
-        foreach ($consultas as $dato) {
-//            echo "id del profesor activo".$dato->id."<br>";
-            $query2 ="SELEct u.id FROM {$CFG->prefix}role_assignments AS ra
-         JOIN {$CFG->prefix}context AS ctx ON ra.contextid = ctx.id
-         JOIN {$CFG->prefix}user AS u ON u.id = ra.userid
-         JOIN {$CFG->prefix}groups_members AS gm ON gm.userid = u.id
-         JOIN {$CFG->prefix}user_enrolments AS enr ON gm.userid = enr.userid AND enr.status = 0
-         WHERE ra.roleid = $rolstudent
-         AND ctx.instanceid = $idcurso
-         AND gm.groupid = $data->id";
+        $groupid = (int)$data->id;
+        $groupname = (string)$data->name;
 
-            $total = count(groups_get_members($data->id, 'u.id'));
-//        echo "Id del curso: ".$data->id."<br>";
-            $consultaalumnos = $DB->get_records_sql($query2);
-            if(sizeof($consultaalumnos) == 0){
-                $consultacupo =1;
-                if($consultacupo > 0) {
-                    $band = 0;
-                    $consultanombre = $DB->get_record("user", array('id' => $dato->id), 'firstname,lastname');
-//                    $nombrecompleto = "Monitor (a): " . $consultanombre->firstname . " " . $consultanombre->lastname;
-                    $html .=  "<option value='" . $data->{"id"} . "'>" . $data->{"name"} . "</option>";
-                    break;
-                }
-            }
-            foreach ($consultaalumnos as $numalumnos){
-                $consultacupo++;
-            }
-//             echo "Nombre del grupo".$data->{"name"}."<br>";
-//             echo "Numero de alumnos en el grupo".$consultacupo."<br>";
-//            echo"Cupo".$consultacupo."<br>";
-//            echo"limite".$limitedegrupo."<br>";
-//            echo "id del grupo: ".$data->id."nombre grupo: ".$data->name."id del maestro".$dato->id."numero deestudiantes en ese curso".$consultacupo.'<br>';
-            if($consultacupo < $limitedegrupo){
-                if($band == 1 ){
-                    $consultacupo = 1;
-                }
-                if($consultacupo > 0) {
-                    $band = 0;
-                    $consultanombre = $DB->get_record("user", array('id' => $dato->id), 'firstname,lastname');
-//                    $nombrecompleto = "Monitor (a): " . $consultanombre->firstname . " " . $consultanombre->lastname;
-                    $html .=  "<option value='" . $data->{"id"} . "'>" . $data->{"name"} . "</option>";
-                    break;
-                }
-            }if($consultacupo >= $limitedegrupo){
-                //echo "El grupo".$data->{"name"}." está lleno<br>";
-                $band =1 ;
-                //Agregar al usuario al segundo grupo vacio que encuentre.
-                $nohaycupo = true;
-            }
-//        echo "Nombre del grupo: ".$data->name."Numero de alumnos:".$consultacupo."<br>";
+        // Si no se configura límite, se toma el primer grupo disponible.
+        if (empty($limitedegrupo) || (int)$limitedegrupo <= 0) {
+            $selectedgroup = ['id' => $groupid, 'name' => $groupname];
+            break;
         }
+
+        $sqlstudents = "SELECT COUNT(DISTINCT u.id)
+                          FROM {$CFG->prefix}role_assignments ra
+                          JOIN {$CFG->prefix}context ctx ON ra.contextid = ctx.id
+                          JOIN {$CFG->prefix}user u ON u.id = ra.userid
+                          JOIN {$CFG->prefix}groups_members gm ON gm.userid = u.id
+                         WHERE ra.roleid = :rolstudent
+                           AND ctx.instanceid = :courseid
+                           AND gm.groupid = :groupid";
+        $params = [
+            'rolstudent' => (int)$rolstudent,
+            'courseid' => (int)$idcurso,
+            'groupid' => $groupid,
+        ];
+        $studentcount = (int)$DB->count_records_sql($sqlstudents, $params);
+
+        // Mostrar un grupo a la vez: el primer grupo con cupo.
+        if ($studentcount < (int)$limitedegrupo) {
+            $selectedgroup = ['id' => $groupid, 'name' => $groupname];
+            break;
+        }
+
+        $nohaycupo = true;
+    }
+
+    if (!empty($selectedgroup)) {
+        $html .= "<option value='" . (int)$selectedgroup['id'] . "'>" . format_string($selectedgroup['name']) . "</option>";
     }
 
     if($permitegrupodeespera == 1) {
-        if ($nohaycupo) {
-            //echo "NO hay espacio";
-            //la data-> = $existegruponame
-            $idespera = $DB->get_record("groups", array("name" => $nombregroup,'courseid'=>$idcurso), 'id,name');
-            //  echo "agregando el grupo de espera";
-            $html .= "  <optgroup label='" . "Sin Horarios" . "'>" . "<option value='" . $idespera->id . "'>" . $idespera->name . "</option>" . "</optgroup>";
-
+        $idespera = $DB->get_record("groups", array("name" => $nombregroup,'courseid'=>$idcurso), 'id,name');
+        if (!empty($idespera->id)) {
+            $html .= "<optgroup label='Sin Horarios'><option value='" . (int)$idespera->id . "'>" . format_string($idespera->name) . "</option></optgroup>";
         }
-        echo $html;
-    }else{
-        echo $html;
     }
+
+    echo $html;
 }
 if($groupsalredycreated == 1){
 
