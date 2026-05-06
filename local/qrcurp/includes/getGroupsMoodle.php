@@ -77,12 +77,12 @@ $groupslimitsconfig = local_qrcurp_parse_group_limits($limitedegrupo);
 $consultamoodle = $DB->get_records('groups',array('courseid'=>$idcurso)); //CONSULTA DE LA CURP EN LA BD DE MOODLE
 $band =0;
 //$consultamoodle = $DB->get_records('course',array('category'=>$categoryid),'','id,fullname'); //CONSULTA DE LA CURP EN LA BD DE MOODLE
-$html= "<option value=''>Seleccionar</option>";
+$html= "<option value=''>" . get_string('selectoption', 'local_qrcurp') . "</option>";
 //groups_get_members_by_role();
 
 if($onegroupattime == 1){
     $consultamoodle = $DB->get_records('groups', array('courseid' => $idcurso), 'name ASC');
-    $html= "<option value=''>Seleccionar</option>";
+    $html= "<option value=''>" . get_string('selectoption', 'local_qrcurp') . "</option>";
     $nohaycupo = false;
     $selectedgroup = null;
 
@@ -133,7 +133,7 @@ if($onegroupattime == 1){
     if($permitegrupodeespera == 1 && $nohaycupo) {
         $idespera = $DB->get_record("groups", array("name" => $nombregroup,'courseid'=>$idcurso), 'id,name');
         if (!empty($idespera->id)) {
-            $html .= "<optgroup label='Sin Horarios'><option value='" . (int)$idespera->id . "'>" . format_string($idespera->name) . "</option></optgroup>";
+            $html .= "<optgroup label='" . get_string('nogroupschedule', 'local_qrcurp') . "'><option value='" . (int)$idespera->id . "'>" . format_string($idespera->name) . "</option></optgroup>";
         }
     }
 
@@ -142,7 +142,7 @@ if($onegroupattime == 1){
 if($groupsalredycreated == 1){
 
     $consultamoodle = $DB->get_records('groups', array('courseid' => $idcurso), 'name ASC');
-    $html= "<option value=''>Seleccionar</option>";
+    $html= "<option value=''>" . get_string('selectoption', 'local_qrcurp') . "</option>";
     $nohaycupo = false;
 
     foreach ($consultamoodle as $data) {
@@ -187,7 +187,7 @@ if($groupsalredycreated == 1){
     if($permitegrupodeespera == 1 && $nohaycupo) {
         $idespera = $DB->get_record("groups", array("name" => $nombregroup, 'courseid' => $idcurso), 'id,name');
         if (!empty($idespera->id)) {
-            $html .= "<optgroup label='Sin Horarios'><option value='" . (int)$idespera->id . "'>" . format_string($idespera->name) . "</option></optgroup>";
+            $html .= "<optgroup label='" . get_string('nogroupschedule', 'local_qrcurp') . "'><option value='" . (int)$idespera->id . "'>" . format_string($idespera->name) . "</option></optgroup>";
         }
     }
 
