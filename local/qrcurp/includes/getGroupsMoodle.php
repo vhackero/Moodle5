@@ -7,6 +7,63 @@ require_once($CFG->libdir.'/moodlelib.php');
 
 global $CFG;
 
+
+function local_qrcurp_parse_group_limits($rawlimit): array {
+    $config = [
+        'default' => 0,
+        'rules' => [],
+    ];
+
+    $raw = trim((string)$rawlimit);
+    if ($raw === '') {
+        return $config;
+    }
+
+    if (ctype_digit($raw)) {
+        $config['default'] = (int)$raw;
+        return $config;
+    }
+
+    foreach (preg_split('/[
+;]+/', $raw) as $part) {
+        $part = trim($part);
+        if ($part === '') {
+            continue;
+        }
+        if (strpos($part, ':') === false) {
+            if (ctype_digit($part)) {
+                $config['default'] = (int)$part;
+            }
+            continue;
+        }
+
+        [$needle, $limit] = array_map('trim', explode(':', $part, 2));
+        if ($needle === '' || !ctype_digit($limit)) {
+            continue;
+        }
+        if ($needle === '*') {
+            $config['default'] = (int)$limit;
+            continue;
+        }
+        $config['rules'][] = [
+            'needle' => core_text::strtolower($needle),
+            'limit' => (int)$limit,
+        ];
+    }
+
+    return $config;
+}
+
+function local_qrcurp_group_limit_for_name(string $groupname, array $limitconfig): int {
+    $name = core_text::strtolower($groupname);
+    foreach ($limitconfig['rules'] as $rule) {
+        if (core_text::strpos($name, $rule['needle']) !== false) {
+            return (int)$rule['limit'];
+        }
+    }
+    return (int)($limitconfig['default'] ?? 0);
+}
+
 $idcurso = $_POST['idcurso'];
 $roleidprofesor = get_config('local_qrcurp','rolteacher');    //id del rol de Profesor a impartir los cursos
 $limitedegrupo = get_config('local_qrcurp','limitegroup');    //límite de alumnos en los grupos
@@ -15,6 +72,7 @@ $nombregroup = get_config('local_qrcurp','namegroupespera');    //nombre del gru
 $permitegrupodeespera = get_config('local_qrcurp','haygroupespera');    //nombre del grupo al superar el límite de los grupos
 $onegroupattime = get_config('local_qrcurp','onegroupattime');
 $groupsalredycreated = get_config('local_qrcurp','groupsalredycreated');
+$groupslimitsconfig = local_qrcurp_parse_group_limits($limitedegrupo);
 
 $consultamoodle = $DB->get_records('groups',array('courseid'=>$idcurso)); //CONSULTA DE LA CURP EN LA BD DE MOODLE
 $band =0;
@@ -36,8 +94,10 @@ if($onegroupattime == 1){
         $groupid = (int)$data->id;
         $groupname = (string)$data->name;
 
+        $limitforgroup = local_qrcurp_group_limit_for_name($groupname, $groupslimitsconfig);
+
         // Si no se configura límite, se toma el primer grupo disponible.
-        if (empty($limitedegrupo) || (int)$limitedegrupo <= 0) {
+        if ($limitforgroup <= 0) {
             $selectedgroup = ['id' => $groupid, 'name' => $groupname];
             break;
         }
@@ -58,7 +118,7 @@ if($onegroupattime == 1){
         $studentcount = (int)$DB->count_records_sql($sqlstudents, $params);
 
         // Mostrar un grupo a la vez: el primer grupo con cupo.
-        if ($studentcount < (int)$limitedegrupo) {
+        if ($studentcount < $limitforgroup) {
             $selectedgroup = ['id' => $groupid, 'name' => $groupname];
             break;
         }
@@ -93,8 +153,10 @@ if($groupsalredycreated == 1){
         $groupid = (int)$data->id;
         $groupname = (string)$data->name;
 
+        $limitforgroup = local_qrcurp_group_limit_for_name($groupname, $groupslimitsconfig);
+
         // Si no se configura límite, mostrar todos los grupos existentes del curso.
-        if (empty($limitedegrupo) || (int)$limitedegrupo <= 0) {
+        if ($limitforgroup <= 0) {
             $html .= "<option value='" . $groupid . "'>" . format_string($groupname) . "</option>";
             continue;
         }
@@ -115,7 +177,7 @@ if($groupsalredycreated == 1){
         ];
 
         $studentcount = (int)$DB->count_records_sql($sqlstudents, $params);
-        if ($studentcount < (int)$limitedegrupo) {
+        if ($studentcount < $limitforgroup) {
             $html .= "<option value='" . $groupid . "'>" . format_string($groupname) . "</option>";
         } else {
             $nohaycupo = true;

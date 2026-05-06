@@ -147,7 +147,7 @@ $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
         $settings->add(new admin_setting_configtext('local_qrcurp/rolteacher', get_string('rolteacher', 'local_qrcurp'),
             get_string('rolteacherinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 3));
         $settings->add(new admin_setting_configtext('local_qrcurp/limitegroup', get_string('limitegroup', 'local_qrcurp'),
-            get_string('limitegroupinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 5));
+            get_string('limitegroupinfo', 'local_qrcurp'), '', PARAM_RAW_TRIMMED, 255));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategory', get_string('studentxcategory', 'local_qrcurp'),
             get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_RAW, 120));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategorytext', get_string('studentxcategorytext', 'local_qrcurp'),
