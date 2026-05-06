@@ -67,6 +67,36 @@ function save_registration_origin_to_profile($userid, $origin) {
     }
 }
 
+function local_qrcurp_resolve_limit_for_group_name(string $groupname, $rawlimit): int {
+    $raw = trim((string)$rawlimit);
+    if ($raw === '') {
+        return 0;
+    }
+    if (ctype_digit($raw)) {
+        return (int)$raw;
+    }
+    $default = 0;
+    $name = core_text::strtolower($groupname);
+    foreach (preg_split('/[\r\n;]+/', $raw) as $part) {
+        $part = trim($part);
+        if ($part === '' || strpos($part, ':') === false) {
+            continue;
+        }
+        [$needle, $limit] = array_map('trim', explode(':', $part, 2));
+        if (!ctype_digit($limit)) {
+            continue;
+        }
+        if ($needle === '*') {
+            $default = (int)$limit;
+            continue;
+        }
+        if ($needle !== '' && core_text::strpos($name, core_text::strtolower($needle)) !== false) {
+            return (int)$limit;
+        }
+    }
+    return $default;
+}
+
 /**
  * Guarda campos extra dinámicos en user_info_data cuando existe su shortname.
  *
@@ -223,8 +253,9 @@ if($idcreategroup == '' OR $idcourse == '') {
             }
         }
         if ($nohaylimite == 0) {
+            $limitedegrupo = local_qrcurp_resolve_limit_for_group_name((string)$nombredelGrupo, $limitedegrupo);
             $totalUserGroup = (count(groups_get_members($idcreategroup, 'u.*')));
-            if ($totalUserGroup >= $limitedegrupo + 1) {
+            if ($limitedegrupo > 0 && $totalUserGroup >= ($limitedegrupo + 1)) {
                 //límite superado de usuarios para el grupo
                 redirect($url, "Lo sentimos, el grupo al que intentas registrarte ha superado el límite permitido.", null, \core\output\notification::NOTIFY_INFO);
             }
