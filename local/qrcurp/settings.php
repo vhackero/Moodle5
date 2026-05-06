@@ -128,8 +128,6 @@ $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
             get_string('dbuserinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dbpass', get_string('dbpass', 'local_qrcurp'),
             get_string('dbpassinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
-        $settings->add(new admin_setting_configcheckbox('local_qrcurp/dbinsert', get_string('dbinsert', 'local_qrcurp'),
-            get_string('dbinsertinfo', 'local_qrcurp'), 0));
         $settings->add(new admin_setting_configtext('local_qrcurp/dateregistro', get_string('dateregistro', 'local_qrcurp'),
             get_string('dateregistroinfo', 'local_qrcurp'), '', PARAM_TEXT, 30));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/textregistro', get_string('textregistro', 'local_qrcurp'),
