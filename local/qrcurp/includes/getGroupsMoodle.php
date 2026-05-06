@@ -24,7 +24,9 @@ $html= "<option value=''>Seleccionar</option>";
 
 if($onegroupattime == 1){
     foreach ($consultamoodle as $data) {
-
+        if ($permitegrupodeespera == 1 && trim((string)$nombregroup) !== '' && (string)$data->name === (string)$nombregroup) {
+            continue;
+        }
 
         $query = "SELEct distinct(u.id) FROM {$CFG->prefix}role_assignments AS ra
          JOIN {$CFG->prefix}context AS ctx ON ra.contextid = ctx.id
@@ -110,6 +112,10 @@ if($groupsalredycreated == 1){
     $nohaycupo = false;
 
     foreach ($consultamoodle as $data) {
+        if ($permitegrupodeespera == 1 && trim((string)$nombregroup) !== '' && (string)$data->name === (string)$nombregroup) {
+            continue;
+        }
+
         $groupid = (int)$data->id;
         $groupname = (string)$data->name;
 
