@@ -70,7 +70,7 @@ if($onegroupattime == 1){
         $html .= "<option value='" . (int)$selectedgroup['id'] . "'>" . format_string($selectedgroup['name']) . "</option>";
     }
 
-    if($permitegrupodeespera == 1) {
+    if($permitegrupodeespera == 1 && $nohaycupo) {
         $idespera = $DB->get_record("groups", array("name" => $nombregroup,'courseid'=>$idcurso), 'id,name');
         if (!empty($idespera->id)) {
             $html .= "<optgroup label='Sin Horarios'><option value='" . (int)$idespera->id . "'>" . format_string($idespera->name) . "</option></optgroup>";
