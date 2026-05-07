@@ -33,13 +33,16 @@ function enviaCorreo($iduser,$typemail ='',$alias='',$idcourse='',$idgroup='',$n
     $supportuser = \core_user::get_support_user();
     $user = get_complete_user_data('id', $idusurio);
     $correoexterno = get_config('local_qrcurp','emailexterno');
-    $message = "Bienvenido.";
+    $message = get_string('mailwelcome', 'local_qrcurp');
     if($typemail == 0){
         //YA ESTÁ REGISTRADO Y SOLO ENVIA SU NOMBRE DE USUARIO Y CONTRASEÑA
         $from = $DB->get_record('user', array('id' => "$iduser"));
         $alias = $from->idnumber; //cambiar por el campo donde se guardara la contraseña
-        $subject = "Bienvenida(o) a $NAMEPLATAFORMQRCURP";
-        $mensajehtml = "Estimada/o <strong> $from->firstname $from->lastname </strong>."."<br><br>"."Te damos la más cordial bienvenida al  $nameCursos."."<br><br>"."Tus datos de acceso son los siguientes : <br><br> <strong>URL: </strong> <a href='$urlprincipal' target='_blank'>$urlprincipal</a> <br> <strong>Nombre de usuario: </strong> $from->username <br> <strong>Contraseña: </strong> $alias";
+        $subject = get_string('mailsubjectwelcomeplatform', 'local_qrcurp', $NAMEPLATAFORMQRCURP);
+        $mensajehtml = get_string('mailbodywelcomeplatform', 'local_qrcurp', (object)[
+            'firstname' => $from->firstname, 'lastname' => $from->lastname, 'category' => $nameCursos,
+            'url' => $urlprincipal, 'username' => $from->username, 'password' => $alias
+        ]);
         $send = email_to_user($user, $supportuser, $subject, $message, $mensajehtml);
     }
     if($typemail == 2){
@@ -51,8 +54,11 @@ function enviaCorreo($iduser,$typemail ='',$alias='',$idcourse='',$idgroup='',$n
         $cursoinscrito = $DB->get_record('course', array('id' => "$idcourse"),'fullname');
         $nombrecurso = $cursoinscrito->fullname;
         $urlcourses = $urlcourses.$idcourse; //URL con el id de ese curso
-        $subject = "Bienvenida(o) a $nombrecurso de $NAMEPLATAFORMQRCURP";
-        $mensajehtml = "Estimada/o <strong> $from->firstname $from->lastname </strong>."."<br><br>"."Te damos la más cordial bienvenida a la comunidad de práctica de $nombrecurso."."<br><br>"."Tus datos de acceso son los siguientes : <br><br> <strong>URL: </strong> <a href='$urlcourses' target='_blank'>$urlcourses</a> <br> <strong>Nombre de usuario: </strong> $from->username <br> <strong>Contraseña: </strong> $alias";
+        $subject = get_string('mailsubjectwelcomecourseplatform', 'local_qrcurp', (object)['course' => $nombrecurso, 'platform' => $NAMEPLATAFORMQRCURP]);
+        $mensajehtml = get_string('mailbodywelcomecourse', 'local_qrcurp', (object)[
+            'firstname' => $from->firstname, 'lastname' => $from->lastname, 'course' => $nombrecurso,
+            'url' => $urlcourses, 'username' => $from->username, 'password' => $alias
+        ]);
         //$mensajehtml = "Hola que tal ..";
         if($correoexterno == 1) {
             $url = 'https://'.$_SERVER['HTTP_HOST'];
@@ -80,8 +86,11 @@ function enviaCorreo($iduser,$typemail ='',$alias='',$idcourse='',$idgroup='',$n
         $nombregrupo = $gruposinscrito->name;
         $nombrecurso = $cursoinscrito->fullname;
         $urlcourses = $urlcourses.$idcourse; //URL con el id de ese curso
-        $subject = "Bienvenida a $nombrecurso";
-        $mensajehtml = "Estimada/o <strong> $from->firstname $from->lastname </strong>."."<br><br>"."Te damos la más cordial bienvenida al curso de $nombrecurso, en el grupo de $nombregrupo. "."<br><br>"."Tus datos de acceso son los siguientes : <br><br> <strong>URL: </strong> <a href='$urlcourses' target='_blank'>$urlcourses</a> <br> <strong>Nombre de usuario: </strong> $from->username <br> <strong>Contraseña: </strong> $alias<br><br>Agradecemos tu interés y participación.";
+        $subject = get_string('mailsubjectwelcomecourse', 'local_qrcurp', $nombrecurso);
+        $mensajehtml = get_string('mailbodywelcomecoursegroup', 'local_qrcurp', (object)[
+            'firstname' => $from->firstname, 'lastname' => $from->lastname, 'course' => $nombrecurso, 'group' => $nombregrupo,
+            'url' => $urlcourses, 'username' => $from->username, 'password' => $alias
+        ]);
         //$mensajehtml = "Estimada/o <strong> $from->firstname $from->lastname </strong>."."<br><br>"."Te damos la más cordial bienvenida a la comunidad de práctica de $nombrecurso, en el grupo de $nombregrupo. "."<br><br>"."Tus datos de acceso son los siguientes : <br><br> <strong>URL: </strong> <a href='$urlcourses' target='_blank'>$urlcourses</a> <br> <strong>Nombre de usuario: </strong> $from->username <br> <strong>Contraseña: </strong> $alias";
         //$mensajehtml = "Hola que tal ..";
         if($correoexterno == 1) {
@@ -108,9 +117,10 @@ function enviaCorreo($iduser,$typemail ='',$alias='',$idcourse='',$idgroup='',$n
         $nombrecurso = $cursoinscrito->fullname;
         $urlconfirmusers = $CFG->wwwroot.'/local/qrcurp/confirm.php?data='.$secretConfirm.'/'.$username; //URL de confirmación
 //        $urlcourses = $urlcourses.$idcourse; //URL con el id de ese curso
-        $subject = $nameCategory." :: Confirmación de registro";
-        $mensajehtml = "Hola, $from->firstname $from->lastname.<br><br> Se ha solicitado una nueva cuenta en '".$nameCategory."' utilizando su dirección de correo electrónico. <br><br> Para confirmar su nueva cuenta, copie y pegue la siguiente URL en la barra de direcciones (parte superior de la ventana) de su navegador web: <br><br> <strong>$urlconfirmusers</strong>
-        <br><br>Agradecemos tu interés y participación.";
+        $subject = get_string('mailsubjectconfirmregistration', 'local_qrcurp', $nameCategory);
+        $mensajehtml = get_string('mailbodyconfirmregistration', 'local_qrcurp', (object)[
+            'firstname' => $from->firstname, 'lastname' => $from->lastname, 'category' => $nameCategory, 'url' => $urlconfirmusers
+        ]);
         //$mensajehtml = "Hola que tal ..";
         if($correoexterno == 1) {
             $url = 'https://'.$_SERVER['HTTP_HOST'];
@@ -126,8 +136,10 @@ function enviaCorreo($iduser,$typemail ='',$alias='',$idcourse='',$idgroup='',$n
         //recuperar usuario y contraseña quedaría
         $nombre = $idgroup;
         $username = $idcourse;
-        $subject = "Recuperación de credenciales de acceso - ".$nameCursos;
-        $mensajehtml = "Estimado $nombre : <br><br>Hemos recibido una petición de recuperación de Nombre de usuario y/o Contraseña en el sitio $NAMEPLATAFORMQRCURP <br><br> Estas son tus credenciales de acceso: <br><br> <strong>URL:</strong> <a href='$CFG->wwwroot'>$CFG->wwwroot</a> <br> <strong>Nombre de usuario: </strong> $username <br> <strong>Contraseña: </strong> $alias <br><br> Para iniciar tu sesión, accede a la URL con las credenciales de acceso que te estamos enviando.<br><br> <hr>  <br>" ;
+        $subject = get_string('mailsubjectrecovercredentials', 'local_qrcurp', $nameCursos);
+        $mensajehtml = get_string('mailbodyrecovercredentials', 'local_qrcurp', (object)[
+            'name' => $nombre, 'platform' => $NAMEPLATAFORMQRCURP, 'url' => $CFG->wwwroot, 'username' => $username, 'password' => $alias
+        ]);
 
         if($correoexterno == 1) {
             echo 'Correo externo';
@@ -150,8 +162,11 @@ function enviaCorreo($iduser,$typemail ='',$alias='',$idcourse='',$idgroup='',$n
         $nombregrupo = $gruposinscrito->name;
         $nombrecurso = $cursoinscrito->fullname;
         $urlcourses = $urlcourses.$idcourse; //URL con el id de ese curso
-        $subject = "Bienvenida a el curso de $nombrecurso, $NAMEPLATAFORMQRCURP";
-        $mensajehtml = "Estimada/o <strong> $from->firstname $from->lastname </strong>."."<br><br>"."Te damos la más cordial bienvenida a $nombrecurso, en el grupo de $nombregrupo. "."<br><br>"."Tus datos de acceso son los siguientes : <br><br> <strong>URL: </strong> <a href='$urlcourses' target='_blank'>$urlcourses</a> <br> <strong>Nombre de usuario: </strong> $from->username <br> <strong>Contraseña: </strong> $alias<br><br> ¡Para iniciar sesión deberás ingresar a la URL y autenticarte con tus datos de acceso!  <br><br> <hr>  $NAMEPLATAFORMQRCURP <br>";
+        $subject = get_string('mailsubjectwelcomecourseplatformshort', 'local_qrcurp', (object)['course' => $nombrecurso, 'platform' => $NAMEPLATAFORMQRCURP]);
+        $mensajehtml = get_string('mailbodywelcomereenrolcourse', 'local_qrcurp', (object)[
+            'firstname' => $from->firstname, 'lastname' => $from->lastname, 'course' => $nombrecurso, 'group' => $nombregrupo,
+            'url' => $urlcourses, 'username' => $from->username, 'password' => $alias, 'platform' => $NAMEPLATAFORMQRCURP
+        ]);
         $send = email_to_user($user, $supportuser, $subject, $message, $mensajehtml);
     }
     return $send;
