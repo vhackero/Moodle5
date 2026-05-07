@@ -280,7 +280,10 @@ class local_actions extends external_api {
     public static function mass_restore_courses_parameters() {
         return new external_function_parameters(
             array(
-                'filepath' => new external_value(PARAM_RAW, 'Ruta absoluta del archivo MBZ en el servidor Moodle'),
+                'filepath' => new external_value(PARAM_RAW, 'Ruta absoluta del archivo MBZ en el servidor Moodle', VALUE_DEFAULT, ''),
+                'mbzbase64' => new external_value(PARAM_RAW, 'Contenido del archivo MBZ codificado en base64', VALUE_DEFAULT, ''),
+                'mbzfilename' => new external_value(PARAM_FILE, 'Nombre de archivo MBZ cuando se usa mbzbase64', VALUE_DEFAULT, 'restore.mbz'),
+                'mbzurl' => new external_value(PARAM_URL, 'URL HTTPS del MBZ para descarga en servidor Moodle', VALUE_DEFAULT, ''),
                 'userid' => new external_value(PARAM_INT, 'Usuario que ejecuta la restauración'),
                 'mode' => new external_value(PARAM_ALPHA, 'Modo de restauración: merge o replace', VALUE_DEFAULT, 'merge'),
                 'courseids' => new external_multiple_structure(
@@ -307,12 +310,15 @@ class local_actions extends external_api {
         );
     }
 
-    public static function mass_restore_courses($filepath, $userid, $mode = 'merge', $courseids = array(), $data = array()) {
+    public static function mass_restore_courses($filepath = '', $mbzbase64 = '', $mbzfilename = 'restore.mbz', $mbzurl = '', $userid = 0, $mode = 'merge', $courseids = array(), $data = array()) {
         global $CFG, $DB;
         require_once($CFG->dirroot . "/backup/util/includes/restore_includes.php");
 
         $params = self::validate_parameters(self::mass_restore_courses_parameters(), array(
             'filepath' => $filepath,
+            'mbzbase64' => $mbzbase64,
+            'mbzfilename' => $mbzfilename,
+            'mbzurl' => $mbzurl,
             'userid' => $userid,
             'mode' => $mode,
             'courseids' => $courseids,
@@ -323,7 +329,26 @@ class local_actions extends external_api {
             throw new invalid_parameter_exception('Invalid mode, use merge or replace');
         }
 
-        if (!file_exists($params['filepath'])) {
+        $filepathlocal = $params['filepath'];
+        if ($filepathlocal === '' && $params['mbzbase64'] !== '') {
+            $tmpdir = make_request_directory();
+            $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
+            $rawfile = base64_decode($params['mbzbase64'], true);
+            if ($rawfile === false) {
+                throw new invalid_parameter_exception('mbzbase64 is not valid base64');
+            }
+            file_put_contents($filepathlocal, $rawfile);
+        } else if ($filepathlocal === '' && $params['mbzurl'] !== '') {
+            $tmpdir = make_request_directory();
+            $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
+            $downloaded = download_file_content($params['mbzurl']);
+            if ($downloaded === false || $downloaded === '') {
+                throw new moodle_exception('filenotfound');
+            }
+            file_put_contents($filepathlocal, $downloaded);
+        }
+
+        if ($filepathlocal === '' || !file_exists($filepathlocal)) {
             throw new moodle_exception('filenotfound');
         }
 
@@ -342,7 +367,7 @@ class local_actions extends external_api {
             $backupdir = restore_controller::get_tempdir_name(SITEID, $params['userid']) . '_' . $courseid . '_' . time();
             $path = make_backup_temp_directory($backupdir);
             $fp = get_file_packer('application/vnd.moodle.backup');
-            $fp->extract_to_pathname($params['filepath'], $path);
+            $fp->extract_to_pathname($filepathlocal, $path);
 
             try {
                 $target = $params['mode'] === 'replace' ? backup::TARGET_EXISTING_DELETING : backup::TARGET_CURRENT_ADDING;
