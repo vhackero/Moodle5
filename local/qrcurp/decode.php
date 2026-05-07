@@ -686,14 +686,33 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
         continue;
     }
     $type = $parts[2] ?? 'text';
-    if (!in_array($type, ['text', 'email', 'number', 'date'])) {
+    if (!in_array($type, ['text', 'email', 'number', 'date', 'checkbox', 'select'])) {
         $type = 'text';
+    }
+    $options = [];
+    if ($type === 'select' && !empty($parts[4])) {
+        foreach (explode(',', $parts[4]) as $optionraw) {
+            $optionraw = trim($optionraw);
+            if ($optionraw === '') {
+                continue;
+            }
+            $optionparts = array_map('trim', explode(':', $optionraw, 2));
+            $optionvalue = $optionparts[0] ?? '';
+            if ($optionvalue === '') {
+                continue;
+            }
+            $options[] = [
+                'value' => $optionvalue,
+                'label' => $optionparts[1] ?? $optionvalue,
+            ];
+        }
     }
     $formextrafields[] = [
         'shortname' => $shortname,
         'label' => $parts[1] ?? ucfirst(str_replace('_', ' ', $shortname)),
         'type' => $type,
         'required' => isset($parts[3]) && (int) $parts[3] === 1,
+        'options' => $options,
     ];
 }
 
@@ -1594,11 +1613,30 @@ foreach (preg_split('/\r\n|\r|\n/', $formextrafieldsraw) as $line) {
                                 <div class="form-group dynamic-extra-field">
                                     <p><?php echo s($extrafield['label']); ?>:
                                         <?php if ($extrafield['required']) { ?><span class="red-text"> *</span><?php } ?>
-                                        <input class="form-control"
-                                               id="extra_<?php echo s($extrafield['shortname']); ?>"
-                                               name="extra_fields[<?php echo s($extrafield['shortname']); ?>]"
-                                               type="<?php echo s($extrafield['type']); ?>"
-                                            <?php if ($extrafield['required']) { ?>required<?php } ?>>
+                                        <?php if ($extrafield['type'] === 'select') { ?>
+                                            <select class="form-control"
+                                                    id="extra_<?php echo s($extrafield['shortname']); ?>"
+                                                    name="extra_fields[<?php echo s($extrafield['shortname']); ?>]"
+                                                <?php if ($extrafield['required']) { ?>required<?php } ?>>
+                                                <option value="">Selecciona una opción</option>
+                                                <?php foreach (($extrafield['options'] ?? []) as $option) { ?>
+                                                    <option value="<?php echo s($option['value']); ?>"><?php echo s($option['label']); ?></option>
+                                                <?php } ?>
+                                            </select>
+                                        <?php } else if ($extrafield['type'] === 'checkbox') { ?>
+                                            <input
+                                                id="extra_<?php echo s($extrafield['shortname']); ?>"
+                                                name="extra_fields[<?php echo s($extrafield['shortname']); ?>]"
+                                                type="checkbox"
+                                                value="1"
+                                                <?php if ($extrafield['required']) { ?>required<?php } ?>>
+                                        <?php } else { ?>
+                                            <input class="form-control"
+                                                   id="extra_<?php echo s($extrafield['shortname']); ?>"
+                                                   name="extra_fields[<?php echo s($extrafield['shortname']); ?>]"
+                                                   type="<?php echo s($extrafield['type']); ?>"
+                                                <?php if ($extrafield['required']) { ?>required<?php } ?>>
+                                        <?php } ?>
                                     </p>
                                 </div>
                             <?php } ?>

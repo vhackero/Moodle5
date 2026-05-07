@@ -27,7 +27,7 @@ $fechaLimiteRegistro = strtotime($fechaLimiteRegistro);
 $fechaActual = strtotime(date('d-m-Y'));
 if($fechaActual > $fechaLimiteRegistro){
     $url = $CFG->wwwroot.'/index.php';
-    $menssage = "La fecha de registro ha concluido, te sugerimos consultar la información para el próximo periodo.";
+    $menssage = get_string('registrationclosed', 'local_qrcurp');
     redirect($url, $menssage , 5, \core\output\notification::NOTIFY_WARNING);
 }
 ?>
@@ -35,7 +35,7 @@ if($fechaActual > $fechaLimiteRegistro){
 <script src="../js/sweetalert.min.js"></script>
 <script>
     $(document).ready(function () {
-        swal("Te recordamos que si has estado en una lengua en más de 2 trimestres, no tendras acceso a esa lenga y deberas escoger otra lengua que quieras tomar.",{
+        swal(<?= json_encode(get_string('enrolmorewarning', 'local_qrcurp')) ?>,{
             closeOnClickOutside: false,
             button: "Aceptar"
         })
@@ -52,12 +52,12 @@ if($fechaActual > $fechaLimiteRegistro){
                     $("#typeuser").val(data[3]);
 
                     if ($("#cursos").val() == null) {
-                        swal("Verifica que tu CURP es correcta, o que te encuentras registrado en la plataforma, si estas seguro de que es correcta, contacta a el administrador del sitio: "+mailsuport);
+                        swal(<?= json_encode(get_string('enrolmoreinvalidcurp', 'local_qrcurp', '__MAIL__')) ?>.replace("__MAIL__", mailsuport));
                         $("#cursos").html('');
                         $("#grupos").html('');
                     }
                     if(data[4] == 1){
-                        swal("Solo puedes pertenecer a un curso del periodo actual").then((value)=>{
+                        swal(<?= json_encode(get_string('enrolmoreonecourseonly', 'local_qrcurp')) ?>).then((value)=>{
                             window.location.href =  "../../../";
                         })
                     }
@@ -81,25 +81,25 @@ if($fechaActual > $fechaLimiteRegistro){
     }
 </style>
 <form method="post" action="datos.php">
-    <h1>Hola, actualmente te encuentras registrado en CVL, para poder registrarte en el nuevo perido o seleccionar una nueva lengua, por favor, ingresa tu CURP y posteriormente selecciona el curso y el grupo al que deseas pertenecer: </h1>
+    <h1><?= get_string('enrolmoretitle', 'local_qrcurp') ?></h1>
     <hr>
     <div class="form-group">
-        <p>Clave Única de Registro de Población (CURP): <span class="red-text"> *</span> <br>    <input  class="form-control" name="curp" id="curp" type="text">
+        <p><?= get_string('enrolcurp', 'local_qrcurp') ?> <span class="red-text"> *</span> <br>    <input  class="form-control" name="curp" id="curp" type="text">
         </p>
     </div>
     <div class="form-group">
-        <p>Curso:<span class="red-text"> *</span> <br><select title="Este campo es requerido"  required class="form-control" name="cursos" id="cursos"></select></p>
+        <p><?= get_string('enrolcourse', 'local_qrcurp') ?><span class="red-text"> *</span> <br><select title="Este campo es requerido"  required class="form-control" name="cursos" id="cursos"></select></p>
     </div>
     <div class="form-group">
     <div class="form-group">
-        <p>Grupos disponibles:<span class="red-text"> *</span> <br><select title="Este campo es requerido" required class="form-control" name="grupos" id="grupos"></select></p>
+        <p><?= get_string('enrolavailablegroups', 'local_qrcurp') ?><span class="red-text"> *</span> <br><select title="Este campo es requerido" required class="form-control" name="grupos" id="grupos"></select></p>
     </div>
     <input name="email" id="email" type="hidden" >
     <input name="iduser" id="iduser" type="hidden">
     <input name="curso" id="curso" type="hidden">
     <input name="typeuser" id="typeuser" type="hidden">
     <input name="oldcurso" id="oldcurso" type="hidden">
-    <input class="btn btn-primary" type="submit" value="Inscribirme">
+    <input class="btn btn-primary" type="submit" value="<?= get_string('enrolsubmit', 'local_qrcurp') ?>">
     <br><br>
     <hr>
 

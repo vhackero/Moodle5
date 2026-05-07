@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_qrcurp';    //Full name of the plugin
-$plugin->version   = 2017111300;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version   = 2026050700;        // The current plugin version (Date: YYYYMMDDXX)
 //$plugin->requires  = 2021051100;        // Requires this Moodle version (3.4).
 $plugin->requires  = 2017111300;        // Requires this Moodle version (3.4).
-$plugin->release = '1.2.0';             //Version block
+$plugin->release = '1.3.0';             //Version block
