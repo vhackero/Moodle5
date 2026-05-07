@@ -350,10 +350,9 @@ class local_courses extends external_api {
 			//Note: create_course() core function check shortname, idnumber, category
 
             $course['id'] = create_course((object) $course)->id;
+            local_forum_external::default_forum($course['id']);
 			$resultcourses[] = array('id' => $course['id'], 'shortname' => $course['shortname']);
 		}
-		local_forum_external::default_forum($course['id']);
-
         //Comentado para el aula por defecto del aula modelo
 //		local_courses::crearURL($course['id']);
 //		local_courses::crearArchivo($course['id']);
@@ -413,6 +412,7 @@ class local_courses extends external_api {
         local_courses::crearSesionBBB($course['id']);
         local_courses::crearForo($course['id']);
 //        local_courses::createBlockByName($course['id'],'accessibility');
+        local_courses::createBlockByName($course['id'],'news_items');
         local_courses::createBlockByName($course['id'],'completion_progress');
         local_courses::createBlockByName($course['id'],'cien_tecnicas');
         local_courses::createBlockByName($course['id'],'calendar_month');
