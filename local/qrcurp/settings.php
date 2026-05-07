@@ -168,6 +168,8 @@ $settings->add(new admin_setting_configselect('local_qrcurp/rolstudent', get_str
             get_string('haygroupesperainfo', 'local_qrcurp'),0));
         $settings->add(new admin_setting_configtext('local_qrcurp/namegroupespera', get_string('namegroupespera', 'local_qrcurp'),
             get_string('namegroupesperainfo', 'local_qrcurp'), '', PARAM_RAW, 50));
+        $settings->add(new admin_setting_configtext('local_qrcurp/enrolmoreperiodcategoryid', get_string('enrolmoreperiodcategoryid', 'local_qrcurp'),
+            get_string('enrolmoreperiodcategoryidinfo', 'local_qrcurp'), '2', PARAM_INT, 10));
         $settings->add(new admin_setting_configtext('local_qrcurp/defaultnamecategory', get_string('defaultnamecategory', 'local_qrcurp'),
             get_string('defaultnamecategoryinfo', 'local_qrcurp'),'', PARAM_RAW, 50));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/confirmemail', get_string('confirmemail', 'local_qrcurp'),
