@@ -71,7 +71,10 @@ function local_qrcurp_course_has_available_group(int $courseid, int $rolstudent,
 }
 
 $curp = trim((string)($_POST['curp'] ?? ''));
-$idcategoria = 2;
+$idcategoria = (int)get_config('local_qrcurp', 'enrolmoreperiodcategoryid');
+if ($idcategoria <= 0) {
+    $idcategoria = 2;
+}
 $limitedecursos = 2;
 $existeEnPeridoActual = 0;
 $pertencelista = 0;
