@@ -625,18 +625,14 @@ class local_courses extends external_api {
         global $CFG, $DB;
 
         //conexión con el servidor SIGIE
+        $host = (string)get_config('local_wsplataforma', 'sigiedbhost');
+        $usuario = (string)get_config('local_wsplataforma', 'sigiedbuser');
+        $contrasena = (string)get_config('local_wsplataforma', 'sigiedbpass');
+        $base_datos = (string)get_config('local_wsplataforma', 'sigiedbname');
 
-//        $host = "localhost";   //local
-//        $host = "3.17.67.194";  //Pre-productivo
-        $host = "172.18.30.113"; //Productivo
-        $usuario = "elearning";
-        $contrasena = "elearning";
-        $base_datos = "des_sisi_gestor";
-
-        /*$host = "172.18.26.113";
-               $usuario = "elearning";
-               $contrasena = "elearning";
-               $base_datos = "des_sisi_gestor";*/
+        if ($host === '' || $usuario === '' || $base_datos === '') {
+            return 'not_find_data';
+        }
 
         try {
             // Establecer conexión con la base de datos utilizando PDO

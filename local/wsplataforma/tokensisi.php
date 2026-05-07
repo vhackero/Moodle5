@@ -45,17 +45,18 @@ if (is_restored_user($username)) {
 }
 
 //CTIE R001-07-03-2025
-if(isset($CFG->unencryptedpassword) AND $CFG->unencryptedpassword == 1){
+if ((int)get_config('local_wsplataforma', 'unencryptedpassword') === 1) {
     //Consulta la constraseña sin cifrar en SIGIE
     function conection_dbsigie(){
 
-        // Configuración de la base de datos
-//        $host = "3.17.67.194";  //Pre-productivo
-        $host = "172.18.30.115"; //Productivo
-        $usuario = "elearning";
-        $contrasena = "elearning";
-        $base_datos = "des_sisi_gestor";
+        $host = (string)get_config('local_wsplataforma', 'sigiedbhost');
+        $usuario = (string)get_config('local_wsplataforma', 'sigiedbuser');
+        $contrasena = (string)get_config('local_wsplataforma', 'sigiedbpass');
+        $base_datos = (string)get_config('local_wsplataforma', 'sigiedbname');
 
+        if ($host === '' || $usuario === '' || $base_datos === '') {
+            return null;
+        }
 
         try {
             // Establecer conexión con la base de datos utilizando PDO
