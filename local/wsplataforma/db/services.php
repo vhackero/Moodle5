@@ -202,6 +202,17 @@ $functions = array(
             'component'   => 'local',
             'capabilities'  => 'moodle/restore:restorecourse,moodle/restore:uploadfile,moodle/course:managefiles,moodle/course:backup',
         ),
+
+        'local_actions_mass_restore_courses' => array(
+            'classname'   => 'local_actions',
+            'methodname'  => 'mass_restore_courses',
+            'classpath'   => 'local/wsplataforma/externallib_actions.php',
+            'description' => 'Restaura un archivo MBZ de forma masiva sobre múltiples cursos (merge o replace)',
+            'type'        => 'write',
+            'component'   => 'local',
+            'capabilities'  => 'moodle/restore:restorecourse,moodle/restore:uploadfile,moodle/course:update,moodle/course:managefiles',
+        ),
+
         'local_actions_restore_course' => array(
             'classname'   => 'local_actions',
             'methodname'  => 'restore_course',

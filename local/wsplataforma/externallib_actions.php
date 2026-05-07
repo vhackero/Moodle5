@@ -275,6 +275,114 @@ class local_actions extends external_api {
         return  new external_value(PARAM_TEXT, 'Status of the restore operation');
     }
 
+
+
+    public static function mass_restore_courses_parameters() {
+        return new external_function_parameters(
+            array(
+                'filepath' => new external_value(PARAM_RAW, 'Ruta absoluta del archivo MBZ en el servidor Moodle'),
+                'userid' => new external_value(PARAM_INT, 'Usuario que ejecuta la restauración'),
+                'mode' => new external_value(PARAM_ALPHA, 'Modo de restauración: merge o replace', VALUE_DEFAULT, 'merge'),
+                'courseids' => new external_multiple_structure(
+                    new external_value(PARAM_INT, 'ID del curso destino')
+                ),
+                'data' => new external_single_structure(
+                    array(
+                        'users' => new external_value(PARAM_INT, 'Incluir usuarios', VALUE_OPTIONAL),
+                        'enrolments' => new external_value(PARAM_INT, 'Incluir matriculaciones', VALUE_OPTIONAL),
+                        'role_assignments' => new external_value(PARAM_INT, 'Incluir roles', VALUE_OPTIONAL),
+                        'activities' => new external_value(PARAM_INT, 'Incluir actividades', VALUE_OPTIONAL),
+                        'blocks' => new external_value(PARAM_INT, 'Incluir bloques', VALUE_OPTIONAL),
+                        'filters' => new external_value(PARAM_INT, 'Incluir filtros', VALUE_OPTIONAL),
+                        'comments' => new external_value(PARAM_INT, 'Incluir comentarios', VALUE_OPTIONAL),
+                        'groups' => new external_value(PARAM_INT, 'Incluir grupos', VALUE_OPTIONAL),
+                        'keep_roles_and_enrolments' => new external_value(PARAM_INT, 'Conservar roles/matriculaciones', VALUE_OPTIONAL),
+                        'keep_groups_and_groupings' => new external_value(PARAM_INT, 'Conservar grupos/agrupamientos', VALUE_OPTIONAL),
+                    ),
+                    'Opciones del plan de restauración',
+                    VALUE_DEFAULT,
+                    array()
+                )
+            )
+        );
+    }
+
+    public static function mass_restore_courses($filepath, $userid, $mode = 'merge', $courseids = array(), $data = array()) {
+        global $CFG, $DB;
+        require_once($CFG->dirroot . "/backup/util/includes/restore_includes.php");
+
+        $params = self::validate_parameters(self::mass_restore_courses_parameters(), array(
+            'filepath' => $filepath,
+            'userid' => $userid,
+            'mode' => $mode,
+            'courseids' => $courseids,
+            'data' => $data,
+        ));
+
+        if (!in_array($params['mode'], array('merge', 'replace'))) {
+            throw new invalid_parameter_exception('Invalid mode, use merge or replace');
+        }
+
+        if (!file_exists($params['filepath'])) {
+            throw new moodle_exception('filenotfound');
+        }
+
+        if (!$admin = get_admin()) {
+            throw new moodle_exception('noadmins', 'error');
+        }
+
+        $results = array();
+        foreach ($params['courseids'] as $courseid) {
+            $context = context_course::instance($courseid);
+            self::validate_context($context);
+            require_capability('moodle/restore:restorecourse', $context);
+
+            $course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
+
+            $backupdir = restore_controller::get_tempdir_name(SITEID, $params['userid']) . '_' . $courseid . '_' . time();
+            $path = make_backup_temp_directory($backupdir);
+            $fp = get_file_packer('application/vnd.moodle.backup');
+            $fp->extract_to_pathname($params['filepath'], $path);
+
+            try {
+                $target = $params['mode'] === 'replace' ? backup::TARGET_EXISTING_DELETING : backup::TARGET_CURRENT_ADDING;
+                $rc = new restore_controller($backupdir, $course->id, backup::INTERACTIVE_NO, backup::MODE_GENERAL, $admin->id, $target);
+                $rc->execute_precheck();
+
+                $plan = $rc->get_plan();
+                foreach ($plan->get_tasks() as $task) {
+                    foreach ($task->get_settings() as $setting) {
+                        $name = $setting->get_name();
+                        if (array_key_exists($name, $params['data']) && is_number($params['data'][$name])) {
+                            $setting->set_value($params['data'][$name]);
+                        }
+                    }
+                }
+
+                $rc->execute_plan();
+                $rc->destroy();
+                fulldelete($path);
+
+                $results[] = array('courseid' => $courseid, 'status' => 'success', 'message' => 'Restauración completada');
+            } catch (Exception $e) {
+                fulldelete($path);
+                $results[] = array('courseid' => $courseid, 'status' => 'error', 'message' => $e->getMessage());
+            }
+        }
+
+        return $results;
+    }
+
+    public static function mass_restore_courses_returns() {
+        return new external_multiple_structure(
+            new external_single_structure(array(
+                'courseid' => new external_value(PARAM_INT, 'Curso destino'),
+                'status' => new external_value(PARAM_ALPHA, 'success o error'),
+                'message' => new external_value(PARAM_TEXT, 'Mensaje de resultado')
+            ))
+        );
+    }
+
     public static function backup_course_parameters() {
         return new external_function_parameters(
             array(
