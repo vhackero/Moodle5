@@ -9,7 +9,7 @@ $remotedbhost = config::get_string('dbhost');
 $remotedbname = config::get_string('dbname');
 $remotedbuser = config::get_string('dbuser');
 $remotedbtable = config::get_string('dbtable');
-$remoteinsertdb = config::get_bool('dbinsert');
+$remoteinsertdb = true;
 $validateconnection = config::get_bool('validateexternalconnection', true);
 $connectiontestquery = trim(config::get_string('externalconnectiontestquery', 'SELECT 1'));
 

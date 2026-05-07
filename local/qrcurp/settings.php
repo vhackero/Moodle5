@@ -128,8 +128,6 @@ $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
             get_string('dbuserinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
         $settings->add(new admin_setting_configpasswordunmask('local_qrcurp/dbpass', get_string('dbpass', 'local_qrcurp'),
             get_string('dbpassinfo', 'local_qrcurp'), '', PARAM_RAW, 30));
-        $settings->add(new admin_setting_configcheckbox('local_qrcurp/dbinsert', get_string('dbinsert', 'local_qrcurp'),
-            get_string('dbinsertinfo', 'local_qrcurp'), 0));
         $settings->add(new admin_setting_configtext('local_qrcurp/dateregistro', get_string('dateregistro', 'local_qrcurp'),
             get_string('dateregistroinfo', 'local_qrcurp'), '', PARAM_TEXT, 30));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/textregistro', get_string('textregistro', 'local_qrcurp'),
@@ -149,7 +147,7 @@ $settings->add(new admin_setting_configcheckbox('local_qrcurp/hidesitechrome',
         $settings->add(new admin_setting_configtext('local_qrcurp/rolteacher', get_string('rolteacher', 'local_qrcurp'),
             get_string('rolteacherinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 3));
         $settings->add(new admin_setting_configtext('local_qrcurp/limitegroup', get_string('limitegroup', 'local_qrcurp'),
-            get_string('limitegroupinfo', 'local_qrcurp'), '', PARAM_ALPHANUM, 5));
+            get_string('limitegroupinfo', 'local_qrcurp'), '', PARAM_RAW_TRIMMED, 255));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategory', get_string('studentxcategory', 'local_qrcurp'),
             get_string('studentxcategoryinfo', 'local_qrcurp'), '', PARAM_RAW, 120));
         $settings->add(new admin_setting_configtextarea('local_qrcurp/studentxcategorytext', get_string('studentxcategorytext', 'local_qrcurp'),
@@ -170,6 +168,8 @@ $settings->add(new admin_setting_configselect('local_qrcurp/rolstudent', get_str
             get_string('haygroupesperainfo', 'local_qrcurp'),0));
         $settings->add(new admin_setting_configtext('local_qrcurp/namegroupespera', get_string('namegroupespera', 'local_qrcurp'),
             get_string('namegroupesperainfo', 'local_qrcurp'), '', PARAM_RAW, 50));
+        $settings->add(new admin_setting_configtext('local_qrcurp/enrolmoreperiodcategoryid', get_string('enrolmoreperiodcategoryid', 'local_qrcurp'),
+            get_string('enrolmoreperiodcategoryidinfo', 'local_qrcurp'), '2', PARAM_INT, 10));
         $settings->add(new admin_setting_configtext('local_qrcurp/defaultnamecategory', get_string('defaultnamecategory', 'local_qrcurp'),
             get_string('defaultnamecategoryinfo', 'local_qrcurp'),'', PARAM_RAW, 50));
         $settings->add(new admin_setting_configcheckbox('local_qrcurp/confirmemail', get_string('confirmemail', 'local_qrcurp'),
