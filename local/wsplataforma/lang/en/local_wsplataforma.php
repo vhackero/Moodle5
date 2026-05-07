@@ -22,7 +22,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Web Service Planetmedia';
+$string['pluginname'] = 'Servicio web Plataforma';
 
 $string['settings:unencryptedpassword'] = 'Use unencrypted password from SIGIE';
 $string['settings:unencryptedpassword_desc'] = 'If enabled, token authentication will query SIGIE for the password field instead of using the incoming password value.';
