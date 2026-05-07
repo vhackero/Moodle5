@@ -16,17 +16,17 @@
 /**
  * Web service local plugin template external functions and service definitions.
  *
- * @package    localwstemplate
+ * @package    localwsplataforma
  * @copyright  2011 Jerome Mouneyrac
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 // We defined the web service functions to install.
 $functions = array(
-        'local_wstemplate_hello_world' => array(
-                'classname'   => 'local_wstemplate_external',
+        'local_wsplataforma_hello_world' => array(
+                'classname'   => 'local_wsplataforma_external',
                 'methodname'  => 'hello_world',
-                'classpath'   => 'local/wstemplate/externallib.php',
+                'classpath'   => 'local/wsplataforma/externallib.php',
 		'component'   => 'local',
                 'description' => 'Return Hello World FIRSTNAME. Can change the text (Hello World) sending a new text as parameter',
                 'type'        => 'read',
@@ -39,7 +39,7 @@ $functions = array(
         'description'   => 'Returns student course total grade and grades for activities.
                                 This function does not return category or manual items.
                                 This function is suitable for managers or teachers not students.',
-        'classpath'   => 'local/wstemplate/externallib_grades_group.php',
+        'classpath'   => 'local/wsplataforma/externallib_grades_group.php',
         'type'          => 'read',
         'component'   => 'local',
         'capabilities'  => 'moodle/grade:view, moodle/grade:viewall, moodle/grade:viewhidden',
@@ -49,7 +49,7 @@ $functions = array(
         'classname'     => 'local_sections',
         'methodname'    => 'change_numsections',
         'description'   => 'Incrementa o decrementa el numero de secciones de un curso',
-        'classpath'   => 'local/wstemplate/externallib_sections.php',
+        'classpath'   => 'local/wsplataforma/externallib_sections.php',
         'type'          => 'write',
         'component'   => 'local',
         'capabilities'  => 'moodle/course:update',
@@ -59,7 +59,7 @@ $functions = array(
         'classname'     => 'local_sections',
         'methodname'    => 'get_section',
         'description'   => 'Obtiene una o todas las secciones de un curso',
-        'classpath'   => 'local/wstemplate/externallib_sections.php',
+        'classpath'   => 'local/wsplataforma/externallib_sections.php',
         'type'          => 'read',
         'component'   => 'local',
         'capabilities'  => 'moodle/course:update',
@@ -69,7 +69,7 @@ $functions = array(
         'classname'     => 'local_sections',
         'methodname'    => 'update_sections',
         'description'   => 'Actualiza una o mas secciones de un curso',
-        'classpath'   => 'local/wstemplate/externallib_sections.php',
+        'classpath'   => 'local/wsplataforma/externallib_sections.php',
         'type'          => 'write',
         'component'   => 'local',
         'capabilities'  => 'moodle/course:update',
@@ -78,7 +78,7 @@ $functions = array(
 				'classname'     => 'local_sections',
 				'methodname'    => 'delete_sections',
 				'description'   => 'Elimina una seccion de un curso, junto con su contenido',
-				'classpath'   => 'local/wstemplate/externallib_sections.php',
+				'classpath'   => 'local/wsplataforma/externallib_sections.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:update',
@@ -88,7 +88,7 @@ $functions = array(
 				'classname'     => 'local_courses',
 				'methodname'    => 'get_courses_without_idnumber',
 				'description'   => 'Obtiene los cursos que tienen el idnumber vacio',
-				'classpath'   => 'local/wstemplate/externallib_courses.php',
+				'classpath'   => 'local/wsplataforma/externallib_courses.php',
 				'type'          => 'read',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:update, moodle/course:viewhiddencourses, moodle/course:view',
@@ -97,7 +97,7 @@ $functions = array(
 				'classname'     => 'local_courses',
 				'methodname'    => 'create_course_notvisible',
 				'description'   => 'Crea un curso invisible y regresa el id generado',
-				'classpath'   => 'local/wstemplate/externallib_courses.php',
+				'classpath'   => 'local/wsplataforma/externallib_courses.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:create,moodle/course:visibility',
@@ -107,7 +107,7 @@ $functions = array(
 				'classname'     => 'local_mods',
 				'methodname'    => 'create_forum',
 				'description'   => 'Crea un foro en una seccion de un curso y regresa el id del foro',
-				'classpath'   => 'local/wstemplate/externallib_mods.php',
+				'classpath'   => 'local/wsplataforma/externallib_mods.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:update,moodle/grade:managegradingforms',
@@ -117,7 +117,7 @@ $functions = array(
 				'classname'     => 'local_mods',
 				'methodname'    => 'delete_mod',
 				'description'   => 'Elimina cualquier mod (Foro, Chat, SCORM, ETC )',
-				'classpath'   => 'local/wstemplate/externallib_mods.php',
+				'classpath'   => 'local/wsplataforma/externallib_mods.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:update,moodle/course:manageactivities',
@@ -127,7 +127,7 @@ $functions = array(
 				'classname'     => 'local_mods',
 				'methodname'    => 'create_scorm',
 				'description'   => 'Crea un scorm en una seccion de un curso y regresa el id del scorm',
-				'classpath'   => 'local/wstemplate/externallib_mods.php',
+				'classpath'   => 'local/wsplataforma/externallib_mods.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:update',
@@ -137,7 +137,7 @@ $functions = array(
 				'classname'     => 'local_courses',
 				'methodname'    => 'courses_create_tags',
 				'description'   => 'Crea una lista de tags del curso, eliminando las existentes. Los tagas son mostrados como competencias del curso',
-				'classpath'   => 'local/wstemplate/externallib_courses.php',
+				'classpath'   => 'local/wsplataforma/externallib_courses.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:update',
@@ -147,7 +147,7 @@ $functions = array(
 				'classname'     => 'local_courses',
 				'methodname'    => 'courses_duplicate_course',
 				'description'   => 'Duplica un curso con o sin datos de usuarios',
-				'classpath'   => 'local/wstemplate/externallib_courses.php',
+				'classpath'   => 'local/wsplataforma/externallib_courses.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:update,moodle/course:create,moodle/course:visibility',
@@ -157,7 +157,7 @@ $functions = array(
 				'classname'     => 'local_mods',
 				'methodname'    => 'delete_discussion',
 				'description'   => 'Elimina una discución de un foro',
-				'classpath'   => 'local/wstemplate/externallib_mods.php',
+				'classpath'   => 'local/wsplataforma/externallib_mods.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'mod/forum:deleteownpost,mod/forum:deleteanypost',
@@ -167,7 +167,7 @@ $functions = array(
 				'classname'     => 'local_courses',
 				'methodname'    => 'courses_avance_oas',
 				'description'   => 'Obtiene el avance de los OAs o medallas (Es decir el valor que tiene la barra de progreso de las medallas)',
-				'classpath'   => 'local/wstemplate/externallib_courses.php',
+				'classpath'   => 'local/wsplataforma/externallib_courses.php',
 				'type'          => 'read',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/grade:view',
@@ -177,7 +177,7 @@ $functions = array(
 				'classname'     => 'local_mods',
 				'methodname'    => 'add_discussion_news',
 				'description'   => 'Registra una discusión en el foro de novedades',
-				'classpath'   => 'local/wstemplate/externallib_mods.php',
+				'classpath'   => 'local/wsplataforma/externallib_mods.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => '',
@@ -187,7 +187,7 @@ $functions = array(
 				'classname'     => 'local_role',
 				'methodname'    => 'is_user_enrolled',
 				'description'   => 'Verifica si un usuario se encuentra enrolado',
-				'classpath'   => 'local/wstemplate/externallib_role.php',
+				'classpath'   => 'local/wsplataforma/externallib_role.php',
 				'type'          => 'read',
 				'component'   => 'local',
 		),
@@ -195,7 +195,7 @@ $functions = array(
         'local_actions_backup_course' => array(
             'classname'   => 'local_actions',
             'methodname'  => 'backup_course',
-            'classpath'   => 'local/wstemplate/externallib_actions.php',
+            'classpath'   => 'local/wsplataforma/externallib_actions.php',
             'description' => 'Backup a course',
             'type'        => 'write',
             'ajax'        => true,
@@ -205,7 +205,7 @@ $functions = array(
         'local_actions_restore_course' => array(
             'classname'   => 'local_actions',
             'methodname'  => 'restore_course',
-            'classpath'   => 'local/wstemplate/externallib_actions.php',
+            'classpath'   => 'local/wsplataforma/externallib_actions.php',
             'description' => 'restore a course',
             'type'        => 'write',
             'component'   => 'local',
@@ -216,7 +216,7 @@ $functions = array(
             'classname'     => 'local_courses',
             'methodname'    => 'courses_backup_course',
             'description'   => 'Obtiene una URL para descargar un backup de un curso',
-            'classpath'   => 'local/wstemplate/externallib_courses.php',
+            'classpath'   => 'local/wsplataforma/externallib_courses.php',
             'type'          => 'write',
             'component'   => 'local',
 			'capabilities'  => 'moodle/restore:restorecourse,moodle/restore:uploadfile,moodle/course:managefiles',
@@ -226,7 +226,7 @@ $functions = array(
 				'classname'     => 'local_sections',
 				'methodname'    => 'update_sections_sequence',
 				'description'   => 'Actualiza una o mas secciones de un curso',
-				'classpath'   => 'local/wstemplate/externallib_sections.php',
+				'classpath'   => 'local/wsplataforma/externallib_sections.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'moodle/course:update',
@@ -235,7 +235,7 @@ $functions = array(
 				'classname'     => 'local_courses',
 				'methodname'    => 'update_enrolments_course',
 				'description'   => 'Actualiza la matriculación de un estudiante a un curso',
-				'classpath'   => 'local/wstemplate/externallib_courses.php',
+				'classpath'   => 'local/wsplataforma/externallib_courses.php',
 				'type'          => 'write',
 				'component'   => 'local',
 				'capabilities'  => 'enrol/manual:manage',
@@ -248,44 +248,44 @@ $functions = array(
  
  	INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) 
   			VALUES (NULL, 'local_courses_backup_course', 'local_courses', 'courses_backup_course', 
-  			'local/wstemplate/externallib_courses.php', 'local_wstemplate', 
+  			'local/wsplataforma/externallib_courses.php', 'local_wsplataforma', 
   			'');
   			
   	
  
  	INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) 
   			VALUES (NULL, 'local_update_sections_sequence', 'local_sections', 'update_sections_sequence', 
-  			'local/wstemplate/externallib_sections.php', 'local_wstemplate', 'moodle/course:update');
+  			'local/wsplataforma/externallib_sections.php', 'local_wsplataforma', 'moodle/course:update');
  
-  INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) VALUES (NULL, 'local_mods_create_forum', 'local_mods', 'create_forum', 'local/wstemplate/externallib_mods.php', 'local_wstemplate', 'moodle/course:update');
-  INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) VALUES (NULL, 'local_mods_delete', 'local_mods', 'delete_mod', 'local/wstemplate/externallib_mods.php', 'local_wstemplate', 'moodle/course:update,moodle/course:manageactivities');
-  INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) VALUES (NULL, 'local_mods_create_scorm', 'local_mods', 'create_scorm', 'local/wstemplate/externallib_mods.php', 'local_wstemplate', 'moodle/course:update');
+  INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) VALUES (NULL, 'local_mods_create_forum', 'local_mods', 'create_forum', 'local/wsplataforma/externallib_mods.php', 'local_wsplataforma', 'moodle/course:update');
+  INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) VALUES (NULL, 'local_mods_delete', 'local_mods', 'delete_mod', 'local/wsplataforma/externallib_mods.php', 'local_wsplataforma', 'moodle/course:update,moodle/course:manageactivities');
+  INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) VALUES (NULL, 'local_mods_create_scorm', 'local_mods', 'create_scorm', 'local/wsplataforma/externallib_mods.php', 'local_wsplataforma', 'moodle/course:update');
   INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) 
-  			VALUES (NULL, 'local_courses_create_tags', 'local_courses', 'courses_create_tags', 'local/wstemplate/externallib_courses.php', 'local_wstemplate', 'moodle/course:update');
+  			VALUES (NULL, 'local_courses_create_tags', 'local_courses', 'courses_create_tags', 'local/wsplataforma/externallib_courses.php', 'local_wsplataforma', 'moodle/course:update');
   			
   INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) 
-  			VALUES (NULL, 'local_courses_duplicate_course', 'local_courses', 'courses_duplicate_course', 'local/wstemplate/externallib_courses.php', 'local_wstemplate', 'moodle/course:update,moodle/course:create,moodle/course:visibility');
+  			VALUES (NULL, 'local_courses_duplicate_course', 'local_courses', 'courses_duplicate_course', 'local/wsplataforma/externallib_courses.php', 'local_wsplataforma', 'moodle/course:update,moodle/course:create,moodle/course:visibility');
   			
   INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) 
-  			VALUES (NULL, 'local_forums_delete_discussion', 'local_mods', 'delete_discussion', 'local/wstemplate/externallib_mods.php', 
-  			'local_wstemplate', 'mod/forum:deleteownpost,mod/forum:deleteanypost');
+  			VALUES (NULL, 'local_forums_delete_discussion', 'local_mods', 'delete_discussion', 'local/wsplataforma/externallib_mods.php', 
+  			'local_wsplataforma', 'mod/forum:deleteownpost,mod/forum:deleteanypost');
   
   INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) 
   			VALUES (NULL, 'local_add_discussion_news', 'local_mods', 'add_discussion_news', 
-  			'local/wstemplate/externallib_mods.php', 'local_wstemplate', 
+  			'local/wsplataforma/externallib_mods.php', 'local_wsplataforma', 
   			'');
   			
   			
   INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) 
   			VALUES (NULL, 'local_courses_avance_oas', 'local_courses', 'courses_avance_oas', 
-  			'local/wstemplate/externallib_courses.php', 'local_wstemplate', 
+  			'local/wsplataforma/externallib_courses.php', 'local_wsplataforma', 
   			'moodle/grade:view');
   			
   			
   			
   			INSERT INTO `mdl_external_functions` (`id`, `name`, `classname`, `methodname`, `classpath`, `component`, `capabilities`) 
   			VALUES (NULL, 'local_role_is_user_enrolled', 'local_role', 'is_user_enrolled', 
-  			'local/wstemplate/externallib_role.php', 'local_wstemplate', 
+  			'local/wsplataforma/externallib_role.php', 'local_wsplataforma', 
   			'');
   			
   	

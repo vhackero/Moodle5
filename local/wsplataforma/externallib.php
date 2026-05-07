@@ -16,13 +16,13 @@
 /**
  * External Web Service Template
  *
- * @package    localwstemplate
+ * @package    localwsplataforma
  * @copyright  2011 Moodle Pty Ltd (http://moodle.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 require_once($CFG->libdir . "/externallib.php");
 
-class local_wstemplate_external extends external_api {
+class local_wsplataforma_external extends external_api {
 
     /**
      * Returns description of method parameters
@@ -48,7 +48,7 @@ class local_wstemplate_external extends external_api {
 
         //Context validation
         //OPTIONAL but in most web service it should present
-        $context = get_context_instance(CONTEXT_USER, $USER->id);
+        $context = context_user::instance($USER->id);
         self::validate_context($context);
 
         //Capability checking

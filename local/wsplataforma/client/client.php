@@ -1,12 +1,12 @@
 <?php
-// This client for local_wstemplate is free software: you can redistribute it and/or modify
+// This client for local_wsplataforma is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 //
 
 /**
- * XMLRPC client for Moodle 2 - local_wstemplate
+ * XMLRPC client for Moodle 2 - local_wsplataforma
  *
  * This script does not depend of any Moodle code,
  * and it can be called from a browser.
@@ -26,7 +26,7 @@ $token = 'ac9335007432794a8c79026471b541bc';
 $domainname = 'http://localhost/moodle-modelo/';
 
 /// FUNCTION NAME
-$functionname = 'local_wstemplate_hello_world';
+$functionname = 'local_wsplataforma_hello_world';
 
 /// PARAMETERS
 $welcomemsg = 'Hello, ';
