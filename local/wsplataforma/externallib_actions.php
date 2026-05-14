@@ -327,24 +327,39 @@ class local_actions extends external_api {
 
         $tmpdir = make_request_directory();
         $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
-        $downloaded = download_file_content($params['mbzurl']);
 
-        // Local Moodle URL or loopback fallback.
-        if ($downloaded === false || $downloaded === '') {
-            $urlparts = parse_url($params['mbzurl']);
+        $urlparts = parse_url($params['mbzurl']);
+        if (empty($urlparts['scheme']) || empty($urlparts['host'])) {
+            throw new invalid_parameter_exception('mbzurl must be an absolute URL');
+        }
+
+        $siteurlparts = parse_url($CFG->wwwroot);
+        $issamehost = !empty($siteurlparts['host']) && strcasecmp($siteurlparts['host'], $urlparts['host']) === 0;
+
+        if (!$issamehost) {
+            // External URL: always download first and work locally after that.
+            $downloaded = download_file_content($params['mbzurl']);
+            if ($downloaded === false || $downloaded === '') {
+                throw new moodle_exception('filenotfound');
+            }
+            file_put_contents($filepathlocal, $downloaded);
+        } else {
+            // Same-host URL: resolve to local file path when possible.
+            $localpath = '';
             if (!empty($urlparts['path'])) {
                 $localpath = rtrim($CFG->dirroot, '/') . $urlparts['path'];
-                if (file_exists($localpath) && is_readable($localpath)) {
-                    $downloaded = file_get_contents($localpath);
+            }
+            if ($localpath === '' || !file_exists($localpath) || !is_readable($localpath)) {
+                // Fallback: try HTTP download on same host if direct path mapping is unavailable.
+                $downloaded = download_file_content($params['mbzurl']);
+                if ($downloaded === false || $downloaded === '') {
+                    throw new moodle_exception('filenotfound');
                 }
+                file_put_contents($filepathlocal, $downloaded);
+            } else {
+                $filepathlocal = $localpath;
             }
         }
-
-        if ($downloaded === false || $downloaded === '') {
-            throw new moodle_exception('filenotfound');
-        }
-
-        file_put_contents($filepathlocal, $downloaded);
 
         if ($filepathlocal === '' || !file_exists($filepathlocal) || !is_readable($filepathlocal)) {
             throw new moodle_exception('filenotfound');
