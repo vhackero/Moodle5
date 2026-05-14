@@ -319,7 +319,7 @@ $services = array(
                 		'core_enrol_get_enrolled_users', 'core_user_create_users', 'core_user_get_users', 'enrol_manual_enrol_users', 
                 		'enrol_manual_unenrol_users', 'gradereport_user_get_grades_table','local_delete_sections', 'core_grades_get_grades',
                 		'local_add_discussion_news', 'local_role_is_user_enrolled', 'local_update_sections_sequence', 'core_user_update_users',
-                		'local_courses_backup_course', 'local_actions_restore_course', 'local_actions_backup_course','local_update_enrolments_course',''
+                		'local_courses_backup_course', 'local_actions_restore_course', 'local_actions_backup_course', 'local_actions_mass_restore_courses', 'local_update_enrolments_course'
                 ),
                 'restrictedusers' => 0,
         		'shortname' => 'sigiews',
