@@ -280,10 +280,8 @@ class local_actions extends external_api {
     public static function mass_restore_courses_parameters() {
         return new external_function_parameters(
             array(
-                'filepath' => new external_value(PARAM_RAW, 'Ruta absoluta del archivo MBZ en el servidor Moodle', VALUE_DEFAULT, ''),
-                'mbzbase64' => new external_value(PARAM_RAW, 'Contenido del archivo MBZ codificado en base64', VALUE_DEFAULT, ''),
-                'mbzfilename' => new external_value(PARAM_FILE, 'Nombre de archivo MBZ cuando se usa mbzbase64', VALUE_DEFAULT, 'restore.mbz'),
-                'mbzurl' => new external_value(PARAM_URL, 'URL HTTPS del MBZ para descarga en servidor Moodle', VALUE_DEFAULT, ''),
+                'mbzfilename' => new external_value(PARAM_FILE, 'Nombre de archivo MBZ', VALUE_DEFAULT, 'restore.mbz'),
+                'mbzurl' => new external_value(PARAM_URL, 'URL del MBZ (local de Moodle o servidor externo)'),
                 'userid' => new external_value(PARAM_INT, 'Usuario que ejecuta la restauración'),
                 'mode' => new external_value(PARAM_ALPHA, 'Modo de restauración: merge o replace', VALUE_DEFAULT, 'merge'),
                 'courseids' => new external_multiple_structure(
@@ -310,13 +308,11 @@ class local_actions extends external_api {
         );
     }
 
-    public static function mass_restore_courses($filepath = '', $mbzbase64 = '', $mbzfilename = 'restore.mbz', $mbzurl = '', $userid = 0, $mode = 'merge', $courseids = array(), $data = array()) {
+    public static function mass_restore_courses($mbzfilename = 'restore.mbz', $mbzurl = '', $userid = 0, $mode = 'merge', $courseids = array(), $data = array()) {
         global $CFG, $DB;
         require_once($CFG->dirroot . "/backup/util/includes/restore_includes.php");
 
         $params = self::validate_parameters(self::mass_restore_courses_parameters(), array(
-            'filepath' => $filepath,
-            'mbzbase64' => $mbzbase64,
             'mbzfilename' => $mbzfilename,
             'mbzurl' => $mbzurl,
             'userid' => $userid,
@@ -329,37 +325,26 @@ class local_actions extends external_api {
             throw new invalid_parameter_exception('Invalid mode, use merge or replace');
         }
 
-        $filepathlocal = $params['filepath'];
-        if ($filepathlocal === '' && $params['mbzbase64'] !== '') {
-            $tmpdir = make_request_directory();
-            $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
-            $rawfile = base64_decode($params['mbzbase64'], true);
-            if ($rawfile === false) {
-                throw new invalid_parameter_exception('mbzbase64 is not valid base64');
-            }
-            file_put_contents($filepathlocal, $rawfile);
-        } else if ($filepathlocal === '' && $params['mbzurl'] !== '') {
-            $tmpdir = make_request_directory();
-            $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
-            $downloaded = download_file_content($params['mbzurl']);
+        $tmpdir = make_request_directory();
+        $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
+        $downloaded = download_file_content($params['mbzurl']);
 
-            // Fallback for local URLs when web server/loopback routing blocks curl download.
-            if ($downloaded === false || $downloaded === '') {
-                $urlparts = parse_url($params['mbzurl']);
-                if (!empty($urlparts['host']) && in_array($urlparts['host'], array('localhost', '127.0.0.1')) && !empty($urlparts['path'])) {
-                    $localpath = rtrim($CFG->dirroot, '/') . $urlparts['path'];
-                    if (file_exists($localpath) && is_readable($localpath)) {
-                        $downloaded = file_get_contents($localpath);
-                    }
+        // Local Moodle URL or loopback fallback.
+        if ($downloaded === false || $downloaded === '') {
+            $urlparts = parse_url($params['mbzurl']);
+            if (!empty($urlparts['path'])) {
+                $localpath = rtrim($CFG->dirroot, '/') . $urlparts['path'];
+                if (file_exists($localpath) && is_readable($localpath)) {
+                    $downloaded = file_get_contents($localpath);
                 }
             }
-
-            if ($downloaded === false || $downloaded === '') {
-                throw new moodle_exception('filenotfound');
-            }
-
-            file_put_contents($filepathlocal, $downloaded);
         }
+
+        if ($downloaded === false || $downloaded === '') {
+            throw new moodle_exception('filenotfound');
+        }
+
+        file_put_contents($filepathlocal, $downloaded);
 
         if ($filepathlocal === '' || !file_exists($filepathlocal) || !is_readable($filepathlocal)) {
             throw new moodle_exception('filenotfound');
