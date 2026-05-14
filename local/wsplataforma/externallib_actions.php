@@ -342,13 +342,26 @@ class local_actions extends external_api {
             $tmpdir = make_request_directory();
             $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
             $downloaded = download_file_content($params['mbzurl']);
+
+            // Fallback for local URLs when web server/loopback routing blocks curl download.
+            if ($downloaded === false || $downloaded === '') {
+                $urlparts = parse_url($params['mbzurl']);
+                if (!empty($urlparts['host']) && in_array($urlparts['host'], array('localhost', '127.0.0.1')) && !empty($urlparts['path'])) {
+                    $localpath = rtrim($CFG->dirroot, '/') . $urlparts['path'];
+                    if (file_exists($localpath) && is_readable($localpath)) {
+                        $downloaded = file_get_contents($localpath);
+                    }
+                }
+            }
+
             if ($downloaded === false || $downloaded === '') {
                 throw new moodle_exception('filenotfound');
             }
+
             file_put_contents($filepathlocal, $downloaded);
         }
 
-        if ($filepathlocal === '' || !file_exists($filepathlocal)) {
+        if ($filepathlocal === '' || !file_exists($filepathlocal) || !is_readable($filepathlocal)) {
             throw new moodle_exception('filenotfound');
         }
 
