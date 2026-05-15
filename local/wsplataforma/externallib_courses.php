@@ -350,10 +350,9 @@ class local_courses extends external_api {
 			//Note: create_course() core function check shortname, idnumber, category
 
             $course['id'] = create_course((object) $course)->id;
+            local_forum_external::default_forum($course['id']);
 			$resultcourses[] = array('id' => $course['id'], 'shortname' => $course['shortname']);
 		}
-		local_forum_external::default_forum($course['id']);
-
         //Comentado para el aula por defecto del aula modelo
 //		local_courses::crearURL($course['id']);
 //		local_courses::crearArchivo($course['id']);
@@ -413,6 +412,7 @@ class local_courses extends external_api {
         local_courses::crearSesionBBB($course['id']);
         local_courses::crearForo($course['id']);
 //        local_courses::createBlockByName($course['id'],'accessibility');
+        local_courses::createBlockByName($course['id'],'news_items');
         local_courses::createBlockByName($course['id'],'completion_progress');
         local_courses::createBlockByName($course['id'],'cien_tecnicas');
         local_courses::createBlockByName($course['id'],'calendar_month');
@@ -625,18 +625,14 @@ class local_courses extends external_api {
         global $CFG, $DB;
 
         //conexión con el servidor SIGIE
+        $host = (string)get_config('local_wsplataforma', 'sigiedbhost');
+        $usuario = (string)get_config('local_wsplataforma', 'sigiedbuser');
+        $contrasena = (string)get_config('local_wsplataforma', 'sigiedbpass');
+        $base_datos = (string)get_config('local_wsplataforma', 'sigiedbname');
 
-//        $host = "localhost";   //local
-//        $host = "3.17.67.194";  //Pre-productivo
-        $host = "172.18.30.113"; //Productivo
-        $usuario = "elearning";
-        $contrasena = "elearning";
-        $base_datos = "des_sisi_gestor";
-
-        /*$host = "172.18.26.113";
-               $usuario = "elearning";
-               $contrasena = "elearning";
-               $base_datos = "des_sisi_gestor";*/
+        if ($host === '' || $usuario === '' || $base_datos === '') {
+            return 'not_find_data';
+        }
 
         try {
             // Establecer conexión con la base de datos utilizando PDO

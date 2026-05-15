@@ -16,10 +16,21 @@
 
 /**
  * Web service template plugin related strings
- * @package   localwstemplate
+ * @package   localwsplataforma
  * @copyright 2011 Moodle Pty Ltd (http://moodle.com)
  * @author    Jerome Mouneyrac
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$string['pluginname'] = 'Web Service Planetmedia';
+$string['pluginname'] = 'Servicio web Plataforma';
+
+$string['settings:unencryptedpassword'] = 'Use unencrypted password from SIGIE';
+$string['settings:unencryptedpassword_desc'] = 'If enabled, token authentication will query SIGIE for the password field instead of using the incoming password value.';
+$string['settings:sigiedbhost'] = 'SIGIE DB host';
+$string['settings:sigiedbhost_desc'] = 'Hostname or IP address for SIGIE database access.';
+$string['settings:sigiedbname'] = 'SIGIE DB name';
+$string['settings:sigiedbname_desc'] = 'Database name for SIGIE integration.';
+$string['settings:sigiedbuser'] = 'SIGIE DB user';
+$string['settings:sigiedbuser_desc'] = 'Database user for SIGIE integration.';
+$string['settings:sigiedbpass'] = 'SIGIE DB password';
+$string['settings:sigiedbpass_desc'] = 'Database password for SIGIE integration.';
