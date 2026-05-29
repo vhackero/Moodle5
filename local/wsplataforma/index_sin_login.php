@@ -147,8 +147,8 @@ if (!isset($frm) or !is_object($frm)) {
 }
 
 if (empty($frm->username) ) {  // See bug 5184
-    if (!empty($_GET["username"])) {
-        $frm->username = clean_param($_GET["username"], PARAM_RAW); // we do not want data from _POST here
+    if (($username = optional_param("username", "", PARAM_RAW)) !== "") {
+        $frm->username = $username;
     } else {
         $frm->username = get_moodle_cookie();
     }

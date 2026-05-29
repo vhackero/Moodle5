@@ -316,9 +316,9 @@ class local_sections extends external_api {
             $data = ((object)$section);
 
             //CTIE RV002-18062025 LFAS Modificación para generar la estructura de las semanas correctamente desde SIGIE por captura erronea de los programas
-            if(!$nombrerealSection[$data->id]){
+            if (!array_key_exists($data->id, $nombrerealSection)) {
                 continue;
-            }else{
+            } else {
                 $data->name = $nombrerealSection[$data->id];
             }
             //FIN CTIE RV002
@@ -340,7 +340,7 @@ class local_sections extends external_api {
             } catch (Exception $e) {
                 $exceptionparam = new stdClass();
                 $exceptionparam->message = $e->getMessage();
-                $exceptionparam->courseid = $params['courseid'];
+                $exceptionparam->courseid = $data->course;
                 throw new moodle_exception('errorcoursecontextnotvalid' , 'webservice', '', $exceptionparam);
             }
 
@@ -350,8 +350,10 @@ class local_sections extends external_api {
 
             if (!empty($CFG->enableavailability)) {
                 // Renamed field.
-                $data->availability = $data->availabilityconditionsjson;
-                unset($data->availabilityconditionsjson);
+                if (property_exists($data, 'availabilityconditionsjson')) {
+                    $data->availability = $data->availabilityconditionsjson;
+                    unset($data->availabilityconditionsjson);
+                }
                 if ($data->availability === '') {
                     $data->availability = null;
                 }
@@ -557,7 +559,7 @@ class local_sections extends external_api {
             } catch (Exception $e) {
                 $exceptionparam = new stdClass();
                 $exceptionparam->message = $e->getMessage();
-                $exceptionparam->courseid = $params['courseid'];
+                $exceptionparam->courseid = $data->course;
                 throw new moodle_exception('errorcoursecontextnotvalid' , 'webservice', '', $exceptionparam);
             }
 
@@ -566,8 +568,10 @@ class local_sections extends external_api {
             $course = $DB->get_record('course', array('id' => $data->course), '*', MUST_EXIST);
             if (!empty($CFG->enableavailability)) {
                 // Renamed field.
-                $data->availability = $data->availabilityconditionsjson;
-                unset($data->availabilityconditionsjson);
+                if (property_exists($data, 'availabilityconditionsjson')) {
+                    $data->availability = $data->availabilityconditionsjson;
+                    unset($data->availabilityconditionsjson);
+                }
                 if ($data->availability === '') {
                     $data->availability = null;
                 }
