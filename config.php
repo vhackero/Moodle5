@@ -6,10 +6,10 @@ $CFG = new stdClass();
 
 $CFG->dbtype    = 'mariadb';
 $CFG->dblibrary = 'native';
-$CFG->dbhost    = 'localhost';
+$CFG->dbhost    = 'mariadb';
 $CFG->dbname    = 'moodle';
-$CFG->dbuser    = 'root';
-$CFG->dbpass    = '';
+$CFG->dbuser    = 'moodle';
+$CFG->dbpass    = 'moodlepass';
 $CFG->prefix    = 'mdl_';
 $CFG->dboptions = array (
   'dbpersist' => 0,
@@ -18,8 +18,8 @@ $CFG->dboptions = array (
   'dbcollation' => 'utf8mb4_unicode_ci',
 );
 
-$CFG->wwwroot   = 'http://localhost/moodle';
-$CFG->dataroot  = 'C:\\xampp82\\moodledata';
+$CFG->wwwroot   = 'http://localhost:8080';
+$CFG->dataroot  = '/var/www/moodledata';
 $CFG->admin     = 'admin';
 
 $CFG->directorypermissions = 0777;
