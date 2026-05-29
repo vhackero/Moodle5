@@ -325,44 +325,45 @@ class local_actions extends external_api {
             throw new invalid_parameter_exception('Invalid mode, use merge or replace');
         }
 
-        $tmpdir = make_request_directory();
-        $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
-
         $urlparts = parse_url($params['mbzurl']);
         if (empty($urlparts['scheme']) || empty($urlparts['host'])) {
             throw new invalid_parameter_exception('mbzurl must be an absolute URL');
         }
 
-        $siteurlparts = parse_url($CFG->wwwroot);
-        $issamehost = !empty($siteurlparts['host']) && strcasecmp($siteurlparts['host'], $urlparts['host']) === 0;
+        $tmpdir = make_request_directory();
+        $filepathlocal = $tmpdir . '/' . clean_param($params['mbzfilename'], PARAM_FILE);
 
-        if (!$issamehost) {
-            // External URL: always download first and work locally after that.
-            $downloaded = download_file_content($params['mbzurl']);
-            if ($downloaded === false || $downloaded === '') {
-                throw new moodle_exception('filenotfound');
-            }
-            file_put_contents($filepathlocal, $downloaded);
-        } else {
-            // Same-host URL: resolve to local file path when possible.
-            $localpath = '';
-            if (!empty($urlparts['path'])) {
-                $localpath = rtrim($CFG->dirroot, '/') . $urlparts['path'];
-            }
-            if ($localpath === '' || !file_exists($localpath) || !is_readable($localpath)) {
-                // Fallback: try HTTP download on same host if direct path mapping is unavailable.
-                $downloaded = download_file_content($params['mbzurl']);
-                if ($downloaded === false || $downloaded === '') {
-                    throw new moodle_exception('filenotfound');
-                }
-                file_put_contents($filepathlocal, $downloaded);
-            } else {
+        $downloadresponse = download_file_content(
+            $params['mbzurl'],
+            null,
+            null,
+            true,
+            300,
+            20,
+            false,
+            $filepathlocal
+        );
+
+        $downloadok = !empty($downloadresponse->status)
+            && (int)$downloadresponse->status === 200
+            && file_exists($filepathlocal)
+            && is_readable($filepathlocal)
+            && filesize($filepathlocal) > 0;
+
+        if (!$downloadok) {
+            $localpath = self::get_local_mbz_path_from_url($params['mbzurl']);
+            if ($localpath !== '' && file_exists($localpath) && is_readable($localpath)) {
                 $filepathlocal = $localpath;
+                $downloadok = true;
             }
         }
 
-        if ($filepathlocal === '' || !file_exists($filepathlocal) || !is_readable($filepathlocal)) {
-            throw new moodle_exception('filenotfound');
+        if (!$downloadok || $filepathlocal === '' || !file_exists($filepathlocal) || !is_readable($filepathlocal)) {
+            $status = isset($downloadresponse->status) ? $downloadresponse->status : '0';
+            $response = isset($downloadresponse->response_code) ? $downloadresponse->response_code : '';
+            $error = isset($downloadresponse->error) ? $downloadresponse->error : '';
+            throw new invalid_parameter_exception('No se pudo obtener el archivo MBZ desde mbzurl. HTTP status: '
+                . $status . '. Response: ' . $response . '. Error: ' . $error);
         }
 
         if (!$admin = get_admin()) {
@@ -409,6 +410,56 @@ class local_actions extends external_api {
         }
 
         return $results;
+    }
+
+    /**
+     * Resolve a same-server URL to a readable local filesystem path when possible.
+     *
+     * This is only a fallback for local/XAMPP style deployments where the MBZ is
+     * published by the same machine but HTTP download is blocked by loopback,
+     * port, virtualhost or curl restrictions.
+     *
+     * @param string $mbzurl Absolute MBZ URL.
+     * @return string Readable local path or empty string.
+     */
+    private static function get_local_mbz_path_from_url($mbzurl) {
+        global $CFG;
+
+        $urlparts = parse_url($mbzurl);
+        if (empty($urlparts['host']) || empty($urlparts['path'])) {
+            return '';
+        }
+
+        $host = strtolower($urlparts['host']);
+        $siteparts = parse_url($CFG->wwwroot);
+        $sitehost = empty($siteparts['host']) ? '' : strtolower($siteparts['host']);
+        $islocalhost = in_array($host, array('localhost', '127.0.0.1', '::1'));
+        $issamesitehost = $sitehost !== '' && $host === $sitehost;
+
+        if (!$islocalhost && !$issamesitehost) {
+            return '';
+        }
+
+        $candidates = array();
+        $urlpath = urldecode($urlparts['path']);
+        $candidates[] = rtrim($CFG->dirroot, '/') . $urlpath;
+
+        if (!empty($_SERVER['DOCUMENT_ROOT'])) {
+            $candidates[] = rtrim($_SERVER['DOCUMENT_ROOT'], '/') . $urlpath;
+        }
+
+        $sitepath = empty($siteparts['path']) ? '' : rtrim($siteparts['path'], '/');
+        if ($sitepath !== '' && strpos($urlpath, $sitepath . '/') === 0) {
+            $candidates[] = rtrim($CFG->dirroot, '/') . substr($urlpath, strlen($sitepath));
+        }
+
+        foreach (array_unique($candidates) as $candidate) {
+            if ($candidate !== '' && file_exists($candidate) && is_readable($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return '';
     }
 
     public static function mass_restore_courses_returns() {
