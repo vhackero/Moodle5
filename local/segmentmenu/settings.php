@@ -18,6 +18,28 @@ if ($hassiteconfig || has_capability('local/segmentmenu:manage', context_system:
         PARAM_ALPHANUMEXT
     ));
 
+    $settings->add(new admin_setting_configselect(
+        'local_segmentmenu/menuposition',
+        get_string('menuposition', 'local_segmentmenu'),
+        get_string('menuposition_desc', 'local_segmentmenu'),
+        'right',
+        [
+            'right' => get_string('positionright', 'local_segmentmenu'),
+            'left' => get_string('positionleft', 'local_segmentmenu'),
+            'sticky' => get_string('positionsticky', 'local_segmentmenu'),
+        ]
+    ));
+
+    $settings->add(new admin_setting_configtextarea(
+        'local_segmentmenu/menuitems',
+        get_string('menuitems', 'local_segmentmenu'),
+        get_string('menuitems_desc', 'local_segmentmenu'),
+        '',
+        PARAM_RAW,
+        '60',
+        '10'
+    ));
+
     $ADMIN->add('localplugins', $settings);
     $ADMIN->add('localplugins', new admin_externalpage(
         'local_segmentmenu_manage',

@@ -35,4 +35,61 @@ class segment_resolver {
 
         return item_repository::normalise_segment($value ?: '');
     }
+
+    public static function get_current_user_course_roles(): array {
+        global $PAGE, $USER;
+
+        if (empty($USER->id) || empty($PAGE->course->id) || (int)$PAGE->course->id === SITEID) {
+            return [];
+        }
+
+        $context = \context_course::instance((int)$PAGE->course->id, IGNORE_MISSING);
+        if (!$context) {
+            return [];
+        }
+
+        $roles = get_user_roles($context, $USER->id, false);
+        $shortnames = [];
+        foreach ($roles as $role) {
+            if (!empty($role->shortname)) {
+                $shortnames[] = strtolower(trim($role->shortname));
+            }
+        }
+
+        return array_values(array_unique(array_filter($shortnames)));
+    }
+
+    public static function get_current_courseid(): int {
+        global $PAGE;
+
+        if (empty($PAGE->course->id) || (int)$PAGE->course->id === SITEID) {
+            return 0;
+        }
+
+        return (int)$PAGE->course->id;
+    }
+
+    public static function get_current_user_roles_in_courses(array $courseids): array {
+        global $USER;
+
+        if (empty($USER->id)) {
+            return [];
+        }
+
+        $roles = [];
+        foreach (array_unique(array_filter(array_map('intval', $courseids))) as $courseid) {
+            $context = \context_course::instance($courseid, IGNORE_MISSING);
+            if (!$context) {
+                continue;
+            }
+
+            foreach (get_user_roles($context, $USER->id, false) as $role) {
+                if (!empty($role->shortname)) {
+                    $roles[] = strtolower(trim($role->shortname));
+                }
+            }
+        }
+
+        return array_values(array_unique(array_filter($roles)));
+    }
 }
