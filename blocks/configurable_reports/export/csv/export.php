@@ -1,0 +1,75 @@
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Configurable Reports a Moodle block for creating customizable reports
+ *
+ * @copyright  2020 Juan Leyva <juan@moodle.com>
+ * @package    block_configurable_reports
+ * @author     Juan leyva <http://www.twitter.com/jleyvadelgado>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/**
+ * export_report
+ *
+ * @param object $report
+ * @return void
+ */
+function export_report($report) {
+    global $CFG;
+    require_once($CFG->libdir . '/csvlib.class.php');
+    require_once($CFG->dirroot . '/blocks/configurable_reports/export/exportlib.php');
+
+    $table = $report->table;
+
+    $matrix = block_configurable_reports_export_metadata_rows($report);
+    $startrow = count($matrix);
+    $filename = format_string($report->name) ?? 'report';
+
+    if (!empty($table->head)) {
+        foreach ($table->head as $key => $heading) {
+            $matrix[$startrow][$key] = block_configurable_reports_export_clean_cell($heading);
+        }
+    }
+
+    if (!empty($table->data)) {
+        foreach ($table->data as $rkey => $row) {
+            foreach ($row as $key => $item) {
+                $matrix[$startrow + $rkey + 1][$key] = block_configurable_reports_export_clean_cell($item);
+            }
+        }
+    }
+
+    $graphurl = block_configurable_reports_export_get_graph_url($report);
+    if (!empty($graphurl)) {
+        for ($i = 1; $i < 7; $i++) {
+            $matrix[0][$i] = '';
+        }
+        $matrix[0][7] = $graphurl;
+    }
+
+    $csvdelimiter = get_config('block_configurable_reports', 'csvdelimiter');
+    $csvexport = new csv_export_writer("$csvdelimiter", '"', 'application/download', true);
+    $csvexport->set_filename($filename);
+
+    foreach ($matrix as $ri => $col) {
+        ksort($col);
+        $csvexport->add_data($col);
+    }
+    $csvexport->download_file();
+    exit;
+}
