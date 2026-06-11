@@ -10,6 +10,7 @@ class rule_repository {
     public const TYPE_SHOW_BY_ROLE = 'showbyrole';
     public const TYPE_EXCLUDE_ACTIVITY = 'excludeactivity';
     public const TYPE_HIDE_COURSE_SETTINGS = 'hidecoursesettings';
+    public const TYPE_FORUM_MAX_EDITING_TIME = 'forummaxeditingtime';
 
     public static function get_rule_types(): array {
         return [
@@ -17,6 +18,7 @@ class rule_repository {
             self::TYPE_SHOW_BY_ROLE => get_string('showbyrole', 'local_modrules'),
             self::TYPE_EXCLUDE_ACTIVITY => get_string('excludeactivity', 'local_modrules'),
             self::TYPE_HIDE_COURSE_SETTINGS => get_string('hidecoursesettings', 'local_modrules'),
+            self::TYPE_FORUM_MAX_EDITING_TIME => get_string('forummaxeditingtime', 'local_modrules'),
         ];
     }
 
@@ -42,6 +44,9 @@ class rule_repository {
         if ($data->ruletype === self::TYPE_HIDE_COURSE_SETTINGS) {
             $modname = 'course';
             $namematch = '';
+        } else if ($data->ruletype === self::TYPE_FORUM_MAX_EDITING_TIME) {
+            $modname = 'forum';
+            $namematch = '';
         }
 
         $record = (object) [
@@ -52,6 +57,7 @@ class rule_repository {
             'namematch' => $namematch,
             'roleids' => self::serialise_ids($data->roleids ?? []),
             'courseids' => self::serialise_ids($data->courseids ?? []),
+            'configdata' => self::encode_configdata($data),
             'timemodified' => $now,
             'usermodified' => $USER->id,
         ];
@@ -102,5 +108,28 @@ class rule_repository {
 
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
         return implode(',', $ids);
+    }
+
+    public static function decode_configdata(?string $configdata): \stdClass {
+        if (empty($configdata)) {
+            return new \stdClass();
+        }
+
+        $decoded = json_decode($configdata);
+        return is_object($decoded) ? $decoded : new \stdClass();
+    }
+
+    private static function encode_configdata(\stdClass $data): string {
+        if ($data->ruletype !== self::TYPE_FORUM_MAX_EDITING_TIME) {
+            return '';
+        }
+
+        $maxeditingtime = max(1, (int)($data->maxeditingtimeminutes ?? MINSECS));
+        $forumids = self::serialise_ids($data->forumids ?? []);
+
+        return json_encode([
+            'maxeditingtime' => $maxeditingtime,
+            'forumids' => $forumids,
+        ]);
     }
 }

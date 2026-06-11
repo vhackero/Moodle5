@@ -125,6 +125,63 @@ class rule_manager {
         return false;
     }
 
+    public static function get_forum_maxeditingtime(int $forumid, int $courseid): int {
+        global $CFG;
+
+        $coursewide = null;
+        $specific = null;
+
+        foreach (rule_repository::get_all(true) as $rule) {
+            if ($rule->ruletype !== rule_repository::TYPE_FORUM_MAX_EDITING_TIME ||
+                    !self::rule_matches_forum_maxeditingtime($rule, $forumid, $courseid)) {
+                continue;
+            }
+
+            $config = rule_repository::decode_configdata($rule->configdata ?? '');
+            $maxeditingtime = (int)($config->maxeditingtime ?? 0);
+            if ($maxeditingtime < 1) {
+                continue;
+            }
+
+            $forumids = rule_repository::ids_from_string($config->forumids ?? '');
+            if ($forumids) {
+                $specific = $maxeditingtime;
+            } else {
+                $coursewide = $maxeditingtime;
+            }
+        }
+
+        return $specific ?? $coursewide ?? (int)$CFG->maxeditingtime;
+    }
+
+    public static function get_forum_maxeditingtime_for_cm(\cm_info $cm): int {
+        if ($cm->modname !== 'forum') {
+            global $CFG;
+            return (int)$CFG->maxeditingtime;
+        }
+
+        return self::get_forum_maxeditingtime((int)$cm->instance, (int)$cm->course);
+    }
+
+    private static function rule_matches_forum_maxeditingtime(\stdClass $rule, int $forumid, int $courseid): bool {
+        if (empty($rule->enabled) || $rule->modname !== 'forum') {
+            return false;
+        }
+
+        $courses = rule_repository::ids_from_string($rule->courseids);
+        if (!$courses || !in_array($courseid, $courses, true)) {
+            return false;
+        }
+
+        $config = rule_repository::decode_configdata($rule->configdata ?? '');
+        $forumids = rule_repository::ids_from_string($config->forumids ?? '');
+        if ($forumids && !in_array($forumid, $forumids, true)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public static function get_hidden_cm_payload(int $courseid): array {
         $modinfo = get_fast_modinfo($courseid);
         $hidden = [];

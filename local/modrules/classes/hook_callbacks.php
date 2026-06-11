@@ -6,14 +6,26 @@ namespace local_modrules;
 defined('MOODLE_INTERNAL') || die();
 
 class hook_callbacks {
-    public static function before_http_headers(\core\hook\output\before_http_headers $hook): void {
+    private static $headersprocessed = false;
+    private static $headprocessed = false;
+
+    public static function before_http_headers($hook = null): void {
         global $PAGE;
+
+        if (self::$headersprocessed) {
+            return;
+        }
+        self::$headersprocessed = true;
 
         self::redirect_hidden_course_settings();
 
         $cm = self::get_page_cm();
         if (!$cm) {
             return;
+        }
+
+        if ($cm->modname === 'forum') {
+            $GLOBALS['CFG']->maxeditingtime = rule_manager::get_forum_maxeditingtime_for_cm($cm);
         }
 
         if (rule_manager::is_cm_allowed_for_user($cm)) {
@@ -24,11 +36,16 @@ class hook_callbacks {
         redirect($courseurl, get_string('restrictedactivity', 'local_modrules'), null, \core\output\notification::NOTIFY_WARNING);
     }
 
-    public static function before_standard_head(\core\hook\output\before_standard_head_html_generation $hook): void {
+    public static function before_standard_head($hook = null): string {
         global $PAGE;
 
+        if (self::$headprocessed) {
+            return '';
+        }
+        self::$headprocessed = true;
+
         if (empty($PAGE->course->id) || $PAGE->course->id == SITEID) {
-            return;
+            return '';
         }
 
         $payload = rule_manager::get_hidden_cm_payload((int)$PAGE->course->id);
@@ -37,11 +54,11 @@ class hook_callbacks {
             $payload['logs'] = [];
         }
         $payload['excluded'] = [];
-        if (!is_siteadmin() && (str_starts_with($path, '/grade/') || str_starts_with($path, '/report/stats/'))) {
+        if (!is_siteadmin() && (strpos($path, '/grade/') === 0 || strpos($path, '/report/stats/') === 0)) {
             $payload['excluded'] = grade_exclusion_manager::get_excluded_cm_payload((int)$PAGE->course->id);
         }
         if (empty($payload['activities']) && empty($payload['logs']) && empty($payload['excluded']) && empty($payload['courseSettings'])) {
-            return;
+            return '';
         }
 
         $json = json_encode($payload, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
@@ -123,7 +140,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 HTML;
-        $hook->add_html($script);
+        if ($hook && method_exists($hook, 'add_html')) {
+            $hook->add_html($script);
+            return '';
+        }
+
+        return $script;
     }
 
     private static function redirect_hidden_course_settings(): void {
@@ -158,7 +180,7 @@ HTML;
         }
 
         $path = $PAGE->url->get_path(false);
-        $cmid = str_starts_with($path, '/mod/') ? optional_param('id', 0, PARAM_INT) : 0;
+        $cmid = strpos($path, '/mod/') === 0 ? optional_param('id', 0, PARAM_INT) : 0;
         if ($cmid && $cm = get_coursemodule_from_id(null, $cmid, 0, false, IGNORE_MISSING)) {
             try {
                 return \cm_info::create($cm);
