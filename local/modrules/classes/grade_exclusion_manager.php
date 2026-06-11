@@ -6,7 +6,7 @@ namespace local_modrules;
 defined('MOODLE_INTERNAL') || die();
 
 class grade_exclusion_manager {
-    private static array $touchedcourseids = [];
+    private static $touchedcourseids = [];
 
     public static function sync_all(): void {
         global $DB;
