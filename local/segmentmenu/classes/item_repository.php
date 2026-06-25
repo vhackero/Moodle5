@@ -11,8 +11,18 @@ class item_repository {
     private const RESTRICTION_BOTH = 'both';
     public const ALL_OPTION = '__all__';
 
+    public static function table_exists(): bool {
+        global $DB;
+
+        return $DB->get_manager()->table_exists('local_segmentmenu_items');
+    }
+
     public static function get_all(bool $enabledonly = false): array {
         global $DB;
+
+        if (!self::table_exists()) {
+            return [];
+        }
 
         $conditions = $enabledonly ? ['enabled' => 1] : null;
         return $DB->get_records('local_segmentmenu_items', $conditions, 'sortorder ASC, name ASC');
@@ -26,6 +36,10 @@ class item_repository {
 
     public static function get_for_segment(?string $segment): array {
         global $DB;
+
+        if (!self::table_exists()) {
+            return [];
+        }
 
         $segment = self::normalise_segment($segment);
         if ($segment === '') {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/segmentmenu/db" VERSION="2026060500" COMMENT="XMLDB file for local_segmentmenu">
+<XMLDB PATH="local/segmentmenu/db" VERSION="2026060803" COMMENT="XMLDB file for local_segmentmenu">
   <TABLES>
     <TABLE NAME="local_segmentmenu_items" COMMENT="Segment menu items">
       <FIELDS>

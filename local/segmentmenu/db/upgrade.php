@@ -4,12 +4,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 function xmldb_local_segmentmenu_upgrade($oldversion) {
-    global $DB;
+    global $CFG, $DB;
 
     $dbman = $DB->get_manager();
+    $table = new xmldb_table('local_segmentmenu_items');
+
+    if (!$dbman->table_exists($table)) {
+        $dbman->install_from_xmldb_file($CFG->dirroot . '/local/segmentmenu/db/install.xml');
+    }
 
     if ($oldversion < 2026052900) {
-        $table = new xmldb_table('local_segmentmenu_items');
         $field = new xmldb_field('linktarget', XMLDB_TYPE_CHAR, '16', null, XMLDB_NOTNULL, null, 'same', 'segment');
 
         if (!$dbman->field_exists($table, $field)) {
@@ -24,8 +28,6 @@ function xmldb_local_segmentmenu_upgrade($oldversion) {
     }
 
     if ($oldversion < 2026060400) {
-        $table = new xmldb_table('local_segmentmenu_items');
-
         $field = new xmldb_field('courseroles', XMLDB_TYPE_TEXT, null, null, null, null, null, 'segment');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
@@ -54,7 +56,6 @@ function xmldb_local_segmentmenu_upgrade($oldversion) {
     }
 
     if ($oldversion < 2026060500) {
-        $table = new xmldb_table('local_segmentmenu_items');
         $field = new xmldb_field('courseids', XMLDB_TYPE_TEXT, null, null, null, null, null, 'url');
 
         if (!$dbman->field_exists($table, $field)) {
@@ -70,6 +71,14 @@ function xmldb_local_segmentmenu_upgrade($oldversion) {
 
     if ($oldversion < 2026060801) {
         upgrade_plugin_savepoint(true, 2026060801, 'local', 'segmentmenu');
+    }
+
+    if ($oldversion < 2026060802) {
+        upgrade_plugin_savepoint(true, 2026060802, 'local', 'segmentmenu');
+    }
+
+    if ($oldversion < 2026060803) {
+        upgrade_plugin_savepoint(true, 2026060803, 'local', 'segmentmenu');
     }
 
     return true;
