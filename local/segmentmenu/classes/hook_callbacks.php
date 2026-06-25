@@ -6,15 +6,22 @@ namespace local_segmentmenu;
 defined('MOODLE_INTERNAL') || die();
 
 class hook_callbacks {
-    public static function before_standard_top_of_body(\core\hook\output\before_standard_top_of_body_html_generation $hook): void {
+    private static $processed = false;
+
+    public static function before_standard_top_of_body($hook = null): string {
         global $USER;
 
+        if (self::$processed) {
+            return '';
+        }
+        self::$processed = true;
+
         if (!isloggedin() || isguestuser() || during_initial_install()) {
-            return;
+            return '';
         }
 
         if (AJAX_SCRIPT || CLI_SCRIPT || WS_SERVER) {
-            return;
+            return '';
         }
 
         $items = item_repository::get_menu_items_for_user(
@@ -23,7 +30,7 @@ class hook_callbacks {
             segment_resolver::get_current_courseid()
         );
         if (!$items) {
-            return;
+            return '';
         }
 
         $heading = s(get_string('menuheading', 'local_segmentmenu'));
@@ -53,7 +60,7 @@ class hook_callbacks {
         }
 
         if ($links === '') {
-            return;
+            return '';
         }
 
         $html = <<<HTML
@@ -391,6 +398,11 @@ class hook_callbacks {
 }());
 </script>
 HTML;
-        $hook->add_html($html);
+        if ($hook && method_exists($hook, 'add_html')) {
+            $hook->add_html($html);
+            return '';
+        }
+
+        return $html;
     }
 }
